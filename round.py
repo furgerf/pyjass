@@ -5,10 +5,11 @@ import utils
 
 class Round():
 
-  def __init__(self, players):
+  def __init__(self, players, log):
     self._players = players
     self.p1, self.p2, self.p3, self.p4 = players
     self._score = -12345
+    self.log = log
 
   @property
   def score(self):
@@ -27,7 +28,7 @@ class Round():
       played_cards.append(played_card)
 
     winner, score = self._evaluate(played_cards, original_dealer)
-    print("{} wins the round ({} points)".format(self._players[winner].name, score))
+    self.log.info("{} wins the round ({} points)".format(self._players[winner].name, score))
     self._score = score
     return winner
 

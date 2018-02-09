@@ -8,12 +8,13 @@ import utils
 
 class Player():
 
-  def __init__(self, name):
+  def __init__(self, name, log):
     self._name = name
     self._left = None
     self._team = None
     self._right = None
     self._hand = None
+    self.log = log
 
   def set_players(self, left, team, right):
     self._left = left
@@ -43,7 +44,7 @@ class Player():
       valid_cards = self.hand
 
     selected_card = self._randomly_select_card(valid_cards)
-    print("{} selects card {} to play (valid: {})".format(self.name, selected_card, utils.format_cards(valid_cards)))
+    self.log.debug("{} selects card {} to play (valid: {})".format(self.name, selected_card, utils.format_cards(valid_cards)))
     return selected_card
 
   def _randomly_select_card(self, valid_cards):

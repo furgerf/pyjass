@@ -6,11 +6,12 @@ from round import Round
 
 class Hand():
 
-  def __init__(self, players, cards):
+  def __init__(self, players, cards, log):
     self._players = players
     self.p1, self.p2, self.p3, self.p4 = players
     self._score_team_1 = 0
     self._score_team_2 = 0
+    self.log = log
 
     # shuffle
     self.cards = np.random.permutation(cards)
@@ -22,13 +23,13 @@ class Hand():
     # choose trump
     trump = "obenabe"
     [c.set_score(trump) for c in self.cards]
-    print("Playing hand with trump: {}".format(trump))
+    self.log.info("Playing hand with trump: {}".format(trump))
 
     # p1 begins
     dealer = 0
     for i in range(9):
-      print("\nRound {}".format(i+1))
-      current_round = Round(self._players)
+      self.log.debug("---------- Round {} ----------".format(i+1))
+      current_round = Round(self._players, self.log)
       dealer = current_round.play(dealer)
       if dealer % 2 == 0:
         self._score_team_1 += current_round.score
@@ -36,10 +37,10 @@ class Hand():
         self._score_team_2 += current_round.score
 
     if dealer % 2 == 0:
-      print("\nTeam 1 made the last stich")
+      self.log.info("Team 1 made the last stich")
       self._score_team_1 += 5
     else:
-      print("\nTeam 2 made the last stich")
+      self.log.info("Team 2 made the last stich")
       self._score_team_2 += 5
 
   @property
