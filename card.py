@@ -16,6 +16,10 @@ class Card():
           "🂮🂾🃎🃞" + \
           "🂡🂱🃁🃑 "
 
+  IN_PLAY = 5
+  IN_HAND = 6
+  SELECTED = 7
+
   def __init__(self, suit, value):
     self._suit = suit
     self._value = value
@@ -34,6 +38,10 @@ class Card():
   @property
   def score(self):
     return self._score
+
+  @property
+  def card_index(self):
+    return 4*self.value + self.suit
 
   def __str__(self):
     return self._icon
