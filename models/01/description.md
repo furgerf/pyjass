@@ -1,3 +1,4 @@
+# iteration 1
 36m data points(?)
 cost: score of round
-had some bug
+had some bugs
