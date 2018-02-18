@@ -36,10 +36,10 @@ class Game:
       training_data = list()
 
     dealer = 0
-    self.log.warning("Starting game of {} hands with {} vs {}".format(Config.TOTAL_HANDS, Config.TEAM_1_STRATEGY, Config.TEAM_2_STRATEGY))
+    self.log.warning("Starting game of {} hands: {} vs {}{}".format(Config.TOTAL_HANDS, Config.TEAM_1_STRATEGY, Config.TEAM_2_STRATEGY, " (storing training data)" if Config.STORE_TRAINING_DATA else ""))
     for i in range(Config.TOTAL_HANDS):
-      if i % Config.WARNING_INTERVAL == Config.WARNING_INTERVAL-1:
-        self.log.warning("Starting hand {}/{} ({:.2f}%)".format(i+1, ConfigTOTAL_HANDS, 100.0*(i+1)/Config.TOTAL_HANDS))
+      if i % Config.LOGGING_INTERVAL == Config.LOGGING_INTERVAL-1:
+        self.log.warning("Starting hand {}/{} ({:.2f}%)".format(i+1, Config.TOTAL_HANDS, 100.0*(i+1)/Config.TOTAL_HANDS))
       else:
         self.log.info("Starting hand {}".format(i+1))
 
@@ -86,7 +86,7 @@ class Game:
         .format(Card.IN_PLAY, Card.IN_HAND, Card.SELECTED))
 
   def _write_training_data(self, fh, writer, training_data):
-    self.log.warning("Writing {} training data entries to {}".format(len(training_data), fh.name))
+    self.log.warning("Writing {} training samples to {}".format(len(training_data), fh.name))
     writer.writerows(training_data)
     training_data.clear()
 

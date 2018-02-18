@@ -39,7 +39,8 @@ class Player:
           Player.regressor = pickle.load(fh)
       else:
         file_name = "bar.csv"
-        Player.regressor = MLPRegressor(warm_start=True)
+        Player.regressor = SGDRegressor(warm_start=True)
+        # Player.regressor = MLPRegressor(warm_start=True)
         offset = 0
         chunk_size = int(1e6)
         while True:

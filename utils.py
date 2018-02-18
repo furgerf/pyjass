@@ -5,7 +5,9 @@ import logging
 
 import coloredlogs
 
+
 def get_logger(name):
+  """
   debug_levelv_num = 21
   # add "success" log level
   logging.addLevelName(debug_levelv_num, "SUCCESS")
@@ -14,6 +16,7 @@ def get_logger(name):
     if self.isEnabledFor(debug_levelv_num):
       self._log(debug_levelv_num, message, args, **kws)
   logging.Logger.success = success
+  """
 
   # set up logger
   coloredlogs.install(level="DEBUG")
