@@ -4,22 +4,31 @@
 import csv
 from config import Config
 
+from baseline_players import HighestCardPlayer, RandomCardPlayer
 from card import Card
 from hand import Hand
+from learner_players import MlpPlayer, SgdPlayer
 from player import Player
 
 
 class Game:
+  PLAYER_TYPES = {
+      "random": RandomCardPlayer,
+      "highest": HighestCardPlayer,
+      "sgd": SgdPlayer,
+      "mlp": MlpPlayer
+      }
+
   def __init__(self, log):
     self.log = log
     self._cards = [Card(suit, value) for suit in range(4) for value in range(9)]
     self._total_score_team_1 = 0
     self._total_score_team_2 = 0
 
-    self.p1 = Player("p1", Config.TEAM_1_STRATEGY, self.log)
-    self.p2 = Player("p2", Config.TEAM_2_STRATEGY, self.log)
-    self.p3 = Player("p3", Config.TEAM_1_STRATEGY, self.log)
-    self.p4 = Player("p4", Config.TEAM_2_STRATEGY, self.log)
+    self.p1 = Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p1", self.log)
+    self.p2 = Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p2", self.log)
+    self.p3 = Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p3", self.log)
+    self.p4 = Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p4", self.log)
     self.players = (self.p1, self.p2, self.p2, self.p3)
 
   def play(self):
