@@ -11,10 +11,12 @@ import numpy as np
 import utils
 from card import Card
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.neural_network import MLPRegressor
+from sklearn.linear_model import SGDRegressor
 
 
 class Player():
-  training_data = None
+  regressor = None
 
   def __init__(self, name, selection, log):
     self._name = name
@@ -30,21 +32,30 @@ class Player():
         "rf": self._select_with_rf,
         }
     if self._selection == "rf":
-      pickle_file_name = "model.pkl"
+      pickle_file_name = "new-model.pkl"
+      if Player.regressor is not None:
+        return
+
       if path.exists(pickle_file_name):
         with open(pickle_file_name, "rb") as fh:
           self.log.warning("Loading model from {}...".format(pickle_file_name))
-          self._regressor = pickle.load(fh)
+          Player.regressor = pickle.load(fh)
       else:
-        if Player.training_data is None:
-          file_name = "bar.csv"
+        file_name = "bar.csv"
+        Player.regressor = MLPRegressor(warm_start=True)
+        offset = 0
+        chunk_size = int(1e6)
+        while True:
           self.log.warning("Loading data from {}...".format(file_name))
-          Player.training_data = np.genfromtxt(file_name, delimiter=",", dtype=int, skip_header=1)
-        self._regressor = RandomForestRegressor()
-        self.log.warning("Fitting regressor...")
-        self._regressor.fit(Player.training_data[:,:-1], Player.training_data[:,-1])
+          training_data = np.genfromtxt(file_name, delimiter=",", dtype=int, skip_header=1+offset, max_rows=chunk_size)
+          if not len(training_data):
+            break
+          offset += chunk_size
+          self.log.warning("Fitting regressor with {} examples...".format(len(training_data)))
+          Player.regressor.partial_fit(training_data[:,:-1], training_data[:,-1])
+        self.log.warning("Writing model to {}...".format(pickle_file_name))
         with open(pickle_file_name, "wb") as fh:
-          pickle.dump(self._regressor, fh)
+          pickle.dump(Player.regressor, fh)
 
   def set_players(self, left, team, right):
     self._left = left
@@ -112,7 +123,9 @@ class Player():
       my_state[card.card_index] = Card.SELECTED
       states.append(my_state)
 
-    scores = self._regressor.predict(states)
-    self.log.debug("Playing cards {} has predicted score of {}".format(utils.format_cards(valid_cards), scores))
-    return valid_cards[np.argmax(scores)]
+    scores = Player.regressor.predict(states)
+    # TODO: Select according to probability relative to score
+    card = valid_cards[np.argmax(scores)]
+    self.log.debug("Playing cards {} has predicted score of {}, selecting {}".format(utils.format_cards(valid_cards), scores, card))
+    return card
 

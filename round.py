@@ -16,7 +16,6 @@ class Round():
 
   def play(self, dealer):
     # self._print_hands()
-    original_dealer = dealer
 
     played_cards = []
     states = []
@@ -28,9 +27,9 @@ class Round():
       played_cards.append(played_card)
       states.append(player_state)
 
-    winner, score = self._evaluate(played_cards, original_dealer)
+    winner, score = self._evaluate(played_cards, dealer)
     self.log.info("{} wins the round ({} points)".format(self._players[winner].name, score))
-    return winner, np.roll(played_cards, -original_dealer), score, np.roll(states, -original_dealer)
+    return winner, np.roll(played_cards, -dealer), score, np.roll(states, -dealer)
 
   def _evaluate(self, played_cards, dealer):
     best_index = 0
@@ -38,7 +37,6 @@ class Round():
       if played_cards[best_index].is_beaten_by(played_cards[i]):
         best_index = i
     winner = (dealer + best_index) % 4
-    # print("best index {}, dealer {}, winner {}".format(best_index, dealer, winner))
 
     score = sum(map(lambda c: c.score, played_cards))
 

@@ -16,6 +16,7 @@ class Hand():
     self._score_team_2 = 0
     self._training_data = training_data
     self.log = log
+    self._known_cards = np.zeros(36, dtype=int)
 
     # shuffle
     self.cards = np.random.permutation(cards)
@@ -23,37 +24,38 @@ class Hand():
     for i in range(len(self._players)):
       self._players[i].hand = self.cards[i*9:(i+1)*9]
 
-    self._known_cards = np.zeros(36, dtype=int)
 
-  def play(self):
+  def play(self, dealer):
     # choose trump
     trump = "obenabe"
     [c.set_score(trump) for c in self.cards]
     self.log.info("Playing hand with trump: {}".format(trump))
 
-    # p1 begins
-    dealer = 0
+    training_data_team_1 = []
+    training_data_team_2 = []
+    HAND_SCORE_FACTOR = 2
     for i in range(9):
       self.log.debug("---------- Round {} ----------".format(i+1))
       current_round = Round(self._players, self._known_cards, self.log,)
       dealer, played_cards, score, states = current_round.play(dealer)
-      for i in range(4):
-        self._known_cards[played_cards[i].card_index] = i+1
+      for j in range(4):
+        self._known_cards[played_cards[j].card_index] = j+1 # TODO: Check if this needs to be rotated and if some j should be an i
       self.log.debug("Known cards: {}".format(utils.format_cards(self._known_cards)))
-      if dealer % 2 == 0:
-        self._score_team_1 += score
-        if self._training_data:
-          self._training_data.append(np.append(states[0],  score))
-          self._training_data.append(np.append(states[1], -score))
-          self._training_data.append(np.append(states[2],  score))
-          self._training_data.append(np.append(states[3], -score))
-      else:
-        self._score_team_2 += score
-        if self._training_data:
-          self._training_data.append(np.append(states[0], -score))
-          self._training_data.append(np.append(states[1],  score))
-          self._training_data.append(np.append(states[2], -score))
-          self._training_data.append(np.append(states[3],  score))
+      if i < 8: # skip one-card decisions
+        if dealer % 2 == 0:
+          self._score_team_1 += score
+          if self._training_data is not None:
+            training_data_team_1.append(np.append(states[0],  score * HAND_SCORE_FACTOR))
+            training_data_team_2.append(np.append(states[1], -score * HAND_SCORE_FACTOR))
+            training_data_team_1.append(np.append(states[2],  score * HAND_SCORE_FACTOR))
+            training_data_team_2.append(np.append(states[3], -score * HAND_SCORE_FACTOR))
+        else:
+          self._score_team_2 += score
+          if self._training_data is not None:
+            training_data_team_1.append(np.append(states[0], -score * HAND_SCORE_FACTOR))
+            training_data_team_2.append(np.append(states[1],  score * HAND_SCORE_FACTOR))
+            training_data_team_1.append(np.append(states[2], -score * HAND_SCORE_FACTOR))
+            training_data_team_2.append(np.append(states[3],  score * HAND_SCORE_FACTOR))
 
     if dealer % 2 == 0:
       self.log.info("Team 1 made the last stich")
@@ -61,6 +63,14 @@ class Hand():
     else:
       self.log.info("Team 2 made the last stich")
       self._score_team_2 += 5
+
+    if self._training_data is not None:
+      for i in range(len(training_data_team_1)):
+        training_data_team_1[i][-1] += self._score_team_1
+      for i in range(len(training_data_team_2)):
+        training_data_team_2[i][-1] += self._score_team_2
+      self._training_data.extend(training_data_team_1)
+      self._training_data.extend(training_data_team_2)
 
   @property
   def result(self):

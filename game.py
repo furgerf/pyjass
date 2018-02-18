@@ -23,8 +23,11 @@ class Game():
     self._total_score_team_1 = 0
     self._total_score_team_2 = 0
 
-    self.team_1_strategy = "random"
-    self.team_2_strategy = "rf"
+    self.team_1_strategy = "rf"
+    self.team_2_strategy = "random"
+
+    # self.team_1_strategy = "random"
+    # self.team_2_strategy = "rf"
 
     self.p1 = Player("p1", self.team_1_strategy, self.log)
     self.p2 = Player("p2", self.team_2_strategy, self.log)
@@ -37,29 +40,42 @@ class Game():
     self.p4.set_players(self.p3, self.p2, self.p1)
 
   def play(self, store_training_data=False):
-    # TODO: periodically flush training data to free up RAM
     training_data = list() if store_training_data else None
-    warning_interval = int(1e3)
-    total_hands = int(1e4)
+    store_training_interval = int(5e4)
+    warning_interval = int(5e4)
+    total_hands = int(1e5)
     wins_team_1 = 0
     wins_team_2 = 0
     current_score_team_1 = 0
     current_score_team_2 = 0
+    training_data_file_name="foo.csv"
+
+    if training_data is not None:
+      fh = open(training_data_file_name, "w")
+      fh.write("36 rows for cards with their known state from the view of a player " + \
+          "(0 unknown, 1-4 played by player, {} in play, {} in hand, {} selected to play; score of round from the view of the player\n"
+        .format(Card.IN_PLAY, Card.IN_HAND, Card.SELECTED))
+      writer = csv.writer(fh)
+
+    dealer = 0
     for i in range(total_hands):
       if i % warning_interval == warning_interval-1:
         self.log.warning("Starting hand {}/{} ({:.2f}%)".format(i+1, total_hands, 100.0*(i+1)/total_hands))
       else:
         self.log.info("Starting hand {}".format(i+1))
+
       hand = Hand((self.p1, self.p2, self.p3, self.p4), self.cards, training_data, self.log)
-      # if i > 0:
-      #   sys.stdin.read(1)
-      hand.play()
+      hand.play(dealer)
+      dealer = (dealer + 1) % 4
+
       self._total_score_team_1 += hand.result[0]
       self._total_score_team_2 += hand.result[1]
-
       current_score_team_1 += hand.result[0]
       current_score_team_2 += hand.result[1]
-
+      if current_score_team_1 > 1000 and current_score_team_2 > 1000:
+        # "tie", count as no win for either team
+        current_score_team_1 = 0
+        current_score_team_2 = 0
       if current_score_team_1 > 1000:
         wins_team_1 += 1
         current_score_team_1 = 0
@@ -70,6 +86,12 @@ class Game():
         current_score_team_2 = 0
 
       self.log.info("Result: {} vs {} ({} vs {})".format(hand.result[0], hand.result[1], self._total_score_team_1, self._total_score_team_2))
+      if training_data is not None and i != 0 and i % store_training_interval == store_training_interval-1:
+        self.log.warning("Writing {} training data entries to {}".format(len(training_data), fh.name))
+        writer.writerows(training_data)
+        training_data.clear()
+
+
     self.log.warning("Overall result: {} ({}) vs {} ({}); wins: {} vs {}; (score diff {}, off mean: {:.2f}%, win percentage: {:.2f}%)".format(
       self._total_score_team_1, self.team_1_strategy, self._total_score_team_2, self.team_2_strategy,
       wins_team_1, wins_team_2,
@@ -77,19 +99,13 @@ class Game():
       100.0*(self._total_score_team_1*2-(self._total_score_team_1+self._total_score_team_2))/2/(self._total_score_team_1+self._total_score_team_2),
       100.0*wins_team_1/(wins_team_1+wins_team_2)))
 
-    if training_data:
-      self.store_training_data(training_data)
-
-  def store_training_data(self, training_data, file_name="foo.csv"):
-    with open(file_name, "w") as fh:
-      self.log.warning("Writing training data to {}".format(file_name))
-      fh.write("36 rows for cards with their known state from the view of a player " + \
-          "(0 unknown, 1-4 played by player, {} in play, {} in hand, {} selected to play; score of round from the view of the player\n"
-        .format(Card.IN_PLAY, Card.IN_HAND, Card.SELECTED))
-      csv.writer(fh).writerows(training_data)
+    if training_data is not None:
+      self.log.warning("Writing {} training data entries to {}".format(len(training_data), fh.name))
+      writer.writerows(training_data)
+      fh.close()
 
 if __name__ == "__main__":
-  np.random.seed(42)
+  # np.random.seed(42)
   game = None
   start_time = time.time()
 
