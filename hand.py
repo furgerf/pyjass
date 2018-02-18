@@ -4,11 +4,11 @@
 import numpy as np
 
 import utils
+from model import Mound
 from round import Round
 
 
 class Hand():
-  HAND_SCORE_FACTOR = 2
 
   def __init__(self, players, cards, training_data, log):
     self._players = players
@@ -78,15 +78,15 @@ class Hand():
 
   def _update_current_training_data(self, training_data_team_1, training_data_team_2, states, score, dealer):
     if dealer % 2 == 0:
-      training_data_team_1.append(np.append(states[0],  score * Hand.HAND_SCORE_FACTOR))
-      training_data_team_2.append(np.append(states[1], -score * Hand.HAND_SCORE_FACTOR))
-      training_data_team_1.append(np.append(states[2],  score * Hand.HAND_SCORE_FACTOR))
-      training_data_team_2.append(np.append(states[3], -score * Hand.HAND_SCORE_FACTOR))
+      training_data_team_1.append(np.append(states[0],  score * Model.HAND_SCORE_FACTOR))
+      training_data_team_2.append(np.append(states[1], -score * Model.HAND_SCORE_FACTOR))
+      training_data_team_1.append(np.append(states[2],  score * Model.HAND_SCORE_FACTOR))
+      training_data_team_2.append(np.append(states[3], -score * Model.HAND_SCORE_FACTOR))
     else:
-      training_data_team_1.append(np.append(states[0], -score * Hand.HAND_SCORE_FACTOR))
-      training_data_team_2.append(np.append(states[1],  score * Hand.HAND_SCORE_FACTOR))
-      training_data_team_1.append(np.append(states[2], -score * Hand.HAND_SCORE_FACTOR))
-      training_data_team_2.append(np.append(states[3],  score * Hand.HAND_SCORE_FACTOR))
+      training_data_team_1.append(np.append(states[0], -score * Model.HAND_SCORE_FACTOR))
+      training_data_team_2.append(np.append(states[1],  score * Model.HAND_SCORE_FACTOR))
+      training_data_team_1.append(np.append(states[2], -score * Model.HAND_SCORE_FACTOR))
+      training_data_team_2.append(np.append(states[3],  score * Model.HAND_SCORE_FACTOR))
 
   @property
   def result(self):

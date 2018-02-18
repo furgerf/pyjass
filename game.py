@@ -11,6 +11,7 @@ import numpy as np
 import utils
 from card import Card
 from hand import Hand
+from model import Mound
 from player import Player
 
 
@@ -23,16 +24,10 @@ class Game():
     self._total_score_team_1 = 0
     self._total_score_team_2 = 0
 
-    self.team_1_strategy = "rf"
-    self.team_2_strategy = "random"
-
-    # self.team_1_strategy = "random"
-    # self.team_2_strategy = "rf"
-
-    self.p1 = Player("p1", self.team_1_strategy, self.log)
-    self.p2 = Player("p2", self.team_2_strategy, self.log)
-    self.p3 = Player("p3", self.team_1_strategy, self.log)
-    self.p4 = Player("p4", self.team_2_strategy, self.log)
+    self.p1 = Player("p1", Model.TEAM_1_STRATEGY, self.log)
+    self.p2 = Player("p2", Model.TEAM_2_STRATEGY, self.log)
+    self.p3 = Player("p3", Model.TEAM_1_STRATEGY, self.log)
+    self.p4 = Player("p4", Model.TEAM_2_STRATEGY, self.log)
 
     self.p1.set_players(self.p4, self.p3, self.p2)
     self.p2.set_players(self.p1, self.p4, self.p3)
@@ -105,7 +100,9 @@ class Game():
       fh.close()
 
 if __name__ == "__main__":
-  # np.random.seed(42)
+  if not Model.RANDOM:
+    np.random.seed(42)
+
   game = None
   start_time = time.time()
 
