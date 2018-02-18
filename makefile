@@ -20,6 +20,7 @@ lint:
 
 select-model: unselect-model
 	ln -s $(MODELS_DIR)/$(MODEL) $(CURRENT_MODEL)
+	ls -l $(CURRENT_MODEL)
 
 unselect-model:
 	test -L $(CURRENT_MODEL) && unlink $(CURRENT_MODEL) || exit 0

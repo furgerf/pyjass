@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import math
 
 import coloredlogs
 
@@ -41,3 +42,14 @@ def get_logger(name):
 
 def format_cards(cards):
   return " ".join(str(c) for c in cards)
+
+def format_human(number):
+  unit = 1000
+  if number < unit:
+    return str(number)
+  magnitude = int(math.log(number) / math.log(unit))
+  pre = "kMGTPE"[magnitude-1]
+  scaled_number = number / math.pow(unit, magnitude)
+  if scaled_number == int(scaled_number):
+    scaled_number = int(scaled_number)
+  return "{}{}".format(scaled_number, pre)

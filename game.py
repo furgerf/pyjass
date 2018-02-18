@@ -4,6 +4,7 @@
 import csv
 from config import Config
 
+import utils
 from baseline_players import HighestCardPlayer, RandomCardPlayer
 from card import Card
 from hand import Hand
@@ -45,11 +46,12 @@ class Game:
       training_data = list()
 
     dealer = 0
-    self.log.warning("Starting game of {} hands: {} vs {}{}".format(Config.TOTAL_HANDS,
+    self.log.warning("Starting game of {} hands: {} vs {}{}".format(utils.format_human(Config.TOTAL_HANDS),
       Config.TEAM_1_STRATEGY, Config.TEAM_2_STRATEGY, " (storing training data)" if Config.STORE_TRAINING_DATA else ""))
     for i in range(Config.TOTAL_HANDS):
       if i % Config.LOGGING_INTERVAL == Config.LOGGING_INTERVAL-1:
-        self.log.info("Starting hand {}/{} ({:.2f}%)".format(i+1, Config.TOTAL_HANDS, 100.0*(i+1)/Config.TOTAL_HANDS))
+        self.log.info("Starting hand {}/{} ({:.2f}%)".format(
+          utils.format_human(i+1), utils.format_human(Config.TOTAL_HANDS), 100.0*(i+1)/Config.TOTAL_HANDS))
       else:
         self.log.debug("Starting hand {}".format(i+1))
 
@@ -98,6 +100,8 @@ class Game:
     fh.write(header.format(Card.IN_PLAY, Card.IN_HAND, Card.SELECTED))
 
   def _write_training_data(self, fh, writer, training_data):
+    if not training_data:
+      return
     self.log.info("Writing {} training samples to {}".format(len(training_data), fh.name))
     writer.writerows(training_data)
     training_data.clear()
@@ -109,8 +113,9 @@ class Game:
     message = "Overall result: {} ({}) vs {} ({}); wins: {} vs {} ({} ties); " + \
         "(score diff {}, off mean: {:.2f}%, T1 win percentage: {:.2f}%)"
     self.log.warning(message.format(
-      self._total_score_team_1, Config.TEAM_1_STRATEGY, self._total_score_team_2, Config.TEAM_2_STRATEGY,
-      wins_team_1, wins_team_2, ties,
-      int((self._total_score_team_1*2-score_of_both_teams)/2),
+      utils.format_human(self._total_score_team_1), Config.TEAM_1_STRATEGY,
+      utils.format_human(self._total_score_team_2), Config.TEAM_2_STRATEGY,
+      utils.format_human(wins_team_1), utils.format_human(wins_team_2), utils.format_human(ties),
+      utils.format_human((self._total_score_team_1*2-score_of_both_teams)/2),
       100.0*(self._total_score_team_1*2-score_of_both_teams)/2/score_of_both_teams,
       100.0*wins_team_1/wins_of_both_teams if wins_of_both_teams > 0 else 0))
