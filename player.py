@@ -11,19 +11,16 @@ import numpy as np
 import utils
 from card import Card
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.neural_network import MLPRegressor
 from sklearn.linear_model import SGDRegressor
+from sklearn.neural_network import MLPRegressor
 
 
-class Player():
+class Player:
   regressor = None
 
   def __init__(self, name, selection, log):
     self._name = name
     self._selection = selection
-    self._left = None
-    self._team = None
-    self._right = None
     self._hand = None
     self.log = log
     self.card_selections = {
@@ -57,11 +54,6 @@ class Player():
         with open(pickle_file_name, "wb") as fh:
           pickle.dump(Player.regressor, fh)
 
-  def set_players(self, left, team, right):
-    self._left = left
-    self._team = team
-    self._right = right
-
   @property
   def name(self):
     return self._name
@@ -88,6 +80,8 @@ class Player():
     self.log.debug("{} selects card {} to play (valid: {})".format(self.name, selected_card, utils.format_cards(valid_cards)))
 
     encoded_player_state = self._encode_cards(played_cards, known_cards)
+    if encoded_player_state[selected_card.card_index] != Card.IN_HAND:
+      raise ValueError()
     encoded_player_state[selected_card.card_index] = Card.SELECTED
 
     return selected_card, encoded_player_state

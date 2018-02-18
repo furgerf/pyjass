@@ -6,7 +6,7 @@ import numpy as np
 import utils
 
 
-class Round():
+class Round:
 
   def __init__(self, players, known_cards, log):
     self._players = players
@@ -42,7 +42,7 @@ class Round():
     # evaluate round
     winner, score = self._evaluate(played_cards, dealer)
     self.log.info("{} wins the round ({} points)".format(self._players[winner].name, score))
-    return winner, score, np.roll(played_cards, -dealer), np.roll(states, -dealer)
+    return winner, score, np.roll(played_cards, dealer, axis=0), np.roll(states, dealer, axis=0)
 
   def _evaluate(self, played_cards, dealer):
     # find the index of the best card among the played cards
