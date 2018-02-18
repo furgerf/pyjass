@@ -12,7 +12,7 @@ import numpy as np
 import utils
 from game import Game
 
-if __name__ == "__main__":
+def main():
   if not Config.RANDOM:
     np.random.seed(42)
 
@@ -38,3 +38,5 @@ if __name__ == "__main__":
     log.warning("Finished execution after {}".format(time_string))
     logging.shutdown()
 
+if __name__ == "__main__":
+  main()

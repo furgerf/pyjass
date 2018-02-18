@@ -41,4 +41,3 @@ def get_logger(name):
 
 def format_cards(cards):
   return " ".join(str(c) for c in cards)
-

@@ -11,7 +11,7 @@ class Round:
   def __init__(self, players, known_cards, log):
     self._players = players
     self._known_cards = known_cards
-    self.p1, self.p2, self.p3, self.p4 = players
+    self.p1, self.p2, self.p3, self.p4 = players # pylint: disable=invalid-name
     self.log = log
 
   def play(self, dealer):
@@ -40,11 +40,12 @@ class Round:
       states.append(player_state)
 
     # evaluate round
-    winner, score = self._evaluate(played_cards, dealer)
-    self.log.info("{} wins the round ({} points)".format(self._players[winner].name, score))
+    winner, score = Round._evaluate(played_cards, dealer)
+    self.log.debug("{} wins the round ({} points)".format(self._players[winner].name, score))
     return winner, score, np.roll(played_cards, dealer, axis=0), np.roll(states, dealer, axis=0)
 
-  def _evaluate(self, played_cards, dealer):
+  @staticmethod
+  def _evaluate(played_cards, dealer):
     # find the index of the best card among the played cards
     best_index = 0
     for i in range(1, 4):
@@ -68,4 +69,3 @@ class Round:
       print("{}\t\t\t\t\t{}".format(self.p4.hand[i], self.p2.hand[i]))
 
     print("\t{}: {}".format(self.p1.name, utils.format_cards(self.p1.hand)))
-

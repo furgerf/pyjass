@@ -16,4 +16,3 @@ class HighestCardPlayer(Player):
   def _select_card(self, args):
     valid_cards = args[0]
     return valid_cards[-1]
-

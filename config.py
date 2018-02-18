@@ -6,7 +6,7 @@ class Config:
   RANDOM = False
 
   LOG_LEVEL = "DEBUG"
-  LOG_LEVEL = "WARNING"
+  LOG_LEVEL = "INFO"
 
   HAND_SCORE_FACTOR = 2
 
@@ -22,7 +22,6 @@ class Config:
 
   STORE_TRAINING_INTERVAL = int(1e4)
   LOGGING_INTERVAL = int(5e4)
-  TOTAL_HANDS = int(1e3) * 1 + 0
+  TOTAL_HANDS = int(1e5) * 1 + 0
 
   TRAINING_DATA_FILE_NAME = "data/foo.csv"
-

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import csv
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -40,7 +39,8 @@ class Player(ABC):
       valid_cards = self.hand
 
     selected_card = self._select_card((valid_cards, played_cards, known_cards))
-    self.log.debug("{} selects card {} to play (valid: {})".format(self.name, selected_card, utils.format_cards(valid_cards)))
+    self.log.debug("{} selects card {} to play (valid: {})".format(
+      self.name, selected_card, utils.format_cards(valid_cards)))
 
     encoded_player_state = self._encode_cards(played_cards, known_cards)
     if encoded_player_state[selected_card.card_index] != Card.IN_HAND:
@@ -64,4 +64,3 @@ class Player(ABC):
         raise ValueError()
       cards[hc.card_index] = Card.IN_HAND
     return cards
-

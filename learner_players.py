@@ -3,10 +3,13 @@
 
 
 import pickle
+from config import Config
 from os import path
 
 import numpy as np
 
+import utils
+from card import Card
 from player import Player
 from sklearn.linear_model import SGDRegressor
 from sklearn.neural_network import MLPRegressor
@@ -27,17 +30,17 @@ class LearnerPlayer(Player):
     offset = 0
     chunk_size = int(1e6)
     while True:
-      self.log.warning("Loading data from {}...".format(Config.TRAINING_DATA_FILE_NAME))
+      self.log.info("Loading data from {} ({} lines read)...".format(Config.TRAINING_DATA_FILE_NAME, offset))
       training_data = np.genfromtxt(Config.TRAINING_DATA_FILE_NAME,
           delimiter=",", dtype=int, skip_header=1+offset, max_rows=chunk_size)
 
-      if not len(training_data):
+      if not training_data:
         self.log.warning("Finished training model: {}".format(regressor))
         break
 
       offset += chunk_size
       self.log.warning("Fitting regressor with {} examples...".format(len(training_data)))
-      regressor.partial_fit(training_data[:,:-1], training_data[:,-1])
+      regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
 
     self.log.warning("Writing newly-trained model to {}...".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:
@@ -49,8 +52,7 @@ class LearnerPlayer(Player):
     state = self._encode_cards(played_cards, known_cards)
     states = []
     scores = []
-    for i in range(len(valid_cards)):
-      card = valid_cards[i]
+    for card in valid_cards:
       my_state = np.array(state, copy=True)
       my_state[card.card_index] = Card.SELECTED
       states.append(my_state)
@@ -58,7 +60,8 @@ class LearnerPlayer(Player):
     scores = self.regressor.predict(states)
     # TODO: Select according to probability relative to score
     card = valid_cards[np.argmax(scores)]
-    self.log.debug("Playing cards {} has predicted score of {}, selecting {}".format(utils.format_cards(valid_cards), scores, card))
+    self.log.debug("Playing cards {} has predicted score of {}, selecting {}"
+        .format(utils.format_cards(valid_cards), scores, card))
     return card
 
 
@@ -72,7 +75,7 @@ class SgdPlayer(LearnerPlayer):
             "warm_start": True
             })
 
-    super(LearnerPlayer, self).__init__(name, SgdPlayer._sgd_regressor, log)
+    super(SgdPlayer, self).__init__(name, SgdPlayer._sgd_regressor, log)
 
 
 class MlpPlayer(LearnerPlayer):
@@ -85,5 +88,4 @@ class MlpPlayer(LearnerPlayer):
             "warm_start": True
             })
 
-    super(LearnerPlayer, self).__init__(name, MlpPlayer._mlp_regressor, log)
-
+    super(MlpPlayer, self).__init__(name, MlpPlayer._mlp_regressor, log)

@@ -64,4 +64,3 @@ class Card():
 
   def is_beaten_by(self, other_card):
     return self.suit == other_card.suit and self.value < other_card.value
-
