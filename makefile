@@ -9,7 +9,7 @@ CURRENT_MODEL=current-model
 DIRECTORIES=$(DATA_DIR) $(MODELS_DIR)
 
 run:
-	$(NICE) $(BIN)/python run.py
+	$(NICE) $(BIN)/python run.py $(ARGS)
 
 run-args:
 	$(MAKE) run --args # placeholder
@@ -19,7 +19,7 @@ lint:
 	$(BIN)/pylint $(LINT_FILES) --ignore=venv/ -f colorized -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
 
 select-model: unselect-model
-	ln -s $(MODELS_DIR)/$(MODEL) $(CURRENT_MODEL)
+	ln -s $(MODELS_DIR)/$(MOD) $(CURRENT_MODEL)
 	ls -l $(CURRENT_MODEL)
 
 unselect-model:
