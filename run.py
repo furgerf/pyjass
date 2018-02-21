@@ -31,11 +31,11 @@ def main():
   parser.add_argument("--team2", choices=Game.PLAYER_TYPES.keys(), default="random",
       help="Strategy for team 2")
 
-  parser.add_argument("--hands", type=int, nargs="?", default=int(1e5),
+  parser.add_argument("--hands", type=float, nargs="?", default=1e4,
       help="Number of hands to play")
-  parser.add_argument("--logint", type=int, nargs="?", default=int(1e4),
+  parser.add_argument("--logint", type=float, nargs="?", default=1e3,
       help="Progress log interval")
-  parser.add_argument("--storetrainingint", type=int, nargs="?", default=int(5e4),
+  parser.add_argument("--storetrainingint", type=float, nargs="?", default=1e5,
       help="Store training data interval")
 
   # apply args
@@ -51,16 +51,17 @@ def main():
     Config.TEAM_2_STRATEGY = args.team2
 
   if args.hands:
-    Config.TOTAL_HANDS = args.hands
+    Config.TOTAL_HANDS = int(args.hands)
   if args.logint:
-    Config.LOGGING_INTERVAL = args.logint
+    Config.LOGGING_INTERVAL = int(args.logint)
   if args.storetrainingint:
-    Config.STORE_TRAINING_INTERVAL = args.storetrainingint
+    Config.STORE_TRAINING_INTERVAL = int(args.storetrainingint)
 
   log = utils.get_logger("jass")
   log.info("Args: {}".format(args))
   log.debug("Config: {}".format(
-    {key: Config.__dict__[key] for key in filter(lambda key: not key.startswith("__"), Config.__dict__)}))
+    {key: utils.format_human(Config.__dict__[key]) if isinstance(Config.__dict__[key], int)
+      else Config.__dict__[key] for key in filter(lambda key: not key.startswith("__"), Config.__dict__)}))
   if args.loglevel:
     log.setLevel(args.loglevel.upper())
 

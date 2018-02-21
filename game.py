@@ -49,9 +49,9 @@ class Game:
     self.log.warning("Starting game of {} hands: {} vs {}{}".format(utils.format_human(Config.TOTAL_HANDS),
       Config.TEAM_1_STRATEGY, Config.TEAM_2_STRATEGY, " (storing training data)" if Config.STORE_TRAINING_DATA else ""))
     for i in range(Config.TOTAL_HANDS):
-      if i % Config.LOGGING_INTERVAL == Config.LOGGING_INTERVAL-1:
+      if i % Config.LOGGING_INTERVAL == 0 and i != 0:
         self.log.info("Starting hand {}/{} ({:.2f}%)".format(
-          utils.format_human(i+1), utils.format_human(Config.TOTAL_HANDS), 100.0*(i+1)/Config.TOTAL_HANDS))
+          utils.format_human(i), utils.format_human(Config.TOTAL_HANDS), 100.0*(i)/Config.TOTAL_HANDS))
       else:
         self.log.debug("Starting hand {}".format(i+1))
 
@@ -102,7 +102,7 @@ class Game:
   def _write_training_data(self, fh, writer, training_data):
     if not training_data:
       return
-    self.log.info("Writing {} training samples to {}".format(len(training_data), fh.name))
+    self.log.info("Writing {} training samples to {}".format(utils.format_human(len(training_data)), fh.name))
     writer.writerows(training_data)
     training_data.clear()
 
