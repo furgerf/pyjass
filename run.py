@@ -36,8 +36,12 @@ def main():
   # game settings
   parser.add_argument("--team1", choices=Game.PLAYER_TYPES.keys(), default="random",
       help="Strategy for team 1")
+  parser.add_argument("--team1-best", action="store_true",
+      help="True if team 1 should always choose the best card")
   parser.add_argument("--team2", choices=Game.PLAYER_TYPES.keys(), default="random",
       help="Strategy for team 2")
+  parser.add_argument("--team2-best", action="store_true",
+      help="True if team 2 should always choose the best card")
 
   # intervals
   parser.add_argument("--hands", type=float, nargs="?", default=1e4,
@@ -59,8 +63,12 @@ def main():
 
   if args.team1:
     Config.TEAM_1_STRATEGY = args.team1
+  if args.team1_best:
+    Config.TEAM_1_BEST = args.team1_best
   if args.team2:
     Config.TEAM_2_STRATEGY = args.team2
+  if args.team2_best:
+    Config.TEAM_2_BEST = args.team2_best
 
   if args.hands:
     Config.TOTAL_HANDS = int(args.hands)

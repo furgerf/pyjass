@@ -11,8 +11,9 @@ from card import Card
 
 class Player(ABC):
 
-  def __init__(self, name, log):
+  def __init__(self, name, play_best_card, log):
     self._name = name
+    self._play_best_card = play_best_card
     self.log = log
     self._hand = None
 

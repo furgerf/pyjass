@@ -16,9 +16,9 @@ from sklearn.neural_network import MLPRegressor
 
 
 class LearnerPlayer(Player):
-  def __init__(self, name, regressor, log):
+  def __init__(self, name, play_best_card, regressor, log):
     self.regressor = regressor
-    super(LearnerPlayer, self).__init__(name, log)
+    super(LearnerPlayer, self).__init__(name, play_best_card, log)
 
   def _get_regressor(self, pickle_file_name, regressor_constructor, regressor_args):
     if path.exists(pickle_file_name):
@@ -60,9 +60,13 @@ class LearnerPlayer(Player):
       states.append(my_state)
 
     scores = self.regressor.predict(states)
-    # TODO: Select according to probability relative to score
-    card = valid_cards[np.argmax(scores)]
-    self.log.debug("Playing cards {} has predicted score of {}, selecting {}"
+    if self._play_best_card:
+      card = valid_cards[np.argmax(scores)]
+    else:
+      probabilities = scores / np.sum(scores)
+      self.log.warning(probabilities)
+      card = valid_cards[np.random.choice(len(probabilities), p=probabilities)]
+    self.log.debug("Playing cards {} has predicted scores of {}, selecting {}"
         .format(utils.format_cards(valid_cards), scores, card))
     return card
 
@@ -70,7 +74,7 @@ class LearnerPlayer(Player):
 class SgdPlayer(LearnerPlayer):
   _sgd_regressor = None
 
-  def __init__(self, name, log):
+  def __init__(self, name, play_best_card, log):
     self.log = log
     if SgdPlayer._sgd_regressor is None:
       SgdPlayer._sgd_regressor = self._get_regressor(
@@ -78,13 +82,13 @@ class SgdPlayer(LearnerPlayer):
             "warm_start": True
             })
 
-    super(SgdPlayer, self).__init__(name, SgdPlayer._sgd_regressor, log)
+    super(SgdPlayer, self).__init__(name, play_best_card, SgdPlayer._sgd_regressor, log)
 
 
 class MlpPlayer(LearnerPlayer):
   _mlp_regressor = None
 
-  def __init__(self, name, log):
+  def __init__(self, name, play_best_card, log):
     self.log = log
     if MlpPlayer._mlp_regressor is None:
       MlpPlayer._mlp_regressor = self._get_regressor(
@@ -92,4 +96,4 @@ class MlpPlayer(LearnerPlayer):
             "warm_start": True
             })
 
-    super(MlpPlayer, self).__init__(name, MlpPlayer._mlp_regressor, log)
+    super(MlpPlayer, self).__init__(name, play_best_card, MlpPlayer._mlp_regressor, log)

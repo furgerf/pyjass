@@ -26,10 +26,10 @@ class Game:
     self._total_score_team_2 = 0
 
     self.players = (
-        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p1", self.log),
-        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p2", self.log),
-        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p3", self.log),
-        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p4", self.log)
+        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p1", Config.TEAM_1_BEST, self.log),
+        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p2", Config.TEAM_2_BEST, self.log),
+        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p3", Config.TEAM_1_BEST, self.log),
+        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p4", Config.TEAM_2_BEST, self.log)
         )
 
   def play(self):

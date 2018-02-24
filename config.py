@@ -8,7 +8,9 @@ class Config:
   STORE_TRAINING_DATA = False
 
   TEAM_1_STRATEGY = None
+  TEAM_1_BEST = False
   TEAM_2_STRATEGY = None
+  TEAM_2_BEST = False
 
   TOTAL_HANDS = None
   LOGGING_INTERVAL = None
