@@ -5,6 +5,7 @@
 import pickle
 from config import Config
 from os import path
+import math
 
 import numpy as np
 
@@ -72,15 +73,17 @@ class LearnerPlayer(Player):
     return card
 
   def train(self, training_data):
-    self.log.fatal("Training player {} with {} new samples".format(self._name, len(training_data)))
+    self.log.debug("Training player {} with {} new samples".format(self._name, len(training_data)))
     data = np.array(training_data)
     self.regressor.partial_fit(data[:, :-1], data[:, -1])
     self.regressor.training_samples += len(training_data)
 
   def checkpoint(self, current_iteration, total_iterations):
-    pass # TODO
-    # with open(pickle_file_name, "wb") as fh:
-    #   pickle.dump(regressor, fh)
+    unformatted_file_name =  "{}/{}_{}_{:0" + str(int(math.log10(total_iterations))+1) + "d}.pkl"
+    file_name = unformatted_file_name.format(Config.EVALUATION_DIRECTORY, self.name,
+        self.regressor.__class__.__name__, current_iteration)
+    with open(file_name, "wb") as fh:
+      pickle.dump(self.regressor, fh)
 
 
 class SgdPlayer(LearnerPlayer):

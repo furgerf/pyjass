@@ -10,7 +10,7 @@ class BaselinePlayer(Player):
   def train(self, training_data):
     pass
 
-  def checkpoint(self):
+  def checkpoint(self, current_iteration, total_iterations):
     pass
 
 

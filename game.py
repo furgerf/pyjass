@@ -108,7 +108,7 @@ class Game:
           if Config.STORE_TRAINING_DATA:
             self._write_training_data(training_data_fh, training_data_writer, training_data)
           if Config.ONLINE_TRAINING:
-            for player in self.players:
+            for player in self._get_distinct_strategy_players():
               player.train(training_data)
           training_data.clear()
 
@@ -151,9 +151,14 @@ class Game:
         .format(len(checkpoint_data), current_iteration, total_iterations))
     writer.writerows(checkpoint_data)
 
-    # TODO
-    # for player in self.players:
-    #   player.checkpoint(current_iteration, total_iterations)
+    for player in self._get_distinct_strategy_players():
+      player.checkpoint(current_iteration, total_iterations)
+
+  def _get_distinct_strategy_players(self):
+    if Config.TEAM_1_STRATEGY == Config.TEAM_2_STRATEGY:
+      return [self.players[0]]
+    else:
+      return [self.players[0], self.players[1]]
 
   @staticmethod
   def _write_scores_header(fh):

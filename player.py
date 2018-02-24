@@ -59,7 +59,7 @@ class Player(ABC):
     pass
 
   @abstractmethod
-  def checkpoint(self):
+  def checkpoint(self, current_iteration, total_iterations):
     pass
 
   def _encode_cards(self, played_cards, known_cards):
