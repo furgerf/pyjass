@@ -6,8 +6,9 @@ UNBUF=unbuffer
 DATA_DIR=data
 MODELS_DIR=models
 EVAL_DIR=evaluations
+OLD_EVAL_DIR=old-evaluations
 CURRENT_MODEL=current-model
-DIRECTORIES=$(DATA_DIR) $(MODELS_DIR) $(EVAL_DIR)
+DIRECTORIES=$(DATA_DIR) $(MODELS_DIR) $(EVAL_DIR) $(OLD_EVAL_DIR)
 
 run:
 ifndef EID
@@ -25,6 +26,15 @@ run-args:
 lint:
 	$(eval LINT_FILES := *.py models/)
 	$(BIN)/pylint $(LINT_FILES) --ignore=venv/ -f colorized -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
+
+
+archive:
+	for eval in $(EVAL_DIR)/*; do \
+		tar -czf $$eval.tar.gz -C $(EVAL_DIR) $$(basename $$eval); \
+		rm -r $$eval; \
+		mv $$eval.tar.gz $(OLD_EVAL_DIR); \
+		echo "archived $$(basename $$eval)"; \
+	done
 
 select-model: unselect-model
 	ln -s $(MODELS_DIR)/$(MOD) $(CURRENT_MODEL)

@@ -8,17 +8,13 @@ import time
 import traceback
 from argparse import ArgumentParser
 from config import Config
-import fnmatch
 
 import numpy as np
 
 import utils
 from game import Game
 
-
-def main():
-  start_time = time.time()
-
+def parse_arguments():
   parser = ArgumentParser()
   # general
   parser.add_argument("--loglevel", type=str, nargs="?", default="INFO",
@@ -52,7 +48,12 @@ def main():
       help="Store training data interval")
 
   # apply args
-  args = parser.parse_args()
+  return parser.parse_args()
+
+def main():
+  start_time = time.time()
+
+  args = parse_arguments()
   if args.seed:
     np.random.seed(args.seed)
 
