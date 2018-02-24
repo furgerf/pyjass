@@ -27,6 +27,9 @@ lint:
 	$(eval LINT_FILES := *.py models/)
 	$(BIN)/pylint $(LINT_FILES) --ignore=venv/ -f colorized -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
 
+explore:
+	$(BIN)/ipython -m explore -i
+
 
 archive:
 	for eval in $(EVAL_DIR)/*; do \
