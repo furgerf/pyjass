@@ -27,6 +27,7 @@ class LearnerPlayer(Player):
         return pickle.load(fh)
 
     regressor = regressor_constructor(**regressor_args)
+    regressor.training_samples = 0
     self.log.info("Training model: {}".format(regressor))
     offset = 0
     chunk_size = int(1e6)
@@ -40,9 +41,10 @@ class LearnerPlayer(Player):
         self.log.warning("Finished training model: {}".format(regressor))
         break
 
-      offset += chunk_size
       self.log.info("Fitting regressor with {} samples".format(utils.format_human(len(training_data))))
       regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
+      offset += len(training_data)
+      regressor.training_samples += len(training_data)
 
     self.log.warning("Writing newly-trained model to {}".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:
@@ -73,7 +75,12 @@ class LearnerPlayer(Player):
     self.log.fatal("Training player {} with {} new samples".format(self._name, len(training_data)))
     data = np.array(training_data)
     self.regressor.partial_fit(data[:, :-1], data[:, -1])
-    self.regressor.training_iterations += len(training_data)
+    self.regressor.training_samples += len(training_data)
+
+  def checkpoint(self, current_iteration, total_iterations):
+    pass # TODO
+    # with open(pickle_file_name, "wb") as fh:
+    #   pickle.dump(regressor, fh)
 
 
 class SgdPlayer(LearnerPlayer):

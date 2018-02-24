@@ -18,7 +18,7 @@ def parse_arguments():
   parser = ArgumentParser()
   # general
   parser.add_argument("--loglevel", type=str, nargs="?", default="INFO",
-      help="Minimum log level of logged messages")
+      help="Minimum log level of logged messages, defaults to INFO")
   parser.add_argument("--seed", type=int, nargs="?", const=42,
       help="Random seed to use, no seed means random")
 
@@ -42,14 +42,17 @@ def parse_arguments():
       help="True if team 2 should always choose the best card")
 
   # intervals
-  parser.add_argument("--hands", type=float, nargs="?", default=1e4,
-      help="Number of hands to play")
+  default_hands = 1e4
+  parser.add_argument("--hands", type=float, nargs="?", default=default_hands,
+      help="Number of hands to play, defaults to {}".format(default_hands))
   parser.add_argument("--logint", type=float, nargs="?",
       help="Progress log interval (number of hands), defaults to hands/10")
-  parser.add_argument("--trainingint", type=float, nargs="?", default=1e4,
-      help="Training interval for storing data/online training (number of hands)")
-  parser.add_argument("--checkpointint", type=float, nargs="?", default=1e5,
-      help="Checkpoint creation interval (number of hands)")
+  parser.add_argument("--trainingint", type=float, nargs="?",
+      help="Training interval for storing data/online training (number of hands), defaults to hands/10")
+  parser.add_argument("--chkint", type=float, nargs="?",
+      help="Checkpoint creation interval (number of hands), defaults to hands/10")
+  parser.add_argument("--chkresolution", type=float, nargs="?",
+      help="Checkpoint data resolution (number of hands), defaults to checkpoint interval/10")
 
   # apply args
   return parser.parse_args()
@@ -86,8 +89,16 @@ def main():
     Config.LOGGING_INTERVAL = Config.TOTAL_HANDS / 10
   if args.trainingint:
     Config.TRAINING_INTERVAL = int(args.trainingint)
-  if args.checkpointint:
-    Config.CHECKPOINT_INTERVAL = int(args.checkpointint)
+  else:
+    Config.TRAINING_INTERVAL = Config.TOTAL_HANDS / 10
+  if args.chkint:
+    Config.CHECKPOINT_INTERVAL = int(args.chkint)
+  else:
+    Config.CHECKPOINT_INTERVAL = Config.TOTAL_HANDS / 10
+  if args.chkresolution:
+    Config.CHECKPOINT_RESOLUTION = int(args.chkresolution)
+  else:
+    Config.CHECKPOINT_RESOLUTION = Config.CHECKPOINT_INTERVAL / 10
 
   # set up logging
   log = utils.get_logger("jass")

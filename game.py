@@ -39,10 +39,19 @@ class Game:
     current_score_team_1 = 0
     current_score_team_2 = 0
 
+    checkpoint_wins_team_1 = 0
+    checkpoint_wins_team_2 = 0
+    checkpoint_score_team_1 = 0
+    checkpoint_score_team_2 = 0
+    checkpoint_data = list()
+    score_fh = open("{}/scores.csv".format(Config.EVALUATION_DIRECTORY), "w")
+    Game._write_scores_header(score_fh)
+    score_writer = csv.writer(score_fh)
+
     if Config.STORE_TRAINING_DATA:
-      fh = open(Config.TRAINING_DATA_FILE_NAME, "w")
-      Game._write_training_data_header(fh)
-      writer = csv.writer(fh)
+      training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "w")
+      Game._write_training_data_header(training_data_fh)
+      training_data_writer = csv.writer(training_data_fh)
 
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       training_data = list()
@@ -74,13 +83,17 @@ class Game:
       self._total_score_team_2 += score[1]
       current_score_team_1 += score[0]
       current_score_team_2 += score[1]
+      checkpoint_score_team_1 += score[0]
+      checkpoint_score_team_2 += score[1]
       if current_score_team_1 > 1000 or current_score_team_2 > 1000:
         if current_score_team_1 > 1000 and current_score_team_2 > 1000:
           ties += 1
         elif current_score_team_1 > 1000:
           wins_team_1 += 1
+          checkpoint_wins_team_1 += 1
         elif current_score_team_2 > 1000:
           wins_team_2 += 1
+          checkpoint_wins_team_2 += 1
         current_score_team_1 = 0
         current_score_team_2 = 0
 
@@ -91,23 +104,28 @@ class Game:
       if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
         training_data.extend(hand.new_training_data)
 
-        data_processed = False
         if (i+1) % Config.TRAINING_INTERVAL == 0:
           if Config.STORE_TRAINING_DATA:
-            self._write_training_data(fh, writer, training_data)
-            data_processed = True
+            self._write_training_data(training_data_fh, training_data_writer, training_data)
           if Config.ONLINE_TRAINING:
             for player in self.players:
               player.train(training_data)
-            data_processed = True
-
-        if data_processed:
           training_data.clear()
 
+      # checkpoint
+      if (i+1) % Config.CHECKPOINT_RESOLUTION == 0:
+        checkpoint_data.append((i+1,
+          checkpoint_wins_team_1, checkpoint_score_team_1,
+          checkpoint_wins_team_2, checkpoint_score_team_2))
       if (i+1) % Config.CHECKPOINT_INTERVAL == 0:
-        # TODO
-        pass
+        self.checkpoint(checkpoint_data, i+1, Config.TOTAL_HANDS, score_fh, score_writer)
+        checkpoint_wins_team_1 = 0
+        checkpoint_wins_team_2 = 0
+        checkpoint_score_team_1 = 0
+        checkpoint_score_team_2 = 0
+        checkpoint_data.clear()
 
+      # logging
       if (i+1) % Config.LOGGING_INTERVAL == 0:
         self.log.info("Played hand {}/{} ({:.2f}% done)".format(
           utils.format_human(i+1), utils.format_human(Config.TOTAL_HANDS), 100.0*(i+1)/Config.TOTAL_HANDS))
@@ -116,13 +134,31 @@ class Game:
     self._print_results(wins_team_1, wins_team_2, ties)
 
     if Config.STORE_TRAINING_DATA:
-      self._write_training_data(fh, writer, training_data)
-      fh.close()
+      self._write_training_data(training_data_fh, training_data_writer, training_data)
+      training_data_fh.close()
     if Config.ONLINE_TRAINING:
       if training_data:
         for player in self.players:
           player.train(training_data)
-      # TODO: Store final models
+
+    self.checkpoint(checkpoint_data, i+1, Config.TOTAL_HANDS, score_fh, score_writer)
+
+  def checkpoint(self, checkpoint_data, current_iteration, total_iterations, fh, writer):
+    if not checkpoint_data:
+      return
+
+    self.log.warning("Creating checkpoint with {} scores at iteration {}/{}"
+        .format(len(checkpoint_data), current_iteration, total_iterations))
+    writer.writerows(checkpoint_data)
+
+    # TODO
+    # for player in self.players:
+    #   player.checkpoint(current_iteration, total_iterations)
+
+  @staticmethod
+  def _write_scores_header(fh):
+    header = "hand,wins_team_1,score_team_1,wins_team_2,score_team_2\n"
+    fh.write(header)
 
   @staticmethod
   def _write_training_data_header(fh):
