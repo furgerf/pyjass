@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from abc import abstractmethod
+
 import numpy as np
 
 from player import Player
@@ -11,6 +13,10 @@ class BaselinePlayer(Player):
     pass
 
   def checkpoint(self, current_iteration, total_iterations):
+    pass
+
+  @abstractmethod
+  def _select_card(self, args):
     pass
 
 

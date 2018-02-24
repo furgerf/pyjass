@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# pylint: disable=unused-import
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -28,11 +29,12 @@ def visualize_scores(eid="foo"):
   df.cum_score_percentage = df.cum_score_team_1 / (df.cum_score_team_1 + df.cum_score_team_2)
 
   # plot
+  plt.figure()
   plt.plot(df.hand, df.win_percentage, "k.-", c="g", alpha=0.3, label="Team 1 win %")
   plt.plot(df.hand, df.score_percentage, "k.-", c="b", alpha=0.3, label="Team 1 score %")
   plt.plot(df.hand, df.cum_win_percentage, "k.-", c="g", label="Cum team 1 win %")
   plt.plot(df.hand, df.cum_score_percentage, "k.-", c="b", label="Cum team 1 score %")
-  plt.title("Team 1 win/score percentage")
+  plt.title("{}:Team 1 win/score percentage".format(eid))
   plt.legend()
   plt.grid()
   plt.tight_layout()

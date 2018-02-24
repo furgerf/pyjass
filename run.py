@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#seli!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import logging
@@ -50,18 +50,14 @@ def parse_arguments():
   parser.add_argument("--trainingint", type=float, nargs="?",
       help="Training interval for storing data/online training (number of hands), defaults to hands/10")
   parser.add_argument("--chkint", type=float, nargs="?",
-      help="Checkpoint creation interval (number of hands), defaults to hands/10")
+      help="Checkpoint creation interval (number of hands), defaults to hands/100")
   parser.add_argument("--chkresolution", type=float, nargs="?",
       help="Checkpoint data resolution (number of hands), defaults to checkpoint interval/10")
 
-  # apply args
   return parser.parse_args()
 
-def main():
-  start_time = time.time()
-  args = parse_arguments()
-
-  # apply args
+def apply_arguments(args):
+  # pylint: disable=too-many-branches
   if args.seed:
     np.random.seed(args.seed)
 
@@ -94,11 +90,16 @@ def main():
   if args.chkint:
     Config.CHECKPOINT_INTERVAL = int(args.chkint)
   else:
-    Config.CHECKPOINT_INTERVAL = Config.TOTAL_HANDS / 10
+    Config.CHECKPOINT_INTERVAL = Config.TOTAL_HANDS / 100
   if args.chkresolution:
     Config.CHECKPOINT_RESOLUTION = int(args.chkresolution)
   else:
     Config.CHECKPOINT_RESOLUTION = Config.CHECKPOINT_INTERVAL / 10
+
+def main():
+  start_time = time.time()
+  args = parse_arguments()
+  apply_arguments(args)
 
   # set up logging
   log = utils.get_logger("jass")

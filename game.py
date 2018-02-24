@@ -141,15 +141,18 @@ class Game:
         for player in self.players:
           player.train(training_data)
 
-    self.checkpoint(checkpoint_data, i+1, Config.TOTAL_HANDS, score_fh, score_writer)
+    self.checkpoint(checkpoint_data, Config.TOTAL_HANDS, Config.TOTAL_HANDS,
+        score_fh, score_writer)
 
   def checkpoint(self, checkpoint_data, current_iteration, total_iterations, fh, writer):
     if not checkpoint_data:
       return
 
     self.log.warning("Creating checkpoint with {} scores at iteration {}/{}"
-        .format(len(checkpoint_data), current_iteration, total_iterations))
+        .format(utils.format_human(len(checkpoint_data)),
+          utils.format_human(current_iteration), utils.format_human(total_iterations)))
     writer.writerows(checkpoint_data)
+    fh.flush()
 
     for player in self._get_distinct_strategy_players():
       player.checkpoint(current_iteration, total_iterations)
@@ -157,8 +160,7 @@ class Game:
   def _get_distinct_strategy_players(self):
     if Config.TEAM_1_STRATEGY == Config.TEAM_2_STRATEGY:
       return [self.players[0]]
-    else:
-      return [self.players[0], self.players[1]]
+    return [self.players[0], self.players[1]]
 
   @staticmethod
   def _write_scores_header(fh):

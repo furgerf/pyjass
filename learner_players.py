@@ -66,7 +66,13 @@ class LearnerPlayer(Player):
     if self._play_best_card:
       card = valid_cards[np.argmax(scores)]
     else:
-      probabilities = scores / np.sum(scores)
+      if np.min(scores) < 0:
+        adjusted_scores = scores - np.min(scores)
+        probabilities = adjusted_scores / np.sum(adjusted_scores)
+        self.log.warning("Using adjusted scores {} instead of normal scores {} with probabilities {}"
+            .format(adjusted_scores, scores, probabilities))
+      else:
+        probabilities = scores / np.sum(scores)
       card = valid_cards[np.random.choice(len(probabilities), p=probabilities)]
     self.log.debug("Playing cards {} has predicted scores of {}, selecting {}"
         .format(utils.format_cards(valid_cards), scores, card))
@@ -79,7 +85,7 @@ class LearnerPlayer(Player):
     self.regressor.training_samples += len(training_data)
 
   def checkpoint(self, current_iteration, total_iterations):
-    unformatted_file_name =  "{}/{}_{}_{:0" + str(int(math.log10(total_iterations))+1) + "d}.pkl"
+    unformatted_file_name = "{}/{}_{}_{:0" + str(int(math.log10(total_iterations))+1) + "d}.pkl"
     file_name = unformatted_file_name.format(Config.EVALUATION_DIRECTORY, self.name,
         self.regressor.__class__.__name__, current_iteration)
     with open(file_name, "wb") as fh:
