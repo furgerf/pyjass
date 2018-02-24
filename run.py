@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
 import sys
 import time
 import traceback
 from argparse import ArgumentParser
 from config import Config
+import fnmatch
 
 import numpy as np
 
@@ -18,19 +20,26 @@ def main():
   start_time = time.time()
 
   parser = ArgumentParser()
+  # general
   parser.add_argument("--loglevel", type=str, nargs="?", default="INFO",
       help="Minimum log level of logged messages")
   parser.add_argument("--seed", type=int, nargs="?", const=42,
       help="Random seed to use, no seed means random")
 
+  # files
   parser.add_argument("--store-data", action="store_true",
       help="True if trainings data should be stored")
+  parser.add_argument("--training-file", default="foo",
+      help="Name of the training data file to use without ending")
+  parser.add_argument("--eid", required=True, help="ID of the evaluation")
 
+  # game settings
   parser.add_argument("--team1", choices=Game.PLAYER_TYPES.keys(), default="random",
       help="Strategy for team 1")
   parser.add_argument("--team2", choices=Game.PLAYER_TYPES.keys(), default="random",
       help="Strategy for team 2")
 
+  # intervals
   parser.add_argument("--hands", type=float, nargs="?", default=1e4,
       help="Number of hands to play")
   parser.add_argument("--logint", type=float, nargs="?", default=1e3,
@@ -42,8 +51,11 @@ def main():
   args = parser.parse_args()
   if args.seed:
     np.random.seed(args.seed)
+
   if args.store_data:
     Config.STORE_TRAINING_DATA = True
+  Config.TRAINING_DATA_FILE_NAME = "data/{}.csv".format(args.training_file)
+  Config.EVALUATION_DIRECTORY = "evaluations/{}".format(args.eid)
 
   if args.team1:
     Config.TEAM_1_STRATEGY = args.team1
@@ -64,6 +76,14 @@ def main():
       else Config.__dict__[key] for key in filter(lambda key: not key.startswith("__"), Config.__dict__)}))
   if args.loglevel:
     log.setLevel(args.loglevel.upper())
+
+  # make sure the evaluation doesn't overwrite existing data
+  evaluation_lock = "{}/has-eval".format(Config.EVALUATION_DIRECTORY)
+  if os.path.exists(evaluation_lock):
+    log.error("Aborting evaluation because directory {} already contains an evaluation!"
+        .format(Config.EVALUATION_DIRECTORY))
+    return
+  open(evaluation_lock, "a").close() # touch eval lock
 
   try:
     game = Game(log)

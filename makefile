@@ -5,14 +5,22 @@ UNBUF=unbuffer
 
 DATA_DIR=data
 MODELS_DIR=models
+EVAL_DIR=evaluations
 CURRENT_MODEL=current-model
-DIRECTORIES=$(DATA_DIR) $(MODELS_DIR)
+DIRECTORIES=$(DATA_DIR) $(MODELS_DIR) $(EVAL_DIR)
 
 run:
-	$(NICE) $(BIN)/python run.py $(ARGS)
+ifndef EID
+	$(eval EID := $(shell uuidgen))
+endif
+	$(eval EID_ARG := --eid=$(EID))
+	$(eval THIS_EVAL_DIR := $(EVAL_DIR)/$(EID))
+	$(eval EVAL_LOG := $(THIS_EVAL_DIR)/evaluation_$(shell date '+%Y%m%d_%H%M%S').log)
+	mkdir -p $(THIS_EVAL_DIR)
+	$(UNBUF) $(NICE) $(BIN)/python run.py $(EID_ARG) $(ARGS) 2>&1 | tee $(EVAL_LOG)
 
 run-args:
-	$(MAKE) run --args # placeholder
+	$(MAKE) run --args # placeholder for "simplified" invocation
 
 lint:
 	$(eval LINT_FILES := *.py models/)

@@ -15,4 +15,5 @@ class Config:
   STORE_TRAINING_INTERVAL = None
 
   MODEL_DIRECTORY = "current-model"
-  TRAINING_DATA_FILE_NAME = "data/foo-5.csv"
+  TRAINING_DATA_FILE_NAME = None
+  EVALUATION_DIRECTORY = None
