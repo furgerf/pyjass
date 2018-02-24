@@ -7,7 +7,6 @@ DATA_DIR=data
 MODELS_DIR=models
 EVAL_DIR=evaluations
 OLD_EVAL_DIR=old-evaluations
-CURRENT_MODEL=current-model
 DIRECTORIES=$(DATA_DIR) $(MODELS_DIR) $(EVAL_DIR) $(OLD_EVAL_DIR)
 
 run:
@@ -38,13 +37,6 @@ archive:
 		mv $$eval.tar.gz $(OLD_EVAL_DIR); \
 		echo "archived $$(basename $$eval)"; \
 	done
-
-select-model: unselect-model
-	ln -s $(MODELS_DIR)/$(MOD) $(CURRENT_MODEL)
-	ls -l $(CURRENT_MODEL)
-
-unselect-model:
-	test -L $(CURRENT_MODEL) && unlink $(CURRENT_MODEL) || exit 0
 
 
 venv:

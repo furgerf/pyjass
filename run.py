@@ -16,6 +16,7 @@ from game import Game
 
 def parse_arguments():
   parser = ArgumentParser()
+
   # general
   parser.add_argument("--loglevel", type=str, nargs="?", default="INFO",
       help="Minimum log level of logged messages, defaults to INFO")
@@ -25,8 +26,9 @@ def parse_arguments():
   # files
   parser.add_argument("--store-data", action="store_true",
       help="True if trainings data should be stored")
-  parser.add_argument("--training-file", default="foo",
+  parser.add_argument("--training-file",
       help="Name of the training data file to use without ending")
+  parser.add_argument("--model", help="Name of the folder in the models/ directory")
   parser.add_argument("--eid", required=True, help="ID of the evaluation")
 
   # game settings
@@ -46,11 +48,11 @@ def parse_arguments():
   parser.add_argument("--hands", type=float, nargs="?", default=default_hands,
       help="Number of hands to play, defaults to {}".format(default_hands))
   parser.add_argument("--logint", type=float, nargs="?",
-      help="Progress log interval (number of hands), defaults to hands/10")
+      help="Progress log interval (number of hands), defaults to hands/100")
   parser.add_argument("--trainingint", type=float, nargs="?",
       help="Training interval for storing data/online training (number of hands), defaults to hands/10")
   parser.add_argument("--chkint", type=float, nargs="?",
-      help="Checkpoint creation interval (number of hands), defaults to hands/100")
+      help="Checkpoint creation interval (number of hands), defaults to hands/10")
   parser.add_argument("--chkresolution", type=float, nargs="?",
       help="Checkpoint data resolution (number of hands), defaults to checkpoint interval/10")
 
@@ -65,7 +67,10 @@ def apply_arguments(args):
     Config.STORE_TRAINING_DATA = True
   if args.online_training:
     Config.ONLINE_TRAINING = True
-  Config.TRAINING_DATA_FILE_NAME = "data/{}.csv".format(args.training_file)
+  if args.training_file:
+    Config.TRAINING_DATA_FILE_NAME = "data/{}.csv".format(args.training_file)
+  if args.model:
+    Config.MODEL_DIRECTORY = "models/{}".format(args.model)
   Config.EVALUATION_DIRECTORY = "evaluations/{}".format(args.eid)
 
   if args.team1:
@@ -82,7 +87,7 @@ def apply_arguments(args):
   if args.logint:
     Config.LOGGING_INTERVAL = int(args.logint)
   else:
-    Config.LOGGING_INTERVAL = Config.TOTAL_HANDS / 10
+    Config.LOGGING_INTERVAL = Config.TOTAL_HANDS / 100
   if args.trainingint:
     Config.TRAINING_INTERVAL = int(args.trainingint)
   else:
@@ -90,11 +95,23 @@ def apply_arguments(args):
   if args.chkint:
     Config.CHECKPOINT_INTERVAL = int(args.chkint)
   else:
-    Config.CHECKPOINT_INTERVAL = Config.TOTAL_HANDS / 100
+    Config.CHECKPOINT_INTERVAL = Config.TOTAL_HANDS / 10
   if args.chkresolution:
     Config.CHECKPOINT_RESOLUTION = int(args.chkresolution)
   else:
     Config.CHECKPOINT_RESOLUTION = Config.CHECKPOINT_INTERVAL / 10
+
+def check_config(log):
+  model_based_strategies = ["sgd", "mlp"]
+  if not Config.MODEL_DIRECTORY:
+    if Config.TEAM_1_STRATEGY in model_based_strategies or \
+        Config.TEAM_2_STRATEGY in model_based_strategies:
+      log.error("Must specify model for model-based strategies")
+      return False
+
+  # TODO: Add more
+
+  return True
 
 def main():
   start_time = time.time()
@@ -110,7 +127,9 @@ def main():
   if args.loglevel:
     log.setLevel(args.loglevel.upper())
 
-  # config sanity checks
+  if not check_config(log):
+    log.error("Aborting evaluation because config is invalid")
+    return
 
   # make sure the evaluation doesn't overwrite existing data
   evaluation_lock = "{}/has-eval".format(Config.EVALUATION_DIRECTORY)
