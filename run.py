@@ -30,6 +30,8 @@ def parse_arguments():
   parser.add_argument("--eid", required=True, help="ID of the evaluation")
 
   # game settings
+  parser.add_argument("--online-training", action="store_true",
+      help="True if any learning model should be trained while playing")
   parser.add_argument("--team1", choices=Game.PLAYER_TYPES.keys(), default="random",
       help="Strategy for team 1")
   parser.add_argument("--team1-best", action="store_true",
@@ -42,23 +44,28 @@ def parse_arguments():
   # intervals
   parser.add_argument("--hands", type=float, nargs="?", default=1e4,
       help="Number of hands to play")
-  parser.add_argument("--logint", type=float, nargs="?", default=1e3,
-      help="Progress log interval")
-  parser.add_argument("--storetrainingint", type=float, nargs="?", default=1e5,
-      help="Store training data interval")
+  parser.add_argument("--logint", type=float, nargs="?",
+      help="Progress log interval (number of hands), defaults to hands/10")
+  parser.add_argument("--trainingint", type=float, nargs="?", default=1e4,
+      help="Training interval for storing data/online training (number of hands)")
+  parser.add_argument("--checkpointint", type=float, nargs="?", default=1e5,
+      help="Checkpoint creation interval (number of hands)")
 
   # apply args
   return parser.parse_args()
 
 def main():
   start_time = time.time()
-
   args = parse_arguments()
+
+  # apply args
   if args.seed:
     np.random.seed(args.seed)
 
   if args.store_data:
     Config.STORE_TRAINING_DATA = True
+  if args.online_training:
+    Config.ONLINE_TRAINING = True
   Config.TRAINING_DATA_FILE_NAME = "data/{}.csv".format(args.training_file)
   Config.EVALUATION_DIRECTORY = "evaluations/{}".format(args.eid)
 
@@ -75,9 +82,14 @@ def main():
     Config.TOTAL_HANDS = int(args.hands)
   if args.logint:
     Config.LOGGING_INTERVAL = int(args.logint)
-  if args.storetrainingint:
-    Config.STORE_TRAINING_INTERVAL = int(args.storetrainingint)
+  else:
+    Config.LOGGING_INTERVAL = Config.TOTAL_HANDS / 10
+  if args.trainingint:
+    Config.TRAINING_INTERVAL = int(args.trainingint)
+  if args.checkpointint:
+    Config.CHECKPOINT_INTERVAL = int(args.checkpointint)
 
+  # set up logging
   log = utils.get_logger("jass")
   log.info("Args: {}".format(args))
   log.debug("Config: {}".format(
@@ -85,6 +97,8 @@ def main():
       else Config.__dict__[key] for key in filter(lambda key: not key.startswith("__"), Config.__dict__)}))
   if args.loglevel:
     log.setLevel(args.loglevel.upper())
+
+  # config sanity checks
 
   # make sure the evaluation doesn't overwrite existing data
   evaluation_lock = "{}/has-eval".format(Config.EVALUATION_DIRECTORY)

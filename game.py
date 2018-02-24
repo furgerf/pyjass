@@ -43,17 +43,24 @@ class Game:
       fh = open(Config.TRAINING_DATA_FILE_NAME, "w")
       Game._write_training_data_header(fh)
       writer = csv.writer(fh)
+
+    if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       training_data = list()
 
     dealer = 0
-    self.log.warning("Starting game of {} hands: {} vs {}{}".format(utils.format_human(Config.TOTAL_HANDS),
-      Config.TEAM_1_STRATEGY, Config.TEAM_2_STRATEGY, " (storing training data)" if Config.STORE_TRAINING_DATA else ""))
+    if Config.STORE_TRAINING_DATA and Config.ONLINE_TRAINING:
+      training_description = "(training online AND storing data)"
+    elif Config.STORE_TRAINING_DATA:
+      training_description = "(storing training data)"
+    elif Config.ONLINE_TRAINING:
+      training_description = "(training online)"
+    else:
+      training_description = ""
+
+    self.log.warning("Starting game of {} hands: {} vs {} {}".format(utils.format_human(Config.TOTAL_HANDS),
+      Config.TEAM_1_STRATEGY, Config.TEAM_2_STRATEGY, training_description))
     for i in range(Config.TOTAL_HANDS):
-      if i % Config.LOGGING_INTERVAL == 0 and i != 0:
-        self.log.info("Starting hand {}/{} ({:.2f}%)".format(
-          utils.format_human(i), utils.format_human(Config.TOTAL_HANDS), 100.0*(i)/Config.TOTAL_HANDS))
-      else:
-        self.log.debug("Starting hand {}".format(i+1))
+      self.log.debug("Starting hand {}".format(i+1))
 
       # set up and play new hand
       hand = Hand(self.players, self._cards, self.log)
@@ -81,16 +88,41 @@ class Game:
         score[1], self._total_score_team_1, self._total_score_team_2))
 
       # handle new training data if required
-      if Config.STORE_TRAINING_DATA:
+      if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
         training_data.extend(hand.new_training_data)
-        if i != 0 and i % Config.STORE_TRAINING_INTERVAL == Config.STORE_TRAINING_INTERVAL-1:
-          self._write_training_data(fh, writer, training_data)
 
+        data_processed = False
+        if (i+1) % Config.TRAINING_INTERVAL == 0:
+          if Config.STORE_TRAINING_DATA:
+            self._write_training_data(fh, writer, training_data)
+            data_processed = True
+          if Config.ONLINE_TRAINING:
+            for player in self.players:
+              player.train(training_data)
+            data_processed = True
+
+        if data_processed:
+          training_data.clear()
+
+      if (i+1) % Config.CHECKPOINT_INTERVAL == 0:
+        # TODO
+        pass
+
+      if (i+1) % Config.LOGGING_INTERVAL == 0:
+        self.log.info("Played hand {}/{} ({:.2f}% done)".format(
+          utils.format_human(i+1), utils.format_human(Config.TOTAL_HANDS), 100.0*(i+1)/Config.TOTAL_HANDS))
+
+    # the game is over
     self._print_results(wins_team_1, wins_team_2, ties)
 
     if Config.STORE_TRAINING_DATA:
       self._write_training_data(fh, writer, training_data)
       fh.close()
+    if Config.ONLINE_TRAINING:
+      if training_data:
+        for player in self.players:
+          player.train(training_data)
+      # TODO: Store final models
 
   @staticmethod
   def _write_training_data_header(fh):
@@ -104,7 +136,6 @@ class Game:
       return
     self.log.info("Writing {} training samples to {}".format(utils.format_human(len(training_data)), fh.name))
     writer.writerows(training_data)
-    training_data.clear()
 
   def _print_results(self, wins_team_1, wins_team_2, ties):
     # all hands are played

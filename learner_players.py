@@ -64,11 +64,16 @@ class LearnerPlayer(Player):
       card = valid_cards[np.argmax(scores)]
     else:
       probabilities = scores / np.sum(scores)
-      self.log.warning(probabilities)
       card = valid_cards[np.random.choice(len(probabilities), p=probabilities)]
     self.log.debug("Playing cards {} has predicted scores of {}, selecting {}"
         .format(utils.format_cards(valid_cards), scores, card))
     return card
+
+  def train(self, training_data):
+    self.log.fatal("Training player {} with {} new samples".format(self._name, len(training_data)))
+    data = np.array(training_data)
+    self.regressor.partial_fit(data[:, :-1], data[:, -1])
+    self.regressor.training_iterations += len(training_data)
 
 
 class SgdPlayer(LearnerPlayer):

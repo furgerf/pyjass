@@ -11,7 +11,7 @@ from round import Round
 class Hand:
   def __init__(self, players, cards, log):
     self._players = players
-    if Config.STORE_TRAINING_DATA:
+    if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       self._training_data = list()
     self.log = log
     self._known_cards = np.zeros(36, dtype=int)
@@ -57,7 +57,7 @@ class Hand:
         _score_team_2 += score
 
       # if we gather training data and actually had a decision to make, update training data
-      if i < 8 and Config.STORE_TRAINING_DATA:
+      if i < 8 and (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING):
         Hand._update_current_training_data(training_data_team_1, training_data_team_2, states, score, dealer)
 
     # the hand is done, add 5 points for the last stich
@@ -69,7 +69,7 @@ class Hand:
       _score_team_2 += 5
 
     # after concluding the round, update the global training data
-    if Config.STORE_TRAINING_DATA:
+    if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       for team_1_training_entry in training_data_team_1:
         team_1_training_entry[-1] += _score_team_1
       for team_2_training_entry in training_data_team_2:

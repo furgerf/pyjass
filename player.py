@@ -54,6 +54,10 @@ class Player(ABC):
   def _select_card(self, args):
     pass
 
+  @abstractmethod
+  def train(self, training_data):
+    pass
+
   def _encode_cards(self, played_cards, known_cards):
     cards = np.array(known_cards, copy=True)
     for pc in played_cards:
