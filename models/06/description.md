@@ -1,3 +1,5 @@
 # iteration 6
-160m data point
+320m data point
 cost: 2\*score of round + score of hand
+modified card encoding
+-> ?
