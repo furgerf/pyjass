@@ -17,13 +17,13 @@ endif
 	$(eval THIS_EVAL_DIR := $(EVAL_DIR)/$(EID))
 	$(eval EVAL_LOG := $(THIS_EVAL_DIR)/evaluation_$(shell date '+%Y%m%d_%H%M%S').log)
 	mkdir -p $(THIS_EVAL_DIR)
-	$(UNBUF) $(NICE) $(BIN)/python run.py $(EID_ARG) $(ARGS) 2>&1 | tee $(EVAL_LOG)
+	$(UNBUF) $(NICE) $(BIN)/python src/run.py $(EID_ARG) $(ARGS) 2>&1 | tee $(EVAL_LOG)
 
 run-args:
 	$(MAKE) run --args # placeholder for "simplified" invocation
 
 lint:
-	$(eval LINT_FILES := *.py models/)
+	$(eval LINT_FILES := src/*.py)
 	$(BIN)/pylint $(LINT_FILES) --ignore=venv/ -f colorized -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
 
 explore:
