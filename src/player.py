@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
+from config import Config
 
 import numpy as np
 
 import utils
-from card import Card
 
 
 class Player(ABC):
@@ -44,9 +44,9 @@ class Player(ABC):
       self.name, selected_card, utils.format_cards(valid_cards)))
 
     encoded_player_state = self._encode_cards(played_cards, known_cards)
-    if encoded_player_state[selected_card.card_index] != Card.IN_HAND:
+    if encoded_player_state[selected_card.card_index] != Config.ENCODING.card_code_in_hand:
       raise ValueError()
-    encoded_player_state[selected_card.card_index] = Card.SELECTED
+    encoded_player_state[selected_card.card_index] = Config.ENCODING.card_code_selected
 
     return selected_card, encoded_player_state
 
@@ -71,9 +71,9 @@ class Player(ABC):
     for pc in played_cards:
       if cards[pc.card_index] != 0:
         raise ValueError()
-      cards[pc.card_index] = Card.IN_PLAY
+      cards[pc.card_index] = Config.ENCODING.card_code_in_play
     for hc in self.hand:
       if cards[hc.card_index] != 0:
         raise ValueError()
-      cards[hc.card_index] = Card.IN_HAND
+      cards[hc.card_index] = Config.ENCODING.card_code_in_hand
     return cards

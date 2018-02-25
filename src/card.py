@@ -16,13 +16,6 @@ class Card():
           "🂮🂾🃎🃞" + \
           "🂡🂱🃁🃑 "
 
-  IN_PLAY = 5
-  IN_HAND = 6
-  SELECTED = 7
-  # IN_HAND = 10
-  # IN_PLAY = 20
-  # SELECTED = 30
-
   def __init__(self, suit, value):
     self._suit = suit
     self._value = value

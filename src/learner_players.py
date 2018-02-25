@@ -2,15 +2,14 @@
 # -*- coding: utf-8 -*-
 
 
+import math
 import pickle
 from config import Config
 from os import path
-import math
 
 import numpy as np
 
 import utils
-from card import Card
 from player import Player
 from sklearn.linear_model import SGDRegressor
 from sklearn.neural_network import MLPRegressor
@@ -59,7 +58,7 @@ class LearnerPlayer(Player):
     scores = []
     for card in valid_cards:
       my_state = np.array(state, copy=True)
-      my_state[card.card_index] = Card.SELECTED
+      my_state[card.card_index] = Config.ENCODING.card_code_selected
       states.append(my_state)
 
     scores = self.regressor.predict(states)

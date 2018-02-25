@@ -47,7 +47,7 @@ class Hand:
       for j in range(4):
         if self._known_cards[played_cards[j].card_index] != 0:
           raise ValueError()
-        self._known_cards[played_cards[j].card_index] = j+1
+        self._known_cards[played_cards[j].card_index] = Config.ENCODING.card_code_players[j]
       self.log.debug("Known cards: {}".format(utils.format_cards(self._known_cards)))
 
       # update score
@@ -87,15 +87,15 @@ class Hand:
   @staticmethod
   def _update_current_training_data(training_data_team_1, training_data_team_2, states, score, dealer):
     if dealer % 2 == 0:
-      training_data_team_1.append(np.append(states[0], score * Config.HAND_SCORE_FACTOR))
-      training_data_team_2.append(np.append(states[1], -score * Config.HAND_SCORE_FACTOR))
-      training_data_team_1.append(np.append(states[2], score * Config.HAND_SCORE_FACTOR))
-      training_data_team_2.append(np.append(states[3], -score * Config.HAND_SCORE_FACTOR))
+      training_data_team_1.append(np.append(states[0], score * Config.ENCODING.hand_score_factor))
+      training_data_team_2.append(np.append(states[1], -score * Config.ENCODING.hand_score_factor))
+      training_data_team_1.append(np.append(states[2], score * Config.ENCODING.hand_score_factor))
+      training_data_team_2.append(np.append(states[3], -score * Config.ENCODING.hand_score_factor))
     else:
-      training_data_team_1.append(np.append(states[0], -score * Config.HAND_SCORE_FACTOR))
-      training_data_team_2.append(np.append(states[1], score * Config.HAND_SCORE_FACTOR))
-      training_data_team_1.append(np.append(states[2], -score * Config.HAND_SCORE_FACTOR))
-      training_data_team_2.append(np.append(states[3], score * Config.HAND_SCORE_FACTOR))
+      training_data_team_1.append(np.append(states[0], -score * Config.ENCODING.hand_score_factor))
+      training_data_team_2.append(np.append(states[1], score * Config.ENCODING.hand_score_factor))
+      training_data_team_1.append(np.append(states[2], -score * Config.ENCODING.hand_score_factor))
+      training_data_team_2.append(np.append(states[3], score * Config.ENCODING.hand_score_factor))
 
   @property
   def new_training_data(self):

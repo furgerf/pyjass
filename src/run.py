@@ -13,6 +13,7 @@ import numpy as np
 
 import utils
 from game import Game
+from encoding import Encoding
 
 def parse_arguments():
   parser = ArgumentParser()
@@ -71,6 +72,7 @@ def apply_arguments(args):
     Config.TRAINING_DATA_FILE_NAME = "data/{}.csv".format(args.training_file)
   if args.model:
     Config.MODEL_DIRECTORY = "models/{}".format(args.model)
+    Config.ENCODING = get_encodings().get(args.model)
   Config.EVALUATION_DIRECTORY = "evaluations/{}".format(args.eid)
 
   if args.team1:
@@ -102,17 +104,51 @@ def apply_arguments(args):
     Config.CHECKPOINT_RESOLUTION = Config.CHECKPOINT_INTERVAL / 10
 
 def check_config(log):
+  # pylint: disable=too-many-return-statements
   model_based_strategies = ["sgd", "mlp"]
-  if not Config.MODEL_DIRECTORY:
-    if Config.TEAM_1_STRATEGY in model_based_strategies or \
-        Config.TEAM_2_STRATEGY in model_based_strategies:
+  uses_model = Config.TEAM_1_STRATEGY in model_based_strategies or \
+      Config.TEAM_2_STRATEGY in model_based_strategies
+
+  if uses_model:
+    if not Config.MODEL_DIRECTORY:
       log.error("Must specify model for model-based strategies")
       return False
-    # TODO: Check if directory exists
+    if not os.path.exists(Config.MODEL_DIRECTORY):
+      log.error("Model directory doesn't exist")
+      return False
+  elif Config.ONLINE_TRAINING:
+    log.error("Cannot train online when not using models")
+    return False
+
+  if Config.STORE_TRAINING_DATA:
+    if not Config.TRAINING_DATA_FILE_NAME:
+      log.error("Need a training file name when storing data")
+      return False
+    if os.path.exists(Config.TRAINING_DATA_FILE_NAME):
+      log.error("Training data file exists already")
+      return False
+
+  if (uses_model or Config.STORE_TRAINING_DATA) and not Config.ENCODING:
+    log.error("Need an encoding when using models or storing data")
+    return False
 
   # TODO: Add more
 
   return True
+
+def get_encodings():
+  encoding_1 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 0)
+  encoding_2 = Encoding([1, 2, 3, 4], 6, 5, 7, 2, 1)
+  encoding_3 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1)
+
+  return {
+      "01": encoding_1,
+      "02": encoding_1,
+      "03": encoding_2,
+      "04": encoding_2,
+      "05": encoding_2,
+      "06": encoding_3
+      }
 
 def main():
   start_time = time.time()
@@ -124,7 +160,7 @@ def main():
   log.info("Args: {}".format(args))
   log.debug("Config: {}".format(
     {key: utils.format_human(Config.__dict__[key]) if isinstance(Config.__dict__[key], (int, float))
-      else Config.__dict__[key] for key in filter(lambda key: not key.startswith("__"), Config.__dict__)}))
+      else str(Config.__dict__[key]) for key in filter(lambda key: not key.startswith("__"), Config.__dict__)}))
   if args.loglevel:
     log.setLevel(args.loglevel.upper())
 

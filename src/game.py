@@ -46,12 +46,12 @@ class Game:
     checkpoint_data = list()
     score_fh = open("{}/scores.csv".format(Config.EVALUATION_DIRECTORY), "w")
     Game._write_scores_header(score_fh)
-    score_writer = csv.writer(score_fh)
+    score_writer = csv.writer(score_fh, lineterminator="\n")
 
     if Config.STORE_TRAINING_DATA:
       training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "w")
       Game._write_training_data_header(training_data_fh)
-      training_data_writer = csv.writer(training_data_fh)
+      training_data_writer = csv.writer(training_data_fh, lineterminator="\n")
 
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       training_data = list()
@@ -171,9 +171,10 @@ class Game:
   @staticmethod
   def _write_training_data_header(fh):
     header = "36 rows for cards with their known state from the view of a player " + \
-        "(0 unknown, 1-4 played by player, {} in play, {} in hand, {} selected to play; " + \
+        "(0 unknown, {} played by player, {} in play, {} in hand, {} selected to play; " + \
         "score of round from the view of the player\n"
-    fh.write(header.format(Card.IN_PLAY, Card.IN_HAND, Card.SELECTED))
+    fh.write(header.format(Config.ENCODING.card_code_players, Config.ENCODING.card_code_in_play,
+      Config.ENCODING.card_code_in_hand, Config.ENCODING.card_code_selected))
 
   def _write_training_data(self, fh, writer, training_data):
     if not training_data:
