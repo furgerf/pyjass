@@ -22,8 +22,6 @@ class Game:
   def __init__(self, log):
     self.log = log
     self._cards = [Card(suit, value) for suit in range(4) for value in range(9)]
-    self._total_score_team_1 = 0
-    self._total_score_team_2 = 0
 
     self.players = (
         Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p1", Config.TEAM_1_BEST, self.log),
@@ -32,26 +30,34 @@ class Game:
         Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p4", Config.TEAM_2_BEST, self.log)
         )
 
-  def play(self):
-    wins_team_1 = 0
-    wins_team_2 = 0
-    ties = 0
-    current_score_team_1 = 0
-    current_score_team_2 = 0
+    self._wins_team_1 = 0
+    self._wins_team_2 = 0
+    self._ties = 0
+    self._total_score_team_1 = 0
+    self._total_score_team_2 = 0
+    self._current_score_team_1 = 0
+    self._current_score_team_2 = 0
 
-    checkpoint_wins_team_1 = 0
-    checkpoint_wins_team_2 = 0
-    checkpoint_score_team_1 = 0
-    checkpoint_score_team_2 = 0
-    checkpoint_data = list()
-    score_fh = open("{}/scores.csv".format(Config.EVALUATION_DIRECTORY), "w")
-    Game._write_scores_header(score_fh)
-    score_writer = csv.writer(score_fh, lineterminator="\n")
+    self._checkpoint_wins_team_1 = 0
+    self._checkpoint_wins_team_2 = 0
+    self._checkpoint_score_team_1 = 0
+    self._checkpoint_score_team_2 = 0
+    self._checkpoint_data = list()
+
+    self._score_fh = None
+    self._score_writer = None
+    self._training_data_fh = None
+    self._training_data_writer = None
+
+  def play(self):
+    self._score_fh = open("{}/scores.csv".format(Config.EVALUATION_DIRECTORY), "w")
+    Game._write_scores_header(self._score_fh)
+    self._score_writer = csv.writer(self._score_fh, lineterminator="\n")
 
     if Config.STORE_TRAINING_DATA:
-      training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "w")
-      Game._write_training_data_header(training_data_fh)
-      training_data_writer = csv.writer(training_data_fh, lineterminator="\n")
+      self._training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "w")
+      Game._write_training_data_header(self._training_data_fh)
+      self._training_data_writer = csv.writer(self._training_data_fh, lineterminator="\n")
 
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       training_data = list()
@@ -78,82 +84,90 @@ class Game:
       # the next hand is started by the next player
       dealer = (dealer + 1) % 4
 
-      # update scores and check if a game was won
-      self._total_score_team_1 += score[0]
-      self._total_score_team_2 += score[1]
-      current_score_team_1 += score[0]
-      current_score_team_2 += score[1]
-      checkpoint_score_team_1 += score[0]
-      checkpoint_score_team_2 += score[1]
-      if current_score_team_1 > 1000 or current_score_team_2 > 1000:
-        if current_score_team_1 > 1000 and current_score_team_2 > 1000:
-          ties += 1
-        elif current_score_team_1 > 1000:
-          wins_team_1 += 1
-          checkpoint_wins_team_1 += 1
-        elif current_score_team_2 > 1000:
-          wins_team_2 += 1
-          checkpoint_wins_team_2 += 1
-        current_score_team_1 = 0
-        current_score_team_2 = 0
-
-      self.log.debug("Result: {} vs {} ({} vs {})".format(score[0],
-        score[1], self._total_score_team_1, self._total_score_team_2))
-
-      # handle new training data if required
-      if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
-        training_data.extend(hand.new_training_data)
-
-        if (i+1) % Config.TRAINING_INTERVAL == 0:
-          if Config.STORE_TRAINING_DATA:
-            self._write_training_data(training_data_fh, training_data_writer, training_data)
-          if Config.ONLINE_TRAINING:
-            for player in self._get_distinct_strategy_players():
-              player.train(training_data)
-          training_data.clear()
+      # update scores and win counts
+      self._update_scores(*score)
 
       # logging
       if (i+1) % Config.LOGGING_INTERVAL == 0:
         self.log.info("Played hand {}/{} ({:.2f}% done)".format(
           utils.format_human(i+1), utils.format_human(Config.TOTAL_HANDS), 100.0*(i+1)/Config.TOTAL_HANDS))
 
+      # handle new training data if required - train before checkpoint!
+      if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
+        training_data.extend(hand.new_training_data)
+        if (i+1) % Config.TRAINING_INTERVAL == 0:
+          self._handle_training_data(training_data)
+
       # checkpoint
-      if (i+1) % Config.CHECKPOINT_RESOLUTION == 0:
-        checkpoint_data.append([i+1,
-          checkpoint_wins_team_1, checkpoint_score_team_1, checkpoint_wins_team_2, checkpoint_score_team_2,
-          self.players[0].get_checkpoint_data(), self.players[1].get_checkpoint_data()
-          ])
-      if (i+1) % Config.CHECKPOINT_INTERVAL == 0:
-        self.checkpoint(checkpoint_data, i+1, Config.TOTAL_HANDS, score_fh, score_writer)
-        checkpoint_wins_team_1 = 0
-        checkpoint_wins_team_2 = 0
-        checkpoint_score_team_1 = 0
-        checkpoint_score_team_2 = 0
-        checkpoint_data.clear()
+      self._update_checkpoint(i)
 
     # the game is over
-    self._print_results(wins_team_1, wins_team_2, ties)
+    self._print_results()
+
+    # deal with "leftover" data/cleanup
+    if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
+      self._handle_training_data(training_data)
+    if Config.STORE_TRAINING_DATA:
+      self._training_data_fh.close()
+    self._create_checkpoint(Config.TOTAL_HANDS, Config.TOTAL_HANDS)
+
+
+  def _update_scores(self, score_team_1, score_team_2):
+    self._total_score_team_1 += score_team_1
+    self._total_score_team_2 += score_team_2
+    self._current_score_team_1 += score_team_1
+    self._current_score_team_2 += score_team_2
+    self._checkpoint_score_team_1 += score_team_1
+    self._checkpoint_score_team_2 += score_team_2
+    if self._current_score_team_1 > 1000 or self._current_score_team_2 > 1000:
+      if self._current_score_team_1 > 1000 and self._current_score_team_2 > 1000:
+        self._ties += 1
+      elif self._current_score_team_1 > 1000:
+        self._wins_team_1 += 1
+        self._checkpoint_wins_team_1 += 1
+      elif self._current_score_team_2 > 1000:
+        self._wins_team_2 += 1
+        self._checkpoint_wins_team_2 += 1
+      self._current_score_team_1 = 0
+      self._current_score_team_2 = 0
+
+    self.log.debug("Result: {} vs {} ({} vs {})".format(score_team_1,
+      score_team_2, self._total_score_team_1, self._total_score_team_2))
+
+  def _handle_training_data(self, training_data):
+    if not training_data:
+      return
 
     if Config.STORE_TRAINING_DATA:
-      self._write_training_data(training_data_fh, training_data_writer, training_data)
-      training_data_fh.close()
+      self._write_training_data(training_data)
     if Config.ONLINE_TRAINING:
-      if training_data:
-        for player in self.players:
-          player.train(training_data)
+      for player in self._get_distinct_strategy_players():
+        player.train(training_data)
+    training_data.clear()
 
-    self.checkpoint(checkpoint_data, Config.TOTAL_HANDS, Config.TOTAL_HANDS,
-        score_fh, score_writer)
+  def _update_checkpoint(self, i):
+    if (i+1) % Config.CHECKPOINT_RESOLUTION == 0:
+      self._checkpoint_data.append([i+1, self._checkpoint_wins_team_1, self._checkpoint_score_team_1,
+        self._checkpoint_wins_team_2, self._checkpoint_score_team_2,
+        self.players[0].get_checkpoint_data(), self.players[1].get_checkpoint_data()
+        ])
+    if (i+1) % Config.CHECKPOINT_INTERVAL == 0:
+      self._create_checkpoint(i+1, Config.TOTAL_HANDS)
+      self._checkpoint_wins_team_1 = 0
+      self._checkpoint_wins_team_2 = 0
+      self._checkpoint_score_team_1 = 0
+      self._checkpoint_score_team_2 = 0
+      self._checkpoint_data.clear()
 
-  def checkpoint(self, checkpoint_data, current_iteration, total_iterations, fh, writer):
-    if not checkpoint_data:
+  def _create_checkpoint(self, current_iteration, total_iterations):
+    if not self._checkpoint_data:
       return
 
     self.log.warning("Creating checkpoint with {} scores at iteration {}/{}"
-        .format(utils.format_human(len(checkpoint_data)),
+        .format(utils.format_human(len(self._checkpoint_data)),
           utils.format_human(current_iteration), utils.format_human(total_iterations)))
-    writer.writerows(checkpoint_data)
-    fh.flush()
+    self._score_writer.writerows(self._checkpoint_data)
+    self._score_fh.flush()
 
     for player in self._get_distinct_strategy_players():
       player.checkpoint(current_iteration, total_iterations)
@@ -176,22 +190,23 @@ class Game:
     fh.write(header.format(Config.ENCODING.card_code_players, Config.ENCODING.card_code_in_play,
       Config.ENCODING.card_code_in_hand, Config.ENCODING.card_code_selected))
 
-  def _write_training_data(self, fh, writer, training_data):
+  def _write_training_data(self, training_data):
     if not training_data:
       return
-    self.log.info("Writing {} training samples to {}".format(utils.format_human(len(training_data)), fh.name))
-    writer.writerows(training_data)
+    self.log.info("Writing {} training samples to {}".format(
+      utils.format_human(len(training_data)), self._training_data_fh.name))
+    self._training_data_writer.writerows(training_data)
 
-  def _print_results(self, wins_team_1, wins_team_2, ties):
+  def _print_results(self):
     # all hands are played
     score_of_both_teams = self._total_score_team_1 + self._total_score_team_2
-    wins_of_both_teams = wins_team_1 + wins_team_2
+    wins_of_both_teams = self._wins_team_1 + self._wins_team_2
     message = "Overall result: {} ({}) vs {} ({}); wins: {} vs {} ({} ties); " + \
         "(score diff {}, off mean: {:.2f}%, T1 win percentage: {:.2f}%)"
     self.log.warning(message.format(
       utils.format_human(self._total_score_team_1), Config.TEAM_1_STRATEGY,
       utils.format_human(self._total_score_team_2), Config.TEAM_2_STRATEGY,
-      utils.format_human(wins_team_1), utils.format_human(wins_team_2), utils.format_human(ties),
+      utils.format_human(self._wins_team_1), utils.format_human(self._wins_team_2), utils.format_human(self._ties),
       utils.format_human((self._total_score_team_1*2-score_of_both_teams)/2),
       100.0*(self._total_score_team_1*2-score_of_both_teams)/2/score_of_both_teams,
-      100.0*wins_team_1/wins_of_both_teams if wins_of_both_teams > 0 else 0))
+      100.0*self._wins_team_1/wins_of_both_teams if wins_of_both_teams > 0 else 0))
