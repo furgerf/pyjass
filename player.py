@@ -62,6 +62,10 @@ class Player(ABC):
   def checkpoint(self, current_iteration, total_iterations):
     pass
 
+  @abstractmethod
+  def get_checkpoint_data(self):
+    pass
+
   def _encode_cards(self, played_cards, known_cards):
     cards = np.array(known_cards, copy=True)
     for pc in played_cards:

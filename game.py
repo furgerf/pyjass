@@ -112,11 +112,17 @@ class Game:
               player.train(training_data)
           training_data.clear()
 
+      # logging
+      if (i+1) % Config.LOGGING_INTERVAL == 0:
+        self.log.info("Played hand {}/{} ({:.2f}% done)".format(
+          utils.format_human(i+1), utils.format_human(Config.TOTAL_HANDS), 100.0*(i+1)/Config.TOTAL_HANDS))
+
       # checkpoint
       if (i+1) % Config.CHECKPOINT_RESOLUTION == 0:
-        checkpoint_data.append((i+1,
-          checkpoint_wins_team_1, checkpoint_score_team_1,
-          checkpoint_wins_team_2, checkpoint_score_team_2))
+        checkpoint_data.append([i+1,
+          checkpoint_wins_team_1, checkpoint_score_team_1, checkpoint_wins_team_2, checkpoint_score_team_2,
+          self.players[0].get_checkpoint_data(), self.players[1].get_checkpoint_data()
+          ])
       if (i+1) % Config.CHECKPOINT_INTERVAL == 0:
         self.checkpoint(checkpoint_data, i+1, Config.TOTAL_HANDS, score_fh, score_writer)
         checkpoint_wins_team_1 = 0
@@ -124,11 +130,6 @@ class Game:
         checkpoint_score_team_1 = 0
         checkpoint_score_team_2 = 0
         checkpoint_data.clear()
-
-      # logging
-      if (i+1) % Config.LOGGING_INTERVAL == 0:
-        self.log.info("Played hand {}/{} ({:.2f}% done)".format(
-          utils.format_human(i+1), utils.format_human(Config.TOTAL_HANDS), 100.0*(i+1)/Config.TOTAL_HANDS))
 
     # the game is over
     self._print_results(wins_team_1, wins_team_2, ties)
@@ -164,7 +165,7 @@ class Game:
 
   @staticmethod
   def _write_scores_header(fh):
-    header = "hand,wins_team_1,score_team_1,wins_team_2,score_team_2\n"
+    header = "hand,wins_team_1,score_team_1,wins_team_2,score_team_2,team_1_info,team_2_info\n"
     fh.write(header)
 
   @staticmethod

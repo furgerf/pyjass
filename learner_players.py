@@ -91,6 +91,9 @@ class LearnerPlayer(Player):
     with open(file_name, "wb") as fh:
       pickle.dump(self.regressor, fh)
 
+  def get_checkpoint_data(self):
+    return self.regressor.training_samples
+
 
 class SgdPlayer(LearnerPlayer):
   _sgd_regressor = None

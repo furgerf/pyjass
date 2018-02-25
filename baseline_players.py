@@ -19,6 +19,9 @@ class BaselinePlayer(Player):
   def _select_card(self, args):
     pass
 
+  def get_checkpoint_data(self):
+    return None
+
 
 class RandomCardPlayer(BaselinePlayer):
   def _select_card(self, args):

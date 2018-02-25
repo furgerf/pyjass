@@ -48,7 +48,7 @@ def parse_arguments():
   parser.add_argument("--hands", type=float, nargs="?", default=default_hands,
       help="Number of hands to play, defaults to {}".format(default_hands))
   parser.add_argument("--logint", type=float, nargs="?",
-      help="Progress log interval (number of hands), defaults to hands/100")
+      help="Progress log interval (number of hands), defaults to hands/50")
   parser.add_argument("--trainingint", type=float, nargs="?",
       help="Training interval for storing data/online training (number of hands), defaults to hands/10")
   parser.add_argument("--chkint", type=float, nargs="?",
@@ -87,7 +87,7 @@ def apply_arguments(args):
   if args.logint:
     Config.LOGGING_INTERVAL = int(args.logint)
   else:
-    Config.LOGGING_INTERVAL = Config.TOTAL_HANDS / 100
+    Config.LOGGING_INTERVAL = Config.TOTAL_HANDS / 50
   if args.trainingint:
     Config.TRAINING_INTERVAL = int(args.trainingint)
   else:
@@ -108,6 +108,7 @@ def check_config(log):
         Config.TEAM_2_STRATEGY in model_based_strategies:
       log.error("Must specify model for model-based strategies")
       return False
+    # TODO: Check if directory exists
 
   # TODO: Add more
 
@@ -122,7 +123,7 @@ def main():
   log = utils.get_logger("jass")
   log.info("Args: {}".format(args))
   log.debug("Config: {}".format(
-    {key: utils.format_human(Config.__dict__[key]) if isinstance(Config.__dict__[key], int)
+    {key: utils.format_human(Config.__dict__[key]) if isinstance(Config.__dict__[key], (int, float))
       else Config.__dict__[key] for key in filter(lambda key: not key.startswith("__"), Config.__dict__)}))
   if args.loglevel:
     log.setLevel(args.loglevel.upper())
@@ -153,7 +154,7 @@ def main():
         "{}h{}m{:.1f}s".format(int(hours), int(mins), secs) if hours > 0 else \
         "{}m{:.1f}s".format(int(mins), secs) if mins > 0 else \
         "{:.1f}s".format(secs)
-    log.warning("Finished execution after {}".format(time_string))
+    log.warning("Finished evaluation '{}' after {}".format(args.eid, time_string))
     logging.shutdown()
 
 if __name__ == "__main__":
