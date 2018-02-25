@@ -26,6 +26,11 @@ class LearnerPlayer(Player):
         self.log.warning("Loading model from {}".format(pickle_file_name))
         return pickle.load(fh)
 
+    if not Config.TRAINING_DATA_FILE_NAME or not path.exists(Config.TRAINING_DATA_FILE_NAME):
+      self.log.error("Unable to train model: training data file '{}' doesn't exist"
+          .format(Config.TRAINING_DATA_FILE_NAME))
+      raise Exception()
+
     regressor = regressor_constructor(**regressor_args)
     regressor.training_samples = 0
     self.log.info("Training model: {}".format(regressor))

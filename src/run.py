@@ -29,7 +29,8 @@ def parse_arguments():
       help="True if trainings data should be stored")
   parser.add_argument("--training-file",
       help="Name of the training data file to use without ending")
-  parser.add_argument("--model", help="Name of the folder in the models/ directory")
+  parser.add_argument("--model", required=True,
+      help="Name of the folder in the models/ directory, determines the encoding to use")
   parser.add_argument("--eid", required=True, help="ID of the evaluation")
 
   # game settings
@@ -50,7 +51,7 @@ def parse_arguments():
       help="Number of hands to play, defaults to {}".format(default_hands))
   parser.add_argument("--logint", type=float, nargs="?",
       help="Progress log interval (number of hands), defaults to hands/50")
-  parser.add_argument("--trainingint", type=float, nargs="?",
+  parser.add_argument("--trainingint", type=float, nargs="?", # NOTE: 1e5 is roughly 1.25 GB RAM
       help="Training interval for storing data/online training (number of hands), defaults to hands/10")
   parser.add_argument("--chkint", type=float, nargs="?",
       help="Checkpoint creation interval (number of hands), defaults to hands/10")
@@ -109,10 +110,11 @@ def check_config(log):
   uses_model = Config.TEAM_1_STRATEGY in model_based_strategies or \
       Config.TEAM_2_STRATEGY in model_based_strategies
 
+  if not Config.MODEL_DIRECTORY or not Config.ENCODING:
+    log.error("Must specify an existing model/encoding")
+    return False
+
   if uses_model:
-    if not Config.MODEL_DIRECTORY:
-      log.error("Must specify model for model-based strategies")
-      return False
     if not os.path.exists(Config.MODEL_DIRECTORY):
       log.error("Model directory doesn't exist")
       return False
@@ -128,18 +130,17 @@ def check_config(log):
       log.error("Training data file exists already")
       return False
 
-  if (uses_model or Config.STORE_TRAINING_DATA) and not Config.ENCODING:
-    log.error("Need an encoding when using models or storing data")
-    return False
-
-  # TODO: Add more
-
   return True
 
 def get_encodings():
+  # MD5: -
   encoding_1 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 0)
+  # MD5: b56c5815f61b0701e2cdd9735f9b090e  encoding-2.csv.gz
   encoding_2 = Encoding([1, 2, 3, 4], 6, 5, 7, 2, 1)
+  # MD5: TBC
   encoding_3 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1)
+  # MD5: TBC
+  encoding_4 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1)
 
   return {
       "01": encoding_1,
@@ -147,7 +148,8 @@ def get_encodings():
       "03": encoding_2,
       "04": encoding_2,
       "05": encoding_2,
-      "06": encoding_3
+      "06": encoding_3,
+      "07": encoding_4
       }
 
 def main():
