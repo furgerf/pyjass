@@ -186,9 +186,10 @@ class Game:
   def _write_training_data_header(fh):
     header = "36 rows for cards with their known state from the view of a player " + \
         "(0 unknown, {} played by player, {} in play, {} in hand, {} selected to play; " + \
-        "score of round from the view of the player\n"
+        "score of round from the view of the player: round factor {}, hand factor {}\n"
     fh.write(header.format(Config.ENCODING.card_code_players, Config.ENCODING.card_code_in_play,
-      Config.ENCODING.card_code_in_hand, Config.ENCODING.card_code_selected))
+      Config.ENCODING.card_code_in_hand, Config.ENCODING.card_code_selected,
+      Config.ENCODING.round_score_factor, Config.ENCODING.hand_score_factor))
 
   def _write_training_data(self, training_data):
     if not training_data:

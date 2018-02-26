@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import csv
 import logging
 import math
+from itertools import chain, islice
 
 import coloredlogs
 
@@ -39,6 +41,17 @@ def get_logger(name):
   logger.addHandler(handler)
   logger.setLevel(logging.DEBUG)
   return logger
+
+def process_csv_file(file_name):
+  with open(file_name, "r") as fh:
+    for row in csv.reader(fh):
+      yield row
+
+def batch(iterator, batch_size):
+  while True:
+    batched_iterator = islice(iterator, batch_size)
+    # pylint: disable=stop-iteration-return
+    yield chain([next(batched_iterator)], batched_iterator)
 
 def format_cards(cards):
   return " ".join(str(c) for c in cards)

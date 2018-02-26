@@ -36,20 +36,18 @@ class LearnerPlayer(Player):
     self.log.info("Training model: {}".format(regressor))
     offset = 0
     chunk_size = int(1e6)
-    while True:
-      self.log.info("Loading data from {} ({} lines done)".format(
-        Config.TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
-      training_data = np.genfromtxt(Config.TRAINING_DATA_FILE_NAME,
-          delimiter=",", dtype=int, skip_header=1+offset, max_rows=chunk_size)
 
-      if not training_data.any():
-        self.log.warning("Finished training model: {}".format(regressor))
-        break
-
-      self.log.info("Fitting regressor with {} samples".format(utils.format_human(len(training_data))))
-      regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
+    iterator = iter(utils.process_csv_file(Config.TRAINING_DATA_FILE_NAME))
+    self.log.info("Skipping header '{}'".format(next(iterator)))
+    for chunk in utils.batch(iterator, chunk_size):
+      training_data = np.array(list(chunk))
       offset += len(training_data)
+      self.log.info("Loaded {} lines from {} ({} lines done)".format(
+        utils.format_human(len(training_data)), Config.TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
+      regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
       regressor.training_samples += len(training_data)
+      self.log.info("Fitted regressor with {} samples ({} total)".format(
+        utils.format_human(len(training_data)), utils.format_human(regressor.training_samples)))
 
     self.log.warning("Writing newly-trained model to {}".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:

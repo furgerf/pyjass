@@ -4,14 +4,16 @@
 
 class Encoding:
 
+  # pylint: disable=too-many-arguments
   def __init__(self, card_code_players, card_code_in_hand, card_code_in_play, card_code_selected,
-      round_score_factor, hand_score_factor):
+      round_score_factor, hand_score_factor, training_data_file_name):
     self._card_code_players = card_code_players
     self._card_code_in_hand = card_code_in_hand
     self._card_code_in_play = card_code_in_play
     self._card_code_selected = card_code_selected
     self._round_score_factor = round_score_factor
     self._hand_score_factor = hand_score_factor
+    self._training_data_file_name = training_data_file_name
 
 
   @property
@@ -38,6 +40,11 @@ class Encoding:
   @property
   def hand_score_factor(self):
     return self._hand_score_factor
+
+
+  @property
+  def training_data_file_name(self):
+    return self._training_data_file_name
 
 
   def __str__(self):

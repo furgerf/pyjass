@@ -28,7 +28,7 @@ def parse_arguments():
   parser.add_argument("--store-data", action="store_true",
       help="True if trainings data should be stored")
   parser.add_argument("--training-file",
-      help="Name of the training data file to use without ending")
+      help="Name of the training data file to use, overriding the default file")
   parser.add_argument("--model", required=True,
       help="Name of the folder in the models/ directory, determines the encoding to use")
   parser.add_argument("--eid", required=True, help="ID of the evaluation")
@@ -69,11 +69,13 @@ def apply_arguments(args):
     Config.STORE_TRAINING_DATA = True
   if args.online_training:
     Config.ONLINE_TRAINING = True
-  if args.training_file:
-    Config.TRAINING_DATA_FILE_NAME = "data/{}.csv".format(args.training_file)
   if args.model:
     Config.MODEL_DIRECTORY = "models/{}".format(args.model)
     Config.ENCODING = get_encodings().get(args.model)
+  if args.training_file:
+    Config.TRAINING_DATA_FILE_NAME = "data/{}".format(args.training_file)
+  else:
+    Config.TRAINING_DATA_FILE_NAME = "data/{}".format(Config.ENCODING.training_data_file_name)
   Config.EVALUATION_DIRECTORY = "evaluations/{}".format(args.eid)
 
   if args.team1:
@@ -134,13 +136,13 @@ def check_config(log):
 
 def get_encodings():
   # MD5: -
-  encoding_1 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 0)
+  encoding_1 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 0, None)
   # MD5: b56c5815f61b0701e2cdd9735f9b090e  encoding-2.csv.gz
-  encoding_2 = Encoding([1, 2, 3, 4], 6, 5, 7, 2, 1)
+  encoding_2 = Encoding([1, 2, 3, 4], 6, 5, 7, 2, 1, "encoding-2.csv")
+  # MD5: eeb9451058585f9cccfccccf2fcd16c6  encoding-3.csv.gz
+  encoding_3 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1, "encoding-3.csv")
   # MD5: TBC
-  encoding_3 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1)
-  # MD5: TBC
-  encoding_4 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1)
+  encoding_4 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, "encoding-4.csv")
 
   return {
       "01": encoding_1,
