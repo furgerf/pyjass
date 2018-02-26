@@ -64,24 +64,34 @@ class LearnerPlayer(Player):
       my_state[card.card_index] = Config.ENCODING.card_code_selected
       states.append(my_state)
 
+    if len(valid_cards) == 1:
+      self.log.debug("Selecting the only valid card {}".format(valid_cards[0]))
+      return valid_cards[0]
     scores = self.regressor.predict(states)
     if self._play_best_card:
       card = valid_cards[np.argmax(scores)]
     else:
       if np.min(scores) < 0:
         adjusted_scores = scores - np.min(scores)
-        probabilities = adjusted_scores / np.sum(adjusted_scores)
-        self.log.warning("Using adjusted scores {} instead of normal scores {} with probabilities {}"
+        score_sum = np.sum(adjusted_scores)
+        if score_sum == 0:
+          score_sum += 1
+        probabilities = adjusted_scores / score_sum
+        self.log.debug("Using adjusted scores {} instead of normal scores {} with probabilities {}"
             .format(adjusted_scores, scores, probabilities))
       else:
-        probabilities = scores / np.sum(scores)
+        score_sum = np.sum(scores)
+        if score_sum == 0:
+          score_sum += 1
+        probabilities = scores / score_sum
       card = valid_cards[np.random.choice(len(probabilities), p=probabilities)]
     self.log.debug("Playing cards {} has predicted scores of {}, selecting {}"
         .format(utils.format_cards(valid_cards), scores, card))
     return card
 
   def train(self, training_data):
-    self.log.debug("Training player {} with {} new samples".format(self._name, len(training_data)))
+    self.log.info("Training player {} with {} new samples".format(
+      self._name, utils.format_human(len(training_data))))
     data = np.array(training_data)
     self.regressor.partial_fit(data[:, :-1], data[:, -1])
     self.regressor.training_samples += len(training_data)

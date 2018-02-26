@@ -3,6 +3,7 @@
 
 # pylint: disable=unused-import
 import matplotlib.pyplot as plt
+from matplotlib.ticker import EngFormatter
 import numpy as np
 import pandas as pd
 # import seaborn as sns
@@ -13,7 +14,7 @@ from src import utils
 plt.ion()
 
 
-def visualize_scores(eid="foo"):
+def visualize_scores(eid="foo", ymin=0.45, ymax=0.65):
   scores_file = "evaluations/{}/scores.csv".format(eid)
   df = pd.read_csv(scores_file)
 
@@ -29,9 +30,11 @@ def visualize_scores(eid="foo"):
   df["cum_score_percentage"] = df.cum_score_team_1 / (df.cum_score_team_1 + df.cum_score_team_2)
 
   # plot
-  plt.figure()
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
+  ax.xaxis.set_major_formatter(EngFormatter())
   plt.title("{}: Team 1 win/score percentage".format(eid))
-  plt.ylim(0.45, 0.65)
+  plt.ylim(ymin, ymax)
   plt.grid()
   plt.tight_layout()
 

@@ -23,6 +23,8 @@ def parse_arguments():
       help="Minimum log level of logged messages, defaults to INFO")
   parser.add_argument("--seed", type=int, nargs="?", const=42,
       help="Random seed to use, no seed means random")
+  parser.add_argument("--seed2", type=int, nargs="?", const=123,
+      help="Alternative random seed to use, no seed means random")
 
   # files
   parser.add_argument("--store-data", action="store_true",
@@ -31,6 +33,7 @@ def parse_arguments():
       help="Name of the training data file to use, overriding the default file")
   parser.add_argument("--model", required=True,
       help="Name of the folder in the models/ directory, determines the encoding to use")
+  # TODO: arg to select model
   parser.add_argument("--eid", required=True, help="ID of the evaluation")
 
   # game settings
@@ -52,7 +55,7 @@ def parse_arguments():
   parser.add_argument("--logint", type=float, nargs="?",
       help="Progress log interval (number of hands), defaults to hands/50")
   parser.add_argument("--trainingint", type=float, nargs="?", # NOTE: 1e5 is roughly 1.25 GB RAM
-      help="Training interval for storing data/online training (number of hands), defaults to hands/10")
+      help="Training interval for storing data/online training (number of hands), defaults to min(hands/10, 1e5)")
   parser.add_argument("--chkint", type=float, nargs="?",
       help="Checkpoint creation interval (number of hands), defaults to hands/10")
   parser.add_argument("--chkresolution", type=float, nargs="?",
@@ -64,6 +67,8 @@ def apply_arguments(args):
   # pylint: disable=too-many-branches
   if args.seed:
     np.random.seed(args.seed)
+  if args.seed2:
+    np.random.seed(args.seed2)
 
   if args.store_data:
     Config.STORE_TRAINING_DATA = True
@@ -96,7 +101,7 @@ def apply_arguments(args):
   if args.trainingint:
     Config.TRAINING_INTERVAL = int(args.trainingint)
   else:
-    Config.TRAINING_INTERVAL = Config.TOTAL_HANDS / 10
+    Config.TRAINING_INTERVAL = min(Config.TOTAL_HANDS / 10, int(1e5))
   if args.chkint:
     Config.CHECKPOINT_INTERVAL = int(args.chkint)
   else:
