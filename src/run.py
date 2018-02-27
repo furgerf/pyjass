@@ -146,8 +146,10 @@ def get_encodings():
   encoding_2 = Encoding([1, 2, 3, 4], 6, 5, 7, 2, 1, "encoding-2.csv")
   # MD5: eeb9451058585f9cccfccccf2fcd16c6  encoding-3.csv.gz
   encoding_3 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1, "encoding-3.csv")
-  # MD5: TBC
+  # MD5: de35cdc99926a01413671f0b5798b9f0  encoding-4.csv.gz
   encoding_4 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, "encoding-4.csv")
+  # MD5: TBC
+  encoding_5 = Encoding([10, 20, 30, 40], 1000, 4000, 16000, 1, 1, "encoding-5.csv")
 
   return {
       "01": encoding_1,
@@ -156,7 +158,8 @@ def get_encodings():
       "04": encoding_2,
       "05": encoding_2,
       "06": encoding_3,
-      "07": encoding_4
+      "07": encoding_4,
+      "08": encoding_5,
       }
 
 def main():
