@@ -40,11 +40,11 @@ def parse_arguments():
   # game settings
   parser.add_argument("--online-training", action="store_true",
       help="True if any learning model should be trained while playing")
-  parser.add_argument("--team1", choices=Game.PLAYER_TYPES.keys(), default="random",
+  parser.add_argument("--team1", choices=Game.PLAYER_TYPES.keys(), default="simple",
       help="Strategy for team 1")
   parser.add_argument("--team1-best", action="store_true",
       help="True if team 1 should always choose the best card")
-  parser.add_argument("--team2", choices=Game.PLAYER_TYPES.keys(), default="random",
+  parser.add_argument("--team2", choices=Game.PLAYER_TYPES.keys(), default="simple",
       help="Strategy for team 2")
   parser.add_argument("--team2-best", action="store_true",
       help="True if team 2 should always choose the best card")
@@ -206,7 +206,7 @@ def main():
         "{}h{}m{:.1f}s".format(int(hours), int(mins), secs) if hours > 0 else \
         "{}m{:.1f}s".format(int(mins), secs) if mins > 0 else \
         "{:.1f}s".format(secs)
-    log.warning("Finished evaluation '{}' after {}".format(args.eid, time_string))
+    log.error("Finished evaluation '{}' after {}".format(args.eid, time_string))
     logging.shutdown()
 
 if __name__ == "__main__":

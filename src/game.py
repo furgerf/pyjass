@@ -5,7 +5,8 @@ import csv
 from config import Config
 
 import utils
-from baseline_players import HighestCardPlayer, RandomCardPlayer
+from baseline_players import (HighestCardPlayer, RandomCardPlayer,
+                              SimpleRulesPlayer)
 from card import Card
 from hand import Hand
 from learner_players import MlpPlayer, SgdPlayer
@@ -15,6 +16,7 @@ class Game:
   PLAYER_TYPES = {
       "random": RandomCardPlayer,
       "highest": HighestCardPlayer,
+      "simple": SimpleRulesPlayer,
       "sgd": SgdPlayer,
       "mlp": MlpPlayer
       }
