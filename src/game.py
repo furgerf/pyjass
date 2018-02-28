@@ -72,8 +72,9 @@ class Game:
     else:
       training_description = ""
 
-    self.log.warning("Starting game of {} hands: {} vs {} {}".format(utils.format_human(Config.TOTAL_HANDS),
-      Config.TEAM_1_STRATEGY, Config.TEAM_2_STRATEGY, training_description))
+    self.log.error("Starting game of {} hands: {}{} vs {}{} {}".format(utils.format_human(Config.TOTAL_HANDS),
+      Config.TEAM_1_STRATEGY, " (best)" if Config.TEAM_1_BEST else "",
+      Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "", training_description))
     for i in range(Config.TOTAL_HANDS):
       self.log.debug("Starting hand {}".format(i+1))
 
@@ -85,6 +86,7 @@ class Game:
       dealer = (dealer + 1) % 4
 
       # update scores and win counts
+      # TODO: Get rid of ties
       self._update_scores(*score)
 
       # logging
@@ -204,7 +206,7 @@ class Game:
     wins_of_both_teams = self._wins_team_1 + self._wins_team_2
     message = "Overall result: {} ({}) vs {} ({}); wins: {} vs {} ({} ties); " + \
         "(score diff {}, off mean: {:.2f}%, T1 win percentage: {:.2f}%)"
-    self.log.warning(message.format(
+    self.log.error(message.format(
       utils.format_human(self._total_score_team_1), Config.TEAM_1_STRATEGY,
       utils.format_human(self._total_score_team_2), Config.TEAM_2_STRATEGY,
       utils.format_human(self._wins_team_1), utils.format_human(self._wins_team_2), utils.format_human(self._ties),

@@ -9,6 +9,8 @@ EVAL_DIR=evaluations
 OLD_EVAL_DIR=old-evaluations
 DIRECTORIES=$(DATA_DIR) $(MODELS_DIR) $(EVAL_DIR) $(OLD_EVAL_DIR)
 
+# TODO: PID file for STOP/CONT
+
 run:
 ifndef EID
 	$(eval EID := $(shell uuidgen))

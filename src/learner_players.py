@@ -5,7 +5,7 @@
 import math
 import pickle
 from config import Config
-from os import path
+import os
 
 import numpy as np
 
@@ -21,12 +21,16 @@ class LearnerPlayer(Player):
     super(LearnerPlayer, self).__init__(name, play_best_card, log)
 
   def _get_regressor(self, pickle_file_name, regressor_constructor, regressor_args):
-    if path.exists(pickle_file_name):
+    if os.path.exists(pickle_file_name):
       with open(pickle_file_name, "rb") as fh:
-        self.log.warning("Loading model from {}".format(pickle_file_name))
-        return pickle.load(fh)
+        model = pickle.load(fh)
+        real_path = os.path.realpath(pickle_file_name)[len(os.getcwd())+1:]
+        path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
+        self.log.error("Loaded model from {}{} (trained on {} samples)".format(pickle_file_name,
+          path_difference, utils.format_human(model.training_samples)))
+        return model
 
-    if not Config.TRAINING_DATA_FILE_NAME or not path.exists(Config.TRAINING_DATA_FILE_NAME):
+    if not Config.TRAINING_DATA_FILE_NAME or not os.path.exists(Config.TRAINING_DATA_FILE_NAME):
       self.log.error("Unable to train model: training data file '{}' doesn't exist"
           .format(Config.TRAINING_DATA_FILE_NAME))
       raise Exception()
@@ -40,7 +44,7 @@ class LearnerPlayer(Player):
     iterator = iter(utils.process_csv_file(Config.TRAINING_DATA_FILE_NAME))
     self.log.info("Skipping header '{}'".format(next(iterator)))
     for chunk in utils.batch(iterator, chunk_size):
-      training_data = np.array(list(chunk))
+      training_data = np.array(list(chunk), dtype=int)
       offset += len(training_data)
       self.log.info("Loaded {} lines from {} ({} lines done)".format(
         utils.format_human(len(training_data)), Config.TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
@@ -90,8 +94,8 @@ class LearnerPlayer(Player):
     return card
 
   def train(self, training_data):
-    self.log.info("Training player {} with {} new samples".format(
-      self._name, utils.format_human(len(training_data))))
+    self.log.info("Training model {} with {} new samples".format(
+      self.regressor.__class__.__name__, utils.format_human(len(training_data))))
     data = np.array(training_data)
     self.regressor.partial_fit(data[:, :-1], data[:, -1])
     self.regressor.training_samples += len(training_data)

@@ -14,6 +14,15 @@ from src import utils
 plt.ion()
 
 
+def load_model(file_name):
+  with open(file_name, "rb") as fh:
+    return pickle.load(fh)
+
+def store_model(model, file_name):
+  with open(file_name, "wb") as fh:
+    return pickle.dump(model, fh)
+
+
 def visualize_scores(eid="foo", ymin=0.45, ymax=0.65):
   scores_file = "evaluations/{}/scores.csv".format(eid)
   df = pd.read_csv(scores_file)
@@ -46,7 +55,7 @@ def visualize_scores(eid="foo", ymin=0.45, ymax=0.65):
   plt.axhline(y=0.5, c="r", alpha=0.3, linestyle="--")
 
   if "team_1_info" in df.columns and "team_2_info" in df.columns:
-    for index in df.team_1_info.diff()[df.team_1_info.diff() != 0].index.values:
+    for i, index in enumerate(df.team_1_info.diff()[df.team_1_info.diff() != 0].index.values):
       # NOTE: both teams have the same training interval
       row = df.iloc[index]
 
@@ -62,7 +71,7 @@ def visualize_scores(eid="foo", ymin=0.45, ymax=0.65):
         note = "T2:{}".format(utils.format_human(row.team_2_info))
 
       plt.annotate(note, color="purple",
-          xy=(row.hand, plt.ylim()[0] + 0.01), xytext=(row.hand, plt.ylim()[0] + 0.01))
+          xy=(row.hand, plt.ylim()[0] + 0.01 + 0.02*(i%4)), xytext=(row.hand, plt.ylim()[0] + 0.01 + 0.02*(i%4)))
 
   plt.legend()
   plt.show()
