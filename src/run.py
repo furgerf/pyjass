@@ -33,7 +33,8 @@ def parse_arguments():
       help="Name of the training data file to use, overriding the default file")
   parser.add_argument("--model", required=True,
       help="Name of the folder in the models/ directory, determines the encoding to use")
-  # TODO: arg to select model
+  parser.add_argument("--regressor-name",
+      help="Name of the regressor file in the model directory to use instead of the default, for all learners")
   parser.add_argument("--eid", required=True, help="ID of the evaluation")
 
   # game settings
@@ -77,6 +78,8 @@ def apply_arguments(args):
   if args.model:
     Config.MODEL_DIRECTORY = "models/{}".format(args.model)
     Config.ENCODING = get_encodings().get(args.model)
+  if args.regressor_name:
+    Config.REGRESSOR_NAME = args.regressor_name
   if args.training_file:
     Config.TRAINING_DATA_FILE_NAME = "data/{}".format(args.training_file)
   else:

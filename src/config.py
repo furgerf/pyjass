@@ -23,5 +23,6 @@ class Config:
 
   # files/directories
   MODEL_DIRECTORY = None
+  REGRESSOR_NAME = None
   TRAINING_DATA_FILE_NAME = None
   EVALUATION_DIRECTORY = None

@@ -28,6 +28,10 @@ class LearnerPlayer(Player):
         path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
         self.log.error("Loaded model from {}{} (trained on {} samples)".format(pickle_file_name,
           path_difference, utils.format_human(model.training_samples)))
+        if model.__class__.__name__ != regressor_constructor.__name__:
+          self.log.error("Loaded model is a different type than desired, aborting")
+          raise Exception()
+
         return model
 
     if not Config.TRAINING_DATA_FILE_NAME or not os.path.exists(Config.TRAINING_DATA_FILE_NAME):
@@ -118,7 +122,8 @@ class SgdPlayer(LearnerPlayer):
     self.log = log
     if SgdPlayer._sgd_regressor is None:
       SgdPlayer._sgd_regressor = self._get_regressor(
-          "{}/sgd-model.pkl".format(Config.MODEL_DIRECTORY), SGDRegressor, {
+          "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME or "sgd-model.pkl"),
+          SGDRegressor, {
             "warm_start": True
             })
 
@@ -132,7 +137,8 @@ class MlpPlayer(LearnerPlayer):
     self.log = log
     if MlpPlayer._mlp_regressor is None:
       MlpPlayer._mlp_regressor = self._get_regressor(
-          "{}/mlp-model.pkl".format(Config.MODEL_DIRECTORY), MLPRegressor, {
+          "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME or "mlp-model.pkl"),
+          MLPRegressor, {
             "warm_start": True
             })
 

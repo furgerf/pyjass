@@ -19,6 +19,9 @@ endif
 	$(eval THIS_EVAL_DIR := $(EVAL_DIR)/$(EID))
 	$(eval EVAL_LOG := $(THIS_EVAL_DIR)/evaluation_$(shell date '+%Y%m%d_%H%M%S').log)
 	mkdir -p $(THIS_EVAL_DIR)
+ifndef MOD
+	$(error Must specify model)
+endif
 	$(eval MOD_ARG := --model=$(MOD))
 	$(UNBUF) $(NICE) $(BIN)/python src/run.py $(EID_ARG) $(MOD_ARG) $(ARGS) 2>&1 | tee $(EVAL_LOG)
 
