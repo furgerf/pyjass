@@ -143,27 +143,45 @@ def check_config(log):
   return True
 
 def get_encodings():
+  # NOTE: Retired
   # MD5: -
-  # encoding_1 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 0, None)
+  encoding_1 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 0, None)
+
+  # NOTE: Retired
   # MD5: b56c5815f61b0701e2cdd9735f9b090e  encoding-2.csv.gz
   encoding_2 = Encoding([1, 2, 3, 4], 6, 5, 7, 2, 1, "encoding-2.csv")
+
+  # NOTE: Changed card encoding - 10m hands
   # MD5: eeb9451058585f9cccfccccf2fcd16c6  encoding-3.csv.gz
   encoding_3 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1, "encoding-3.csv")
+
+  # NOTE: Changed cost - 10m hands
   # MD5: de35cdc99926a01413671f0b5798b9f0  encoding-4.csv.gz
-  encoding_4 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, "encoding-4-small.csv")
+  encoding_4 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, "encoding-4.csv")
+
+  # NOTE: Same encoding as 3 but data from simple - 1m hands
   # MD5: TBC
-  encoding_5 = Encoding([10, 20, 30, 40], 1000, 4000, 16000, 1, 1, "encoding-5.csv")
+  encoding_5 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1, "encoding-5.csv")
+
+  # NOTE: Same encoding as 4 but data from simple - 1m hands
+  # MD5: TBC
+  encoding_6 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, "encoding-6.csv")
+
+  # NOTE: Changed card encoding
+  # MD5: TBC
+  encoding_7 = Encoding([10, 20, 30, 40], 1000, 4000, 16000, 1, 1, "encoding-7.csv")
 
   return {
-      # "01": encoding_1,
-      # "02": encoding_1,
-      # "03": encoding_2,
-      # "04": encoding_2,
+      "01": encoding_1,
+      "02": encoding_1,
+      "03": encoding_2,
+      "04": encoding_2,
       "05": encoding_2,
       "06": encoding_3,
       "07": encoding_4,
-      "08": encoding_5,
-      "custom": encoding_3,
+      "08": encoding_3,
+      "09": encoding_4,
+      "10": encoding_5,
       }
 
 def main():

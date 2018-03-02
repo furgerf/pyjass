@@ -85,7 +85,7 @@ class SimpleRulesPlayer(BaselinePlayer):
             .format(worst_card))
         return worst_card
       # the round isn't the first player's: check if he can beat player 2
-      beating_cards = list(filter(played_cards[1].is_beaten_by))
+      beating_cards = list(filter(played_cards[1].is_beaten_by, valid_cards))
       if beating_cards:
         # first player can be beat: play worst beating card
         best_card = SimpleRulesPlayer._select_worst_card(beating_cards)

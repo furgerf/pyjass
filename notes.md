@@ -7,14 +7,17 @@
 - Use seed for reproducibility
 
 # Discoveries
-- Encoding 2 doesn't seem to work well
+- Encoding 2 doesn't work
 - SGD doesn't work
 - Training with with playing the best card seems to be better
+  - This seems to be true for training on bad data but probably not for better data!
+- So far, encodings 3 and 4 seem to perform similarly
 
 # To try
 - How do methods compare against better baseline?
 - Is training more effective against better-than-random player?
   -> Would make sense, since we're interested in the good decisions
-- Cost? Encoding?
+- Cost? Encoding? Model parameters? Models?
+- How much data is needed/useful for MLP?
 - Encodings 3, 4 -> ?
 
