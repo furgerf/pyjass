@@ -33,7 +33,7 @@ class Round:
     # play round
     for i in range(4):
       current_player = self._players[(dealer+i) % 4]
-      played_card, player_state = current_player.select_card_to_play(played_cards, self._known_cards)
+      played_card, player_state = current_player.select_card_to_play(played_cards, self._known_cards, self.log)
       current_player.hand.remove(played_card)
 
       played_cards.append(played_card)

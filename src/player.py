@@ -12,9 +12,9 @@ import utils
 class Player(ABC):
 
   def __init__(self, name, play_best_card, log):
+    # DON'T store log
     self._name = name
     self._play_best_card = play_best_card
-    self.log = log
     self._hand = None
 
   @property
@@ -29,7 +29,7 @@ class Player(ABC):
   def hand(self, hand):
     self._hand = sorted(hand, key=lambda c: str(c.suit) + str(c.value))
 
-  def select_card_to_play(self, played_cards, known_cards):
+  def select_card_to_play(self, played_cards, known_cards, log):
     if played_cards:
       # try to match suit
       valid_cards = list(filter(lambda c: played_cards[0].suit == c.suit, self.hand))
@@ -39,8 +39,8 @@ class Player(ABC):
     else:
       valid_cards = self.hand
 
-    selected_card = self._select_card((valid_cards, played_cards, known_cards))
-    self.log.debug("{} selects card {} to play (valid: {})".format(
+    selected_card = self._select_card((valid_cards, played_cards, known_cards), log)
+    log.debug("{} selects card {} to play (valid: {})".format(
       self.name, selected_card, utils.format_cards(valid_cards)))
 
     encoded_player_state = self._encode_cards(played_cards, known_cards)
@@ -51,11 +51,11 @@ class Player(ABC):
     return selected_card, encoded_player_state
 
   @abstractmethod
-  def _select_card(self, args):
+  def _select_card(self, args, log):
     pass
 
   @abstractmethod
-  def train(self, training_data):
+  def train(self, training_data, log):
     pass
 
   @abstractmethod

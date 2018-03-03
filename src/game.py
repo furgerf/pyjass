@@ -3,13 +3,13 @@
 
 import csv
 from config import Config
+from multiprocessing import Pool
 
 import utils
 from baseline_players import (HighestCardPlayer, RandomCardPlayer,
                               SimpleRulesPlayer)
-from card import Card
-from hand import Hand
 from learner_players import MlpPlayer, SgdPlayer
+from parallel_game import ParallelGame
 
 
 class Game:
@@ -23,8 +23,6 @@ class Game:
 
   def __init__(self, log):
     self.log = log
-    self._cards = [Card(suit, value) for suit in range(4) for value in range(9)]
-
     self.players = (
         Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p1", Config.TEAM_1_BEST, self.log),
         Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p2", Config.TEAM_2_BEST, self.log),
@@ -50,11 +48,13 @@ class Game:
     self._training_data_fh = None
     self._training_data_writer = None
 
+
   def play(self):
     self._score_fh = open("{}/scores.csv".format(Config.EVALUATION_DIRECTORY), "w")
     Game._write_scores_header(self._score_fh)
     self._score_writer = csv.writer(self._score_fh, lineterminator="\n")
 
+    # setup
     if Config.STORE_TRAINING_DATA:
       self._training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "w")
       Game._write_training_data_header(self._training_data_fh)
@@ -63,7 +63,24 @@ class Game:
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       training_data = list()
 
-    dealer = 0
+    if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
+      if (Config.TRAINING_INTERVAL % Config.CHECKPOINT_INTERVAL) * (Config.CHECKPOINT_INTERVAL % Config.TRAINING_INTERVAL):
+        self.log.error("Can't run in parallel if training and checkpoint intervals aren't a multiple")
+        raise ValueError()
+      batch_size = int(min(Config.TRAINING_INTERVAL, Config.CHECKPOINT_INTERVAL) / Config.PARALLEL_PROCESSES)
+    else:
+      batch_size = int(Config.CHECKPOINT_INTERVAL / Config.PARALLEL_PROCESSES)
+    batch_count = int(Config.TOTAL_HANDS / batch_size / Config.PARALLEL_PROCESSES)
+
+    if (batch_size % Config.CHECKPOINT_RESOLUTION) != 0:
+      self.log.error("The checkpoint resolution must be divisible by the batch size")
+      raise ValueError()
+
+    if (Config.TOTAL_HANDS % (batch_size * Config.PARALLEL_PROCESSES)) != 0 or batch_count * batch_size * Config.PARALLEL_PROCESSES != Config.TOTAL_HANDS:
+      self.log.error("We don't want to deal with half-full batches")
+      raise ValueError()
+
+    # logging
     if Config.STORE_TRAINING_DATA and Config.ONLINE_TRAINING:
       training_description = "(training online AND storing data)"
     elif Config.STORE_TRAINING_DATA:
@@ -72,105 +89,87 @@ class Game:
       training_description = "(training online)"
     else:
       training_description = ""
-
-    self.log.error("Starting game of {} hands: {}{} vs {}{} {}".format(utils.format_human(Config.TOTAL_HANDS),
+    self.log.error("Starting parallel game of {} hands: {}{} vs {}{} {} ({} processes, {} batch size, {} batches)"
+        .format(utils.format_human(Config.TOTAL_HANDS),
       Config.TEAM_1_STRATEGY, " (best)" if Config.TEAM_1_BEST else "",
-      Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "", training_description))
-    for i in range(Config.TOTAL_HANDS):
-      self.log.debug("Starting hand {}".format(i+1))
+      Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "", training_description,
+      Config.PARALLEL_PROCESSES, utils.format_human(batch_size), utils.format_human(batch_count)))
 
-      # set up and play new hand
-      hand = Hand(self.players, self._cards, self.log)
-      score, winner = hand.play(dealer, self._current_score_team_1, self._current_score_team_2)
+    with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(self.log,)) as pool:
+      played_hands = 0
+      batch_round = 0
+      parallel_games = [ParallelGame(self.players) for _ in range(Config.PARALLEL_PROCESSES)]
+      game_scores = [(0, (0, 0)) for game in parallel_games]
 
-      # the next hand is started by the next player
-      dealer = (dealer + 1) % 4
+      while played_hands < Config.TOTAL_HANDS:
+        self.log.debug("Starting batch {}".format(batch_round+1))
+        current_batch_size = min(batch_size, (Config.TOTAL_HANDS - played_hands) / Config.PARALLEL_PROCESSES)
+        batch = [pool.apply_async(game.play_hands, (current_batch_size, played_hands + i * batch_size, *game_scores[i])) for i, game in enumerate(parallel_games)]
+        self.log.debug("Started batch of size {}".format(utils.format_human(current_batch_size)))
+        results = [b.get() for b in batch]
 
-      # update scores and win counts
-      self._update_scores(*score, winner)
+        # process results
+        # dealer/current score are passed as initialization to the next batch
+        game_scores = list(map(lambda result: (result[0], result[1]), results))
+        # global total score/wins are updated
+        self._total_score_team_1 += sum(map(lambda result: result[2][0], results))
+        self._total_score_team_2 += sum(map(lambda result: result[2][1], results))
+        self._wins_team_1 += sum(map(lambda result: result[3][0], results))
+        self._wins_team_2 += sum(map(lambda result: result[3][1], results))
 
-      # logging
-      if (i+1) % Config.LOGGING_INTERVAL == 0:
-        self.log.info("Played hand {}/{} ({:.2f}% done)".format(
-          utils.format_human(i+1), utils.format_human(Config.TOTAL_HANDS), 100.0*(i+1)/Config.TOTAL_HANDS))
+        played_hands += current_batch_size * Config.PARALLEL_PROCESSES
+        batch_round += 1
 
-      # handle new training data if required - train before checkpoint!
+        # logging
+        self.log.info("Finished batch round {}/{} ({:.1f}%), hands played/total: {}/{}".format(
+          utils.format_human(batch_round), utils.format_human(batch_count), 100.0*batch_round/batch_count,
+          utils.format_human(played_hands), utils.format_human(Config.TOTAL_HANDS)))
+
+        # handle new training data if required - train before checkpoint!
+        if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
+          for result in results:
+            training_data.extend(result[5])
+          if played_hands % Config.TRAINING_INTERVAL == 0:
+            self._handle_training_data(training_data)
+
+        # checkpoint
+        for result in results:
+          self._checkpoint_data.extend(result[4])
+        if played_hands % Config.CHECKPOINT_INTERVAL == 0:
+          self._create_checkpoint(played_hands, Config.TOTAL_HANDS)
+
+      # the game is over
+      self._print_results()
+
+      # deal with "leftover" data/cleanup
       if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
-        training_data.extend(hand.new_training_data)
-        if (i+1) % Config.TRAINING_INTERVAL == 0:
-          self._handle_training_data(training_data)
+        self._handle_training_data(training_data)
+      if Config.STORE_TRAINING_DATA:
+        self._training_data_fh.close()
+      self._create_checkpoint(played_hands, Config.TOTAL_HANDS)
 
-      # checkpoint
-      self._update_checkpoint(i)
-
-    # the game is over
-    self._print_results()
-
-    # deal with "leftover" data/cleanup
-    if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
-      self._handle_training_data(training_data)
-    if Config.STORE_TRAINING_DATA:
-      self._training_data_fh.close()
-    self._create_checkpoint(Config.TOTAL_HANDS, Config.TOTAL_HANDS)
-
-
-  def _update_scores(self, score_team_1, score_team_2, winner):
-    self._total_score_team_1 += score_team_1
-    self._total_score_team_2 += score_team_2
-    self._current_score_team_1 += score_team_1
-    self._current_score_team_2 += score_team_2
-    self._checkpoint_score_team_1 += score_team_1
-    self._checkpoint_score_team_2 += score_team_2
-    if winner:
-      if winner == 1:
-        self._wins_team_1 += 1
-        self._checkpoint_wins_team_1 += 1
-      if winner == 2:
-        self._wins_team_2 += 1
-        self._checkpoint_wins_team_2 += 1
-      self._current_score_team_1 = 0
-      self._current_score_team_2 = 0
-
-    self.log.debug("Result: {} vs {} ({} vs {})".format(score_team_1,
-      score_team_2, self._total_score_team_1, self._total_score_team_2))
 
   def _handle_training_data(self, training_data):
     if not training_data:
       return
-
     if Config.STORE_TRAINING_DATA:
       self._write_training_data(training_data)
     if Config.ONLINE_TRAINING:
       for player in self._get_distinct_strategy_players():
-        player.train(training_data)
+        player.train(training_data, self.log)
     training_data.clear()
-
-  def _update_checkpoint(self, i):
-    if (i+1) % Config.CHECKPOINT_RESOLUTION == 0:
-      self._checkpoint_data.append([i+1, self._checkpoint_wins_team_1, self._checkpoint_score_team_1,
-        self._checkpoint_wins_team_2, self._checkpoint_score_team_2,
-        self.players[0].get_checkpoint_data(), self.players[1].get_checkpoint_data()
-        ])
-    if (i+1) % Config.CHECKPOINT_INTERVAL == 0:
-      self._create_checkpoint(i+1, Config.TOTAL_HANDS)
-      self._checkpoint_wins_team_1 = 0
-      self._checkpoint_wins_team_2 = 0
-      self._checkpoint_score_team_1 = 0
-      self._checkpoint_score_team_2 = 0
-      self._checkpoint_data.clear()
 
   def _create_checkpoint(self, current_iteration, total_iterations):
     if not self._checkpoint_data:
       return
-
     self.log.warning("Creating checkpoint with {} scores at iteration {}/{}"
         .format(utils.format_human(len(self._checkpoint_data)),
           utils.format_human(current_iteration), utils.format_human(total_iterations)))
     self._score_writer.writerows(self._checkpoint_data)
     self._score_fh.flush()
-
     for player in self._get_distinct_strategy_players():
       player.checkpoint(current_iteration, total_iterations)
+    self._checkpoint_data.clear()
 
   def _get_distinct_strategy_players(self):
     if Config.TEAM_1_STRATEGY == Config.TEAM_2_STRATEGY:

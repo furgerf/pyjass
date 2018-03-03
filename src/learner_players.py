@@ -20,49 +20,49 @@ class LearnerPlayer(Player):
     self.regressor = regressor
     super(LearnerPlayer, self).__init__(name, play_best_card, log)
 
-  def _get_regressor(self, pickle_file_name, regressor_constructor, regressor_args):
+  def _get_regressor(self, pickle_file_name, regressor_constructor, regressor_args, log):
     if os.path.exists(pickle_file_name):
       with open(pickle_file_name, "rb") as fh:
         model = pickle.load(fh)
         real_path = os.path.realpath(pickle_file_name)[len(os.getcwd())+1:]
         path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
-        self.log.error("Loaded model from {}{} (trained on {} samples)".format(pickle_file_name,
+        log.error("Loaded model from {}{} (trained on {} samples)".format(pickle_file_name,
           path_difference, utils.format_human(model.training_samples)))
         if model.__class__.__name__ != regressor_constructor.__name__:
-          self.log.error("Loaded model is a different type than desired, aborting")
+          log.error("Loaded model is a different type than desired, aborting")
           raise Exception()
 
         return model
 
     if not Config.TRAINING_DATA_FILE_NAME or not os.path.exists(Config.TRAINING_DATA_FILE_NAME):
-      self.log.error("Unable to train model: training data file '{}' doesn't exist"
+      log.error("Unable to train model: training data file '{}' doesn't exist"
           .format(Config.TRAINING_DATA_FILE_NAME))
       raise Exception()
 
     regressor = regressor_constructor(**regressor_args)
     regressor.training_samples = 0
-    self.log.info("Training model: {}".format(regressor))
+    log.info("Training model: {}".format(regressor))
     offset = 0
     chunk_size = int(1e6)
 
     iterator = iter(utils.process_csv_file(Config.TRAINING_DATA_FILE_NAME))
-    self.log.info("Skipping header '{}'".format(next(iterator)))
+    log.info("Skipping header '{}'".format(next(iterator)))
     for chunk in utils.batch(iterator, chunk_size):
       training_data = np.array(list(chunk), dtype=int)
       offset += len(training_data)
-      self.log.info("Loaded {} lines from {} ({} lines done)".format(
+      log.info("Loaded {} lines from {} ({} lines done)".format(
         utils.format_human(len(training_data)), Config.TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
       regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
       regressor.training_samples += len(training_data)
-      self.log.info("Fitted regressor with {} samples ({} total)".format(
+      log.info("Fitted regressor with {} samples ({} total)".format(
         utils.format_human(len(training_data)), utils.format_human(regressor.training_samples)))
 
-    self.log.warning("Writing newly-trained model to {}".format(pickle_file_name))
+    log.warning("Writing newly-trained model to {}".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:
       pickle.dump(regressor, fh)
     return regressor
 
-  def _select_card(self, args):
+  def _select_card(self, args, log):
     valid_cards, played_cards, known_cards = args
     state = self._encode_cards(played_cards, known_cards)
     states = []
@@ -73,7 +73,7 @@ class LearnerPlayer(Player):
       states.append(my_state)
 
     if len(valid_cards) == 1:
-      self.log.debug("Selecting the only valid card {}".format(valid_cards[0]))
+      log.debug("Selecting the only valid card {}".format(valid_cards[0]))
       return valid_cards[0]
     scores = self.regressor.predict(states)
     if self._play_best_card:
@@ -85,7 +85,7 @@ class LearnerPlayer(Player):
         if score_sum == 0:
           score_sum += 1
         probabilities = adjusted_scores / score_sum
-        self.log.debug("Using adjusted scores {} instead of normal scores {} with probabilities {}"
+        log.debug("Using adjusted scores {} instead of normal scores {} with probabilities {}"
             .format(adjusted_scores, scores, probabilities))
       else:
         score_sum = np.sum(scores)
@@ -93,12 +93,12 @@ class LearnerPlayer(Player):
           score_sum += 1
         probabilities = scores / score_sum
       card = valid_cards[np.random.choice(len(probabilities), p=probabilities)]
-    self.log.debug("Playing cards {} has predicted scores of {}, selecting {}"
+    log.debug("Playing cards {} has predicted scores of {}, selecting {}"
         .format(utils.format_cards(valid_cards), scores, card))
     return card
 
-  def train(self, training_data):
-    self.log.info("Training model {} with {} new samples".format(
+  def train(self, training_data, log):
+    log.info("Training model {} with {} new samples".format(
       self.regressor.__class__.__name__, utils.format_human(len(training_data))))
     data = np.array(training_data)
     self.regressor.partial_fit(data[:, :-1], data[:, -1])
@@ -119,13 +119,12 @@ class SgdPlayer(LearnerPlayer):
   _sgd_regressor = None
 
   def __init__(self, name, play_best_card, log):
-    self.log = log
     if SgdPlayer._sgd_regressor is None:
       SgdPlayer._sgd_regressor = self._get_regressor(
           "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME or "sgd-model.pkl"),
           SGDRegressor, {
             "warm_start": True
-            })
+            }, log)
 
     super(SgdPlayer, self).__init__(name, play_best_card, SgdPlayer._sgd_regressor, log)
 
@@ -134,12 +133,11 @@ class MlpPlayer(LearnerPlayer):
   _mlp_regressor = None
 
   def __init__(self, name, play_best_card, log):
-    self.log = log
     if MlpPlayer._mlp_regressor is None:
       MlpPlayer._mlp_regressor = self._get_regressor(
           "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME or "mlp-model.pkl"),
           MLPRegressor, {
             "warm_start": True
-            })
+            }, log)
 
     super(MlpPlayer, self).__init__(name, play_best_card, MlpPlayer._mlp_regressor, log)

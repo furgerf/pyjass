@@ -9,14 +9,14 @@ from player import Player
 
 
 class BaselinePlayer(Player):
-  def train(self, training_data):
+  def train(self, training_data, log):
     pass
 
   def checkpoint(self, current_iteration, total_iterations):
     pass
 
   @abstractmethod
-  def _select_card(self, args):
+  def _select_card(self, args, log):
     pass
 
   def get_checkpoint_data(self):
@@ -24,13 +24,13 @@ class BaselinePlayer(Player):
 
 
 class RandomCardPlayer(BaselinePlayer):
-  def _select_card(self, args):
+  def _select_card(self, args, log):
     valid_cards = args[0]
     return valid_cards[np.random.randint(len(valid_cards))]
 
 
 class HighestCardPlayer(BaselinePlayer):
-  def _select_card(self, args):
+  def _select_card(self, args, log):
     valid_cards = args[0]
     return valid_cards[-1]
 
@@ -54,12 +54,12 @@ class SimpleRulesPlayer(BaselinePlayer):
     return worst_card
 
   # pylint: disable=too-many-return-statements
-  def _select_card(self, args):
+  def _select_card(self, args, log):
     valid_cards, played_cards, _ = args
 
     if len(played_cards) == 0: # pylint: disable=len-as-condition
       # first player: choose best card
-      self.log.debug("First player choses the card with highest value")
+      log.debug("First player choses the card with highest value")
       return SimpleRulesPlayer._select_best_card(valid_cards)
 
     if len(played_cards) == 1:
@@ -68,11 +68,11 @@ class SimpleRulesPlayer(BaselinePlayer):
       if beating_cards:
         # first player can be beat: play worst beating card
         best_card = SimpleRulesPlayer._select_worst_card(beating_cards)
-        self.log.debug("Second player can beat first card, selecting worst beating: {}".format(best_card))
+        log.debug("Second player can beat first card, selecting worst beating: {}".format(best_card))
         return best_card
       # first player can't be beat: play worst card
       worst_card = SimpleRulesPlayer._select_worst_card(valid_cards)
-      self.log.debug("Second player can't beat first one or match suit, selecting lowest value: {}"
+      log.debug("Second player can't beat first one or match suit, selecting lowest value: {}"
           .format(worst_card))
       return worst_card
 
@@ -81,7 +81,7 @@ class SimpleRulesPlayer(BaselinePlayer):
       if played_cards[1].is_beaten_by(played_cards[0]):
         # the round is the first player's: play the worst card
         worst_card = SimpleRulesPlayer._select_worst_card(valid_cards)
-        self.log.debug("Third player plays card with lowest value because round belongs to team: {}"
+        log.debug("Third player plays card with lowest value because round belongs to team: {}"
             .format(worst_card))
         return worst_card
       # the round isn't the first player's: check if he can beat player 2
@@ -89,11 +89,11 @@ class SimpleRulesPlayer(BaselinePlayer):
       if beating_cards:
         # first player can be beat: play worst beating card
         best_card = SimpleRulesPlayer._select_worst_card(beating_cards)
-        self.log.debug("Third player can beat second card, selecting worst beating: {}".format(best_card))
+        log.debug("Third player can beat second card, selecting worst beating: {}".format(best_card))
         return best_card
       # first player can't be beat: play worst card
       worst_card = SimpleRulesPlayer._select_worst_card(valid_cards)
-      self.log.debug("Third player can't beat second one or match suit, selecting lowest value: {}"
+      log.debug("Third player can't beat second one or match suit, selecting lowest value: {}"
           .format(worst_card))
       return worst_card
 
@@ -101,7 +101,7 @@ class SimpleRulesPlayer(BaselinePlayer):
     if played_cards[0].is_beaten_by(played_cards[1]) and played_cards[2].is_beaten_by(played_cards[1]):
       # the round is the second player's: play the worst card
       worst_card = SimpleRulesPlayer._select_worst_card(valid_cards)
-      self.log.debug("Fourth player plays card with lowest value because round belongs to team: {}"
+      log.debug("Fourth player plays card with lowest value because round belongs to team: {}"
           .format(worst_card))
       return worst_card
     # the round isn't the second player's: check if the round can be won
@@ -110,9 +110,9 @@ class SimpleRulesPlayer(BaselinePlayer):
     if beating_cards:
       # the round can be won, play WORST beating card
       worst_card = SimpleRulesPlayer._select_worst_card(beating_cards)
-      self.log.debug("Fourth player can win round, selecting worst: {}".format(worst_card))
+      log.debug("Fourth player can win round, selecting worst: {}".format(worst_card))
       return worst_card
     # the round can't be won: play worst card
     worst_card = SimpleRulesPlayer._select_worst_card(valid_cards)
-    self.log.debug("Fourth player can't win round, selecting lowest value: {}".format(worst_card))
+    log.debug("Fourth player can't win round, selecting lowest value: {}".format(worst_card))
     return worst_card
