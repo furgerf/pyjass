@@ -1,1 +1,1 @@
-../../evaluations/07-mlp-simple/p1_MLPRegressor_9000000.pkl
+../../evaluations/07-mlp-simple-not-best/p1_MLPRegressor_9000000.pkl
