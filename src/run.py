@@ -179,9 +179,9 @@ def get_encodings():
       "05": encoding_2,
       "06": encoding_3,
       "07": encoding_4,
-      "08": encoding_3,
-      "09": encoding_4,
-      "10": encoding_5,
+      "08": encoding_5,
+      "09": encoding_6,
+      "10": encoding_7,
       }
 
 def main():

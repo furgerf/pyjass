@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # pylint: disable=unused-import
+import csv
 import matplotlib.pyplot as plt
 from matplotlib.ticker import EngFormatter
 import numpy as np
@@ -23,7 +24,7 @@ def store_model(model, file_name):
     return pickle.dump(model, fh)
 
 
-def visualize_scores(eid="foo", ymin=0.45, ymax=0.65):
+def visualize_scores(eid="foo", ymin=0.0, ymax=1.0):
   scores_file = "evaluations/{}/scores.csv".format(eid)
   df = pd.read_csv(scores_file)
 
@@ -42,6 +43,8 @@ def visualize_scores(eid="foo", ymin=0.45, ymax=0.65):
   fig = plt.figure()
   ax = fig.add_subplot(111)
   ax.xaxis.set_major_formatter(EngFormatter())
+  ax.yaxis.set_major_locator(plt.MultipleLocator(0.05))
+  ax.minorticks_on()
   plt.title("{}: Team 1 win/score percentage".format(eid))
   plt.ylim(ymin, ymax)
   plt.grid()

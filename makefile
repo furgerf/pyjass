@@ -9,6 +9,8 @@ EVAL_DIR=evaluations
 OLD_EVAL_DIR=old-evaluations
 DIRECTORIES=$(DATA_DIR) $(MODELS_DIR) $(EVAL_DIR) $(OLD_EVAL_DIR)
 
+REGRESSORS=SGDRegressor MLPRegressor
+
 # TODO: PID file for STOP/CONT
 
 run:
@@ -24,6 +26,15 @@ ifndef MOD
 endif
 	$(eval MOD_ARG := --model=$(MOD))
 	$(UNBUF) $(NICE) $(BIN)/python src/run.py $(EID_ARG) $(MOD_ARG) $(ARGS) 2>&1 | tee $(EVAL_LOG)
+	@for reg in $(REGRESSORS); do \
+		unset -v latest; \
+		for pkl in $(THIS_EVAL_DIR)/p*_"$$reg"_*.pkl; do \
+			[[ $$pkl -nt $$latest ]] && latest=$$pkl; \
+		done; \
+		[ -z "$$latest" ] && continue; \
+		ln -s $$(basename $$latest) $(THIS_EVAL_DIR)/final-$$reg.pkl; \
+		echo "Created symlink for final $$reg: $$(ls -l $(THIS_EVAL_DIR)/final-$$reg.pkl | cut -d' ' -f 10-)"; \
+	done
 
 run-args:
 	$(MAKE) run --args # placeholder for "simplified" invocation
