@@ -22,7 +22,7 @@ class Hand:
       self._players[i].hand = self.cards[i*9:(i+1)*9]
 
 
-  def play(self, dealer):
+  def play(self, dealer, initial_score_team_1, initial_score_team_2):
     """Plays the hand by playing 9 rounds.
 
     :dealer: (int) Index of the player that plays the first card.
@@ -37,6 +37,7 @@ class Hand:
     _score_team_2 = 0
     training_data_team_1 = []
     training_data_team_2 = []
+    winner = None
 
     for i in range(9):
       self.log.debug("---------- Round {} ----------".format(i+1))
@@ -53,8 +54,12 @@ class Hand:
       # update score
       if dealer % 2 == 0:
         _score_team_1 += score
+        if not winner and _score_team_1 + initial_score_team_1 > 1000:
+          winner = 1
       else:
         _score_team_2 += score
+        if not winner and _score_team_2 + initial_score_team_2 > 1000:
+          winner = 2
 
       # if we gather training data and actually had a decision to make, update training data
       if i < 8 and (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING):
@@ -64,9 +69,13 @@ class Hand:
     if dealer % 2 == 0:
       self.log.debug("Team 1 made the last stich")
       _score_team_1 += 5
+      if not winner and _score_team_1 + initial_score_team_1 > 1000:
+        winner = 1
     else:
       self.log.debug("Team 2 made the last stich")
       _score_team_2 += 5
+      if not winner and _score_team_2 + initial_score_team_2 > 1000:
+        winner = 2
 
     # after concluding the round, update the global training data
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
@@ -82,7 +91,7 @@ class Hand:
       # self._training_data.extend(training_data_team_1)
       # self._training_data.extend(training_data_team_2)
 
-    return (_score_team_1, _score_team_2)
+    return (_score_team_1, _score_team_2), winner
 
   @staticmethod
   def _update_current_training_data(training_data_team_1, training_data_team_2, states, score, dealer):

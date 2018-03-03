@@ -34,7 +34,6 @@ class Game:
 
     self._wins_team_1 = 0
     self._wins_team_2 = 0
-    self._ties = 0
     self._total_score_team_1 = 0
     self._total_score_team_2 = 0
     self._current_score_team_1 = 0
@@ -82,14 +81,13 @@ class Game:
 
       # set up and play new hand
       hand = Hand(self.players, self._cards, self.log)
-      score = hand.play(dealer)
+      score, winner = hand.play(dealer, self._current_score_team_1, self._current_score_team_2)
 
       # the next hand is started by the next player
       dealer = (dealer + 1) % 4
 
       # update scores and win counts
-      # TODO: Get rid of ties
-      self._update_scores(*score)
+      self._update_scores(*score, winner)
 
       # logging
       if (i+1) % Config.LOGGING_INTERVAL == 0:
@@ -116,20 +114,18 @@ class Game:
     self._create_checkpoint(Config.TOTAL_HANDS, Config.TOTAL_HANDS)
 
 
-  def _update_scores(self, score_team_1, score_team_2):
+  def _update_scores(self, score_team_1, score_team_2, winner):
     self._total_score_team_1 += score_team_1
     self._total_score_team_2 += score_team_2
     self._current_score_team_1 += score_team_1
     self._current_score_team_2 += score_team_2
     self._checkpoint_score_team_1 += score_team_1
     self._checkpoint_score_team_2 += score_team_2
-    if self._current_score_team_1 > 1000 or self._current_score_team_2 > 1000:
-      if self._current_score_team_1 > 1000 and self._current_score_team_2 > 1000:
-        self._ties += 1
-      elif self._current_score_team_1 > 1000:
+    if winner:
+      if winner == 1:
         self._wins_team_1 += 1
         self._checkpoint_wins_team_1 += 1
-      elif self._current_score_team_2 > 1000:
+      if winner == 2:
         self._wins_team_2 += 1
         self._checkpoint_wins_team_2 += 1
       self._current_score_team_1 = 0
@@ -206,12 +202,12 @@ class Game:
     # all hands are played
     score_of_both_teams = self._total_score_team_1 + self._total_score_team_2
     wins_of_both_teams = self._wins_team_1 + self._wins_team_2
-    message = "Overall result: {} ({}) vs {} ({}); wins: {} vs {} ({} ties); " + \
+    message = "Overall result: {} ({}) vs {} ({}); wins: {} vs {}; " + \
         "(score diff {}, off mean: {:.2f}%, T1 win percentage: {:.2f}%)"
     self.log.error(message.format(
       utils.format_human(self._total_score_team_1), Config.TEAM_1_STRATEGY,
       utils.format_human(self._total_score_team_2), Config.TEAM_2_STRATEGY,
-      utils.format_human(self._wins_team_1), utils.format_human(self._wins_team_2), utils.format_human(self._ties),
+      utils.format_human(self._wins_team_1), utils.format_human(self._wins_team_2),
       utils.format_human((self._total_score_team_1*2-score_of_both_teams)/2),
       100.0*(self._total_score_team_1*2-score_of_both_teams)/2/score_of_both_teams,
       100.0*self._wins_team_1/wins_of_both_teams if wins_of_both_teams > 0 else 0))
