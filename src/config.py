@@ -7,6 +7,7 @@ class Config:
   ENCODING = None
   STORE_TRAINING_DATA = False
   ONLINE_TRAINING = False
+  STORE_SCORES = False
 
   # game configuration
   TEAM_1_STRATEGY = None
@@ -28,7 +29,7 @@ class Config:
   EVALUATION_DIRECTORY = None
 
   # parallel processing
-  PARALLEL_PROCESSES = 1 # constant for now
+  PARALLEL_PROCESSES = None
   BATCH_SIZE = None
   BATCH_COUNT = None
 

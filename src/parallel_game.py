@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from config import Config
+from multiprocessing import current_process
 
+import utils
 from card import Card
 from hand import Hand
 
@@ -33,7 +35,7 @@ class ParallelGame:
     checkpoint_wins_team_1 = 0
     checkpoint_wins_team_2 = 0
 
-    LOG.info("Starting to play...")
+    LOG.info("[{}]: Starting to play {} hands...".format(self._id, utils.format_human(hands_to_play)))
     for i in range(int(hands_to_play)):
       # set up and play new hand
       hand = Hand(self.players, self._cards, LOG)
@@ -61,7 +63,7 @@ class ParallelGame:
         current_score_team_2 += score_team_2
 
       # update stats for current checkpoint
-      if (i+1) % Config.CHECKPOINT_RESOLUTION == 0:
+      if Config.STORE_SCORES and (i+1) % Config.CHECKPOINT_RESOLUTION == 0:
         checkpoint_data.append([i+1+already_played_hands, checkpoint_wins_team_1, checkpoint_score_team_1,
           checkpoint_wins_team_2, checkpoint_score_team_2,
           self.players[0].get_checkpoint_data(), self.players[1].get_checkpoint_data()
@@ -70,7 +72,11 @@ class ParallelGame:
       if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
         training_data.extend(hand.new_training_data)
 
-    LOG.info("... finished playing")
+    LOG.info("[{}]: ... finished playing {} hands".format(self._id, utils.format_human(hands_to_play)))
 
     return dealer, (current_score_team_1, current_score_team_2), (batch_score_team_1, batch_score_team_2), \
         (batch_wins_team_1, batch_wins_team_2), checkpoint_data, training_data
+
+  @property
+  def _id(self):
+    return current_process()._identity[0] # pylint: disable=protected-access,not-callable

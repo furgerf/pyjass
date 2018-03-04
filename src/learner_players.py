@@ -3,9 +3,9 @@
 
 
 import math
+import os
 import pickle
 from config import Config
-import os
 
 import numpy as np
 
@@ -96,17 +96,23 @@ class LearnerPlayer(Player):
     return card
 
   def train(self, training_data, log):
-    log.info("Training model {} with {} new samples".format(
-      self.regressor.__class__.__name__, utils.format_human(len(training_data))))
+    log.warning("Training model {} with {} new samples (currently has {})".format(
+      self.regressor.__class__.__name__, utils.format_human(len(training_data)),
+      utils.format_human(self.regressor.training_samples)))
     data = np.array(training_data)
     self.regressor.partial_fit(data[:, :-1], data[:, -1])
     self.regressor.training_samples += len(training_data)
 
-  def checkpoint(self, current_iteration, total_iterations):
-    unformatted_file_name = "{}/{}_{}_{:0" + str(int(math.log10(total_iterations))+1) + "d}.pkl"
-    file_name = unformatted_file_name.format(Config.EVALUATION_DIRECTORY, self.name,
+  def checkpoint(self, current_iteration, total_iterations, log):
+    unformatted_file_name = "{}_{}_{:0" + str(int(math.log10(total_iterations))+1) + "d}.pkl"
+    file_name = unformatted_file_name.format(self.name,
         self.regressor.__class__.__name__, current_iteration)
-    with open(file_name, "wb") as fh:
+    file_path = "{}/{}".format(Config.EVALUATION_DIRECTORY, file_name)
+    log.warning("Storing model in '{}' at iteration {}/{} ({:.1f}%)".format(file_name,
+      utils.format_human(current_iteration), utils.format_human(total_iterations),
+      100.0*current_iteration/total_iterations))
+
+    with open(file_path, "wb") as fh:
       pickle.dump(self.regressor, fh)
 
   def get_checkpoint_data(self):

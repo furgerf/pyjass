@@ -25,6 +25,10 @@ def parse_arguments():
       help="Random seed to use, no seed means random")
   parser.add_argument("--seed2", type=int, nargs="?", const=123,
       help="Alternative random seed to use, no seed means random")
+  parser.add_argument("--procs", type=int, nargs="?", default=1, const=2,
+      help="Number of processes to use, defaults to 1 and sets to 2 if specified without value")
+  parser.add_argument("--store-scores", action="store_true",
+      help="True if game scores should be stored")
 
   # files
   parser.add_argument("--store-data", action="store_true",
@@ -70,9 +74,12 @@ def apply_arguments(args):
     np.random.seed(args.seed)
   if args.seed2:
     np.random.seed(args.seed2)
+  Config.PARALLEL_PROCESSES = args.procs
 
   if args.store_data:
     Config.STORE_TRAINING_DATA = True
+  if args.store_scores:
+    Config.STORE_SCORES = True
   if args.online_training:
     Config.ONLINE_TRAINING = True
   if args.model:
@@ -142,13 +149,13 @@ def check_config(log):
       log.error("Training data file exists already")
       return False
 
-  if (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and \
+  if Config.STORE_SCORES and (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and \
       (Config.TRAINING_INTERVAL%Config.CHECKPOINT_INTERVAL) * (Config.CHECKPOINT_INTERVAL%Config.TRAINING_INTERVAL):
     log.error("Training interval {} must be a multiple of checkpoint interval {} or vice versa".format(
       utils.format_human(Config.TRAINING_INTERVAL), utils.format_human(Config.CHECKPOINT_INTERVAL)))
     return False
 
-  if (Config.BATCH_SIZE % Config.CHECKPOINT_RESOLUTION) != 0:
+  if Config.STORE_SCORES and (Config.BATCH_SIZE % Config.CHECKPOINT_RESOLUTION) != 0:
     log.error("The checkpoint resolution {} must divide the batch size {}".format(
       utils.format_human(Config.CHECKPOINT_RESOLUTION), Config.BATCH_SIZE))
     return False
@@ -157,7 +164,7 @@ def check_config(log):
       Config.BATCH_COUNT * Config.BATCH_SIZE * Config.PARALLEL_PROCESSES != Config.TOTAL_HANDS:
     log.error("The configuration would lead to incomplete batches: {} hands can't be split into parts of {}*{}={}"
         .format(utils.format_human(Config.TOTAL_HANDS), utils.format_human(Config.PARALLEL_PROCESSES),
-          utils.format_cards(Config.BATCH_SIZE), utils.format_cards(Config.PARALLEL_PROCESSES*Config.BATCH_SIZE)))
+          utils.format_human(Config.BATCH_SIZE), utils.format_human(Config.PARALLEL_PROCESSES*Config.BATCH_SIZE)))
     return False
 
   return True

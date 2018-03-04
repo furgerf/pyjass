@@ -12,7 +12,7 @@ class BaselinePlayer(Player):
   def train(self, training_data, log):
     pass
 
-  def checkpoint(self, current_iteration, total_iterations):
+  def checkpoint(self, current_iteration, total_iterations, log):
     pass
 
   @abstractmethod

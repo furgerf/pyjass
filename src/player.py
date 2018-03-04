@@ -60,7 +60,7 @@ class Player(ABC):
     pass
 
   @abstractmethod
-  def checkpoint(self, current_iteration, total_iterations):
+  def checkpoint(self, current_iteration, total_iterations, log):
     pass
 
   @abstractmethod
