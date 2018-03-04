@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import csv
-from config import Config
 from multiprocessing import Pool
 
 import utils
 from baseline_players import (HighestCardPlayer, RandomCardPlayer,
                               SimpleRulesPlayer)
+from config import Config
 from learner_players import MlpPlayer, SgdPlayer
 from parallel_game import ParallelGame
 
@@ -96,6 +96,7 @@ class Game:
         results = [b.get() for b in batch]
 
         # process results
+        self.log.info("Processing results of batch")
         # dealer/current score are passed as initialization to the next batch
         game_scores = list(map(lambda result: (result[0], result[1]), results))
         # global total score/wins are updated
@@ -195,11 +196,11 @@ class Game:
     # all hands are played
     score_of_both_teams = self._total_score_team_1 + self._total_score_team_2
     wins_of_both_teams = self._wins_team_1 + self._wins_team_2
-    message = "Overall result: {} ({}) vs {} ({}); wins: {} vs {}; " + \
+    message = "Overall result: {} ({}{}) vs {} ({}{}); wins: {} vs {}; " + \
         "(score diff {}, off mean: {:.2f}%, T1 win percentage: {:.2f}%)"
     self.log.error(message.format(
-      utils.format_human(self._total_score_team_1), Config.TEAM_1_STRATEGY,
-      utils.format_human(self._total_score_team_2), Config.TEAM_2_STRATEGY,
+      utils.format_human(self._total_score_team_1), Config.TEAM_1_STRATEGY, " (best)" if Config.TEAM_1_BEST else "",
+      utils.format_human(self._total_score_team_2), Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "",
       utils.format_human(self._wins_team_1), utils.format_human(self._wins_team_2),
       utils.format_human((self._total_score_team_1*2-score_of_both_teams)/2),
       100.0*(self._total_score_team_1*2-score_of_both_teams)/2/score_of_both_teams,

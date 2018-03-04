@@ -76,12 +76,12 @@ class Hand:
       if not winner and _score_team_2 + initial_score_team_2 > 1000:
         winner = 2
 
-    # after concluding the round, update the global training data
+    # after concluding the hand, update the global training data
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       for team_1_training_entry in training_data_team_1:
-        team_1_training_entry[-1] += _score_team_1
+        team_1_training_entry[-1] += _score_team_1 * Config.ENCODING.hand_score_factor
       for team_2_training_entry in training_data_team_2:
-        team_2_training_entry[-1] += _score_team_2
+        team_2_training_entry[-1] += _score_team_2 * Config.ENCODING.hand_score_factor
 
       # pylint: disable=consider-using-enumerate
       for i in range(len(training_data_team_1)):
@@ -95,15 +95,15 @@ class Hand:
   @staticmethod
   def _update_current_training_data(training_data_team_1, training_data_team_2, states, score, dealer):
     if dealer % 2 == 0:
-      training_data_team_1.append(np.append(states[0], score * Config.ENCODING.hand_score_factor))
-      training_data_team_2.append(np.append(states[1], -score * Config.ENCODING.hand_score_factor))
-      training_data_team_1.append(np.append(states[2], score * Config.ENCODING.hand_score_factor))
-      training_data_team_2.append(np.append(states[3], -score * Config.ENCODING.hand_score_factor))
+      training_data_team_1.append(np.append(states[0], score * Config.ENCODING.round_score_factor))
+      training_data_team_2.append(np.append(states[1], -score * Config.ENCODING.round_score_factor))
+      training_data_team_1.append(np.append(states[2], score * Config.ENCODING.round_score_factor))
+      training_data_team_2.append(np.append(states[3], -score * Config.ENCODING.round_score_factor))
     else:
-      training_data_team_1.append(np.append(states[0], -score * Config.ENCODING.hand_score_factor))
-      training_data_team_2.append(np.append(states[1], score * Config.ENCODING.hand_score_factor))
-      training_data_team_1.append(np.append(states[2], -score * Config.ENCODING.hand_score_factor))
-      training_data_team_2.append(np.append(states[3], score * Config.ENCODING.hand_score_factor))
+      training_data_team_1.append(np.append(states[0], -score * Config.ENCODING.round_score_factor))
+      training_data_team_2.append(np.append(states[1], score * Config.ENCODING.round_score_factor))
+      training_data_team_1.append(np.append(states[2], -score * Config.ENCODING.round_score_factor))
+      training_data_team_2.append(np.append(states[3], score * Config.ENCODING.round_score_factor))
 
   @property
   def new_training_data(self):
