@@ -46,8 +46,7 @@ class Hand:
 
       # update known cards - mark the cards that were played during this round
       for j in range(4):
-        if self._known_cards[played_cards[j].card_index] != 0:
-          raise ValueError()
+        assert self._known_cards[played_cards[j].card_index] == 0, "Can't change known card"
         self._known_cards[played_cards[j].card_index] = Config.ENCODING.card_code_players[j]
       self.log.debug("Known cards: {}".format(utils.format_cards(self._known_cards)))
 

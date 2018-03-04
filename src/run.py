@@ -114,6 +114,8 @@ def apply_arguments(args):
   else:
     Config.CHECKPOINT_RESOLUTION = Config.CHECKPOINT_INTERVAL / 10
 
+  Config.set_batch_parameters()
+
 def check_config(log):
   # pylint: disable=too-many-return-statements
   model_based_strategies = ["sgd", "mlp"]
@@ -139,6 +141,24 @@ def check_config(log):
     if os.path.exists(Config.TRAINING_DATA_FILE_NAME):
       log.error("Training data file exists already")
       return False
+
+  if (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and \
+      (Config.TRAINING_INTERVAL%Config.CHECKPOINT_INTERVAL) * (Config.CHECKPOINT_INTERVAL%Config.TRAINING_INTERVAL):
+    log.error("Training interval {} must be a multiple of checkpoint interval {} or vice versa".format(
+      utils.format_human(Config.TRAINING_INTERVAL), utils.format_human(Config.CHECKPOINT_INTERVAL)))
+    return False
+
+  if (Config.BATCH_SIZE % Config.CHECKPOINT_RESOLUTION) != 0:
+    log.error("The checkpoint resolution {} must divide the batch size {}".format(
+      utils.format_human(Config.CHECKPOINT_RESOLUTION), Config.BATCH_SIZE))
+    return False
+
+  if (Config.TOTAL_HANDS % (Config.BATCH_SIZE * Config.PARALLEL_PROCESSES)) != 0 or \
+      Config.BATCH_COUNT * Config.BATCH_SIZE * Config.PARALLEL_PROCESSES != Config.TOTAL_HANDS:
+    log.error("The configuration would lead to incomplete batches: {} hands can't be split into parts of {}*{}={}"
+        .format(utils.format_human(Config.TOTAL_HANDS), utils.format_human(Config.PARALLEL_PROCESSES),
+          utils.format_cards(Config.BATCH_SIZE), utils.format_cards(Config.PARALLEL_PROCESSES*Config.BATCH_SIZE)))
+    return False
 
   return True
 
@@ -194,7 +214,9 @@ def main():
   log.info("Args: {}".format(args))
   log.debug("Config: {}".format(
     {key: utils.format_human(Config.__dict__[key]) if isinstance(Config.__dict__[key], (int, float))
-      else str(Config.__dict__[key]) for key in filter(lambda key: not key.startswith("__"), Config.__dict__)}))
+      else str(Config.__dict__[key]) for key in sorted(
+        filter(lambda key: not key.startswith("__") and not isinstance(Config.__dict__[key], staticmethod),
+          Config.__dict__))}))
   if args.loglevel:
     log.setLevel(args.loglevel.upper())
 

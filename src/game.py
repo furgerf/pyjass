@@ -63,23 +63,6 @@ class Game:
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       training_data = list()
 
-    if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
-      if (Config.TRAINING_INTERVAL % Config.CHECKPOINT_INTERVAL) * (Config.CHECKPOINT_INTERVAL % Config.TRAINING_INTERVAL):
-        self.log.error("Can't run in parallel if training and checkpoint intervals aren't a multiple")
-        raise ValueError()
-      batch_size = int(min(Config.TRAINING_INTERVAL, Config.CHECKPOINT_INTERVAL) / Config.PARALLEL_PROCESSES)
-    else:
-      batch_size = int(Config.CHECKPOINT_INTERVAL / Config.PARALLEL_PROCESSES)
-    batch_count = int(Config.TOTAL_HANDS / batch_size / Config.PARALLEL_PROCESSES)
-
-    if (batch_size % Config.CHECKPOINT_RESOLUTION) != 0:
-      self.log.error("The checkpoint resolution must be divisible by the batch size")
-      raise ValueError()
-
-    if (Config.TOTAL_HANDS % (batch_size * Config.PARALLEL_PROCESSES)) != 0 or batch_count * batch_size * Config.PARALLEL_PROCESSES != Config.TOTAL_HANDS:
-      self.log.error("We don't want to deal with half-full batches")
-      raise ValueError()
-
     # logging
     if Config.STORE_TRAINING_DATA and Config.ONLINE_TRAINING:
       training_description = "(training online AND storing data)"
@@ -93,7 +76,7 @@ class Game:
         .format(utils.format_human(Config.TOTAL_HANDS),
       Config.TEAM_1_STRATEGY, " (best)" if Config.TEAM_1_BEST else "",
       Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "", training_description,
-      Config.PARALLEL_PROCESSES, utils.format_human(batch_size), utils.format_human(batch_count)))
+      Config.PARALLEL_PROCESSES, utils.format_human(Config.BATCH_SIZE), utils.format_human(Config.BATCH_COUNT)))
 
     with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(self.log,)) as pool:
       played_hands = 0
@@ -103,9 +86,10 @@ class Game:
 
       while played_hands < Config.TOTAL_HANDS:
         self.log.debug("Starting batch {}".format(batch_round+1))
-        current_batch_size = min(batch_size, (Config.TOTAL_HANDS - played_hands) / Config.PARALLEL_PROCESSES)
-        batch = [pool.apply_async(game.play_hands, (current_batch_size, played_hands + i * batch_size, *game_scores[i])) for i, game in enumerate(parallel_games)]
-        self.log.debug("Started batch of size {}".format(utils.format_human(current_batch_size)))
+        batch = [pool.apply_async(game.play_hands,
+          (Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE, *game_scores[i]))
+          for i, game in enumerate(parallel_games)]
+        self.log.debug("Started batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
         results = [b.get() for b in batch]
 
         # process results
@@ -117,12 +101,12 @@ class Game:
         self._wins_team_1 += sum(map(lambda result: result[3][0], results))
         self._wins_team_2 += sum(map(lambda result: result[3][1], results))
 
-        played_hands += current_batch_size * Config.PARALLEL_PROCESSES
+        played_hands += Config.BATCH_SIZE * Config.PARALLEL_PROCESSES
         batch_round += 1
 
         # logging
         self.log.info("Finished batch round {}/{} ({:.1f}%), hands played/total: {}/{}".format(
-          utils.format_human(batch_round), utils.format_human(batch_count), 100.0*batch_round/batch_count,
+          utils.format_human(batch_round), utils.format_human(Config.BATCH_COUNT), 100.0*batch_round/Config.BATCH_COUNT,
           utils.format_human(played_hands), utils.format_human(Config.TOTAL_HANDS)))
 
         # handle new training data if required - train before checkpoint!

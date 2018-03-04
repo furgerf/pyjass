@@ -6,9 +6,9 @@ from config import Config
 from card import Card
 from hand import Hand
 
+LOG = None
 
 class ParallelGame:
-  global log
 
   def __init__(self, players):
     # NOTE: The players (their models) get updated because they still share the same reference
@@ -16,9 +16,9 @@ class ParallelGame:
     self._cards = [Card(suit, value) for suit in range(4) for value in range(9)]
 
   @staticmethod
-  def inject_log(injected_log):
-    global log
-    log = injected_log
+  def inject_log(log):
+    global LOG # pylint: disable=global-statement
+    LOG = log
 
   def play_hands(self, hands_to_play, already_played_hands, dealer, scores):
     training_data = list()
@@ -33,10 +33,10 @@ class ParallelGame:
     checkpoint_wins_team_1 = 0
     checkpoint_wins_team_2 = 0
 
-    log.info("Starting to play...")
+    LOG.info("Starting to play...")
     for i in range(int(hands_to_play)):
       # set up and play new hand
-      hand = Hand(self.players, self._cards, log)
+      hand = Hand(self.players, self._cards, LOG)
       (score_team_1, score_team_2), winner = hand.play(dealer, current_score_team_1, current_score_team_2)
 
       # the next hand is started by the next player
@@ -70,7 +70,7 @@ class ParallelGame:
       if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
         training_data.extend(hand.new_training_data)
 
-    log.info("... finished playing")
+    LOG.info("... finished playing")
 
-    return dealer, (current_score_team_1, current_score_team_2), (batch_score_team_1, batch_score_team_2), (batch_wins_team_1, batch_wins_team_2), \
-        checkpoint_data, training_data
+    return dealer, (current_score_team_1, current_score_team_2), (batch_score_team_1, batch_score_team_2), \
+        (batch_wins_team_1, batch_wins_team_2), checkpoint_data, training_data

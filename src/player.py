@@ -12,10 +12,11 @@ import utils
 class Player(ABC):
 
   def __init__(self, name, play_best_card, log):
-    # DON'T store log
+    # DON'T store the log
     self._name = name
     self._play_best_card = play_best_card
     self._hand = None
+    log.debug("Created player {}".format(self.name))
 
   @property
   def name(self):
@@ -44,8 +45,8 @@ class Player(ABC):
       self.name, selected_card, utils.format_cards(valid_cards)))
 
     encoded_player_state = self._encode_cards(played_cards, known_cards)
-    if encoded_player_state[selected_card.card_index] != Config.ENCODING.card_code_in_hand:
-      raise ValueError()
+    assert encoded_player_state[selected_card.card_index] == Config.ENCODING.card_code_in_hand, \
+        "Card to be played must be in the player's hand."
     encoded_player_state[selected_card.card_index] = Config.ENCODING.card_code_selected
 
     return selected_card, encoded_player_state
@@ -69,11 +70,9 @@ class Player(ABC):
   def _encode_cards(self, played_cards, known_cards):
     cards = np.array(known_cards, copy=True)
     for pc in played_cards:
-      if cards[pc.card_index] != 0:
-        raise ValueError()
+      assert cards[pc.card_index] == 0, "Cards in play must've previously been unknown"
       cards[pc.card_index] = Config.ENCODING.card_code_in_play
     for hc in self.hand:
-      if cards[hc.card_index] != 0:
-        raise ValueError()
+      assert cards[hc.card_index] == 0, "Cards in the player's hand must be unknown"
       cards[hc.card_index] = Config.ENCODING.card_code_in_hand
     return cards

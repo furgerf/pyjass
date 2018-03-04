@@ -20,7 +20,8 @@ class LearnerPlayer(Player):
     self.regressor = regressor
     super(LearnerPlayer, self).__init__(name, play_best_card, log)
 
-  def _get_regressor(self, pickle_file_name, regressor_constructor, regressor_args, log):
+  @staticmethod
+  def _get_regressor(pickle_file_name, regressor_constructor, regressor_args, log):
     if os.path.exists(pickle_file_name):
       with open(pickle_file_name, "rb") as fh:
         model = pickle.load(fh)
@@ -28,16 +29,13 @@ class LearnerPlayer(Player):
         path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
         log.error("Loaded model from {}{} (trained on {} samples)".format(pickle_file_name,
           path_difference, utils.format_human(model.training_samples)))
-        if model.__class__.__name__ != regressor_constructor.__name__:
-          log.error("Loaded model is a different type than desired, aborting")
-          raise Exception()
+        assert model.__class__.__name__ == regressor_constructor.__name__, \
+            "Loaded model is a different type than desired, aborting"
 
         return model
 
-    if not Config.TRAINING_DATA_FILE_NAME or not os.path.exists(Config.TRAINING_DATA_FILE_NAME):
-      log.error("Unable to train model: training data file '{}' doesn't exist"
-          .format(Config.TRAINING_DATA_FILE_NAME))
-      raise Exception()
+    assert Config.TRAINING_DATA_FILE_NAME and os.path.exists(Config.TRAINING_DATA_FILE_NAME), \
+        "Unable to train model: training data file '{}' doesn't exist".format(Config.TRAINING_DATA_FILE_NAME)
 
     regressor = regressor_constructor(**regressor_args)
     regressor.training_samples = 0
@@ -120,7 +118,7 @@ class SgdPlayer(LearnerPlayer):
 
   def __init__(self, name, play_best_card, log):
     if SgdPlayer._sgd_regressor is None:
-      SgdPlayer._sgd_regressor = self._get_regressor(
+      SgdPlayer._sgd_regressor = LearnerPlayer._get_regressor(
           "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME or "sgd-model.pkl"),
           SGDRegressor, {
             "warm_start": True
@@ -134,7 +132,7 @@ class MlpPlayer(LearnerPlayer):
 
   def __init__(self, name, play_best_card, log):
     if MlpPlayer._mlp_regressor is None:
-      MlpPlayer._mlp_regressor = self._get_regressor(
+      MlpPlayer._mlp_regressor = LearnerPlayer._get_regressor(
           "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME or "mlp-model.pkl"),
           MLPRegressor, {
             "warm_start": True

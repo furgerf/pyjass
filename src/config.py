@@ -27,4 +27,22 @@ class Config:
   TRAINING_DATA_FILE_NAME = None
   EVALUATION_DIRECTORY = None
 
-  PARALLEL_PROCESSES = 2 # constant for now
+  # parallel processing
+  PARALLEL_PROCESSES = 1 # constant for now
+  BATCH_SIZE = None
+  BATCH_COUNT = None
+
+  @staticmethod
+  def set_batch_parameters():
+    Config.BATCH_SIZE = Config._batch_size()
+    Config.BATCH_COUNT = Config._batch_count()
+
+  @staticmethod
+  def _batch_size(): # pylint: disable=invalid-name
+    return int(min(Config.TRAINING_INTERVAL, Config.CHECKPOINT_INTERVAL) / Config.PARALLEL_PROCESSES) if \
+        Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING else \
+        int(Config.CHECKPOINT_INTERVAL / Config.PARALLEL_PROCESSES)
+
+  @staticmethod
+  def _batch_count(): # pylint: disable=invalid-name
+    return int(Config.TOTAL_HANDS / Config.BATCH_SIZE / Config.PARALLEL_PROCESSES)
