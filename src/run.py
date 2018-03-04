@@ -57,9 +57,8 @@ def parse_arguments():
   default_hands = 1e4
   parser.add_argument("--hands", type=float, nargs="?", default=default_hands,
       help="Number of hands to play, defaults to {}".format(default_hands))
-  parser.add_argument("--logint", type=float, nargs="?",
-      help="Progress log interval (number of hands), defaults to hands/50")
-  parser.add_argument("--trainingint", type=float, nargs="?", # NOTE: 1e5 is roughly 1.25 GB RAM
+  # NOTE: 1e5 with 2 processes needs about 4GB of RAM (NOT SURE HOW MUCH WHEN COMBINING TRAINING DATA...)
+  parser.add_argument("--trainingint", type=float, nargs="?",
       help="Training interval for storing data/online training (number of hands), defaults to min(hands/10, 1e5)")
   parser.add_argument("--chkint", type=float, nargs="?",
       help="Checkpoint creation interval (number of hands), defaults to hands/10")
@@ -104,10 +103,6 @@ def apply_arguments(args):
 
   if args.hands:
     Config.TOTAL_HANDS = int(args.hands)
-  if args.logint:
-    Config.LOGGING_INTERVAL = int(args.logint)
-  else:
-    Config.LOGGING_INTERVAL = Config.TOTAL_HANDS / 50
   if args.trainingint:
     Config.TRAINING_INTERVAL = int(args.trainingint)
   else:

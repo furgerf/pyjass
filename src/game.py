@@ -117,6 +117,7 @@ class Game:
         if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
           for result in results:
             training_data.extend(result[5])
+            result[5].clear() # this probably doesn't help but it's not hurting either...
           if played_hands % Config.TRAINING_INTERVAL == 0:
             self._handle_training_data(training_data)
             training_data.clear()

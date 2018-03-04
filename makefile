@@ -36,6 +36,12 @@ endif
 		echo "Created symlink for final $$reg: $$(ls -l $(THIS_EVAL_DIR)/final-$$reg.pkl | cut -d' ' -f 10-)"; \
 	done
 
+# TODO: Target to clean EID
+
+store:
+	$(eval ARGS := --hands=1e6 --seed --store-data --chkint=1e6 $(ARGS))
+	$(MAKE) run
+
 run-args:
 	$(MAKE) run --args # placeholder for "simplified" invocation
 

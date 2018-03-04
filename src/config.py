@@ -17,7 +17,6 @@ class Config:
 
   # intervals
   TOTAL_HANDS = None
-  LOGGING_INTERVAL = None
   TRAINING_INTERVAL = None
   CHECKPOINT_INTERVAL = None
   CHECKPOINT_RESOLUTION = None
@@ -40,9 +39,13 @@ class Config:
 
   @staticmethod
   def _batch_size(): # pylint: disable=invalid-name
-    return int(min(Config.TRAINING_INTERVAL, Config.CHECKPOINT_INTERVAL) / Config.PARALLEL_PROCESSES) if \
-        Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING else \
-        int(Config.CHECKPOINT_INTERVAL / Config.PARALLEL_PROCESSES)
+    if (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and Config.STORE_SCORES:
+      return int(min(Config.TRAINING_INTERVAL, Config.CHECKPOINT_INTERVAL) / Config.PARALLEL_PROCESSES)
+    if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
+      return int(Config.TRAINING_INTERVAL / Config.PARALLEL_PROCESSES)
+    if Config.STORE_SCORES:
+      return int(Config.CHECKPOINT_INTERVAL / Config.PARALLEL_PROCESSES)
+    return int(Config.TOTAL_HANDS / Config.PARALLEL_PROCESSES)
 
   @staticmethod
   def _batch_count(): # pylint: disable=invalid-name

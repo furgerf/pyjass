@@ -23,6 +23,7 @@ class ParallelGame:
     LOG = log
 
   def play_hands(self, hands_to_play, already_played_hands, dealer, scores):
+    # TODO: Try improving memory consumption with pre-allocated (numpy) arrays
     training_data = list()
     checkpoint_data = list()
     current_score_team_1, current_score_team_2 = scores
