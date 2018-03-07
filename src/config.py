@@ -34,18 +34,7 @@ class Config:
 
   @staticmethod
   def set_batch_parameters():
-    Config.BATCH_SIZE = Config._batch_size()
     Config.BATCH_COUNT = Config._batch_count()
-
-  @staticmethod
-  def _batch_size(): # pylint: disable=invalid-name
-    if (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and Config.STORE_SCORES:
-      return int(min(Config.TRAINING_INTERVAL, Config.CHECKPOINT_INTERVAL) / Config.PARALLEL_PROCESSES)
-    if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
-      return int(Config.TRAINING_INTERVAL / Config.PARALLEL_PROCESSES)
-    if Config.STORE_SCORES:
-      return int(Config.CHECKPOINT_INTERVAL / Config.PARALLEL_PROCESSES)
-    return int(Config.TOTAL_HANDS / Config.PARALLEL_PROCESSES)
 
   @staticmethod
   def _batch_count(): # pylint: disable=invalid-name

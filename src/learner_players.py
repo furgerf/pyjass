@@ -99,8 +99,7 @@ class LearnerPlayer(Player):
     log.warning("Training model {} with {} new samples (currently has {})".format(
       self.regressor.__class__.__name__, utils.format_human(len(training_data)),
       utils.format_human(self.regressor.training_samples)))
-    data = np.array(training_data)
-    self.regressor.partial_fit(data[:, :-1], data[:, -1])
+    self.regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
     self.regressor.training_samples += len(training_data)
 
   def checkpoint(self, current_iteration, total_iterations, log):

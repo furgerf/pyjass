@@ -57,13 +57,15 @@ def parse_arguments():
   default_hands = 1e4
   parser.add_argument("--hands", type=float, nargs="?", default=default_hands,
       help="Number of hands to play, defaults to {}".format(default_hands))
-  # NOTE: 1e5 with 2 processes needs about 4GB of RAM (NOT SURE HOW MUCH WHEN COMBINING TRAINING DATA...)
+  # NOTE: 1e5 with 2 processes needs about 1GB of RAM which roughly doubles during training
   parser.add_argument("--trainingint", type=float, nargs="?",
-      help="Training interval for storing data/online training (number of hands), defaults to min(hands/10, 1e5)")
+      help="Training interval for storing data/online training (hands), defaults to min(hands/10, 1e5)")
   parser.add_argument("--chkint", type=float, nargs="?",
-      help="Checkpoint creation interval (number of hands), defaults to hands/10")
+      help="Checkpoint creation interval (hands), defaults to training interval if training online, else hands/10")
   parser.add_argument("--chkresolution", type=float, nargs="?",
-      help="Checkpoint data resolution (number of hands), defaults to checkpoint interval/10")
+      help="Checkpoint data resolution (hands), defaults to checkpoint interval/10")
+  parser.add_argument("--batchsize", type=float, nargs="?",
+      help="Size of a single batch to run on a process, defaults to 1e3")
 
   return parser.parse_args()
 
@@ -106,15 +108,19 @@ def apply_arguments(args):
   if args.trainingint:
     Config.TRAINING_INTERVAL = int(args.trainingint)
   else:
-    Config.TRAINING_INTERVAL = min(Config.TOTAL_HANDS / 10, int(1e5))
+    Config.TRAINING_INTERVAL = min(int(Config.TOTAL_HANDS / 10), int(1e5))
   if args.chkint:
     Config.CHECKPOINT_INTERVAL = int(args.chkint)
   else:
-    Config.CHECKPOINT_INTERVAL = Config.TOTAL_HANDS / 10
+    Config.CHECKPOINT_INTERVAL = Config.TRAINING_INTERVAL if Config.ONLINE_TRAINING else Config.TOTAL_HANDS / 10
   if args.chkresolution:
     Config.CHECKPOINT_RESOLUTION = int(args.chkresolution)
   else:
     Config.CHECKPOINT_RESOLUTION = Config.CHECKPOINT_INTERVAL / 10
+  if args.batchsize:
+    Config.BATCH_SIZE = int(args.batchsize)
+  else:
+    Config.BATCH_SIZE = int(1e3)
 
   Config.set_batch_parameters()
 
@@ -143,6 +149,31 @@ def check_config(log):
     if os.path.exists(Config.TRAINING_DATA_FILE_NAME):
       log.error("Training data file exists already")
       return False
+
+  if Config.TOTAL_HANDS % Config.CHECKPOINT_INTERVAL != 0:
+    log.error("Checkpoint interval {} must divide total hands {}".format(
+      utils.format_human(Config.CHECKPOINT_INTERVAL), utils.format_human(Config.TOTAL_HANDS)))
+    return False
+
+  if Config.CHECKPOINT_INTERVAL % (Config.BATCH_SIZE*Config.PARALLEL_PROCESSES) != 0:
+    log.error("Batch size {} times processes {} must divide checkpoint interval {}".format(
+      utils.format_human(Config.BATCH_SIZE), Config.PARALLEL_PROCESSES, utils.format_human(Config.CHECKPOINT_INTERVAL)))
+    return False
+
+  if Config.TOTAL_HANDS % Config.TRAINING_INTERVAL != 0:
+    log.error("Training interval {} must divide total hands {}".format(
+      utils.format_human(Config.TRAINING_INTERVAL), utils.format_human(Config.TOTAL_HANDS)))
+    return False
+
+  if Config.TRAINING_INTERVAL % (Config.BATCH_SIZE*Config.PARALLEL_PROCESSES) != 0:
+    log.error("Batch size {} times processes {} must divide training interval {}".format(
+      utils.format_human(Config.BATCH_SIZE), Config.PARALLEL_PROCESSES, utils.format_human(Config.TRAINING_INTERVAL)))
+    return False
+
+  if Config.ONLINE_TRAINING and Config.CHECKPOINT_INTERVAL < Config.TRAINING_INTERVAL:
+    log.error("Checkpoint interval {} should be greater than training interval {}".format(
+      utils.format_human(Config.CHECKPOINT_INTERVAL), utils.format_human(Config.TRAINING_INTERVAL)))
+    return False
 
   if Config.STORE_SCORES and (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and \
       (Config.TRAINING_INTERVAL%Config.CHECKPOINT_INTERVAL) * (Config.CHECKPOINT_INTERVAL%Config.TRAINING_INTERVAL):
