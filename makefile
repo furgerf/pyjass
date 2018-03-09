@@ -2,6 +2,7 @@ VENV=venv
 BIN=$(VENV)/bin
 NICE=nice -n 19
 UNBUF=unbuffer
+SHELL=/bin/bash
 
 DATA_DIR=data
 MODELS_DIR=models
@@ -11,21 +12,27 @@ DIRECTORIES=$(DATA_DIR) $(MODELS_DIR) $(EVAL_DIR) $(OLD_EVAL_DIR)
 
 REGRESSORS=SGDRegressor MLPRegressor
 
-# TODO: PID file for STOP/CONT
+# TODO
+# - Target to clean eval directory by EID
+# - Special archiving for (tracked) evaluations
+# - PID file for STOP/CONT, targets to work with them
+
+ARGS=
+MOD=
+UUID=$(shell uuidgen)
+TARGET=run
+EID:=$(TARGET)-$(UUID)
+THIS_EVAL_DIR:=$(EVAL_DIR)/$(EID)
+EVAL_LOG:=$(THIS_EVAL_DIR)/evaluation_$(shell date '+%Y%m%d_%H%M%S').log
+lint: LINT_FILES:=src/*.py
+wait: PID=
 
 run:
-ifndef EID
-	$(eval EID := $(shell uuidgen))
-endif
-	$(eval EID_ARG := --eid=$(EID))
-	$(eval THIS_EVAL_DIR := $(EVAL_DIR)/$(EID))
-	$(eval EVAL_LOG := $(THIS_EVAL_DIR)/evaluation_$(shell date '+%Y%m%d_%H%M%S').log)
 	mkdir -p $(THIS_EVAL_DIR)
 ifndef MOD
 	$(error Must specify model)
 endif
-	$(eval MOD_ARG := --model=$(MOD))
-	$(UNBUF) $(NICE) $(BIN)/python src/run.py $(EID_ARG) $(MOD_ARG) $(ARGS) 2>&1 | tee $(EVAL_LOG)
+	$(UNBUF) $(NICE) $(BIN)/python src/run.py --eid=$(EID) --model=$(MOD) $(ARGS) 2>&1 | tee $(EVAL_LOG)
 	@for reg in $(REGRESSORS); do \
 		unset -v latest; \
 		for pkl in $(THIS_EVAL_DIR)/p*_"$$reg"_*.pkl; do \
@@ -36,22 +43,46 @@ endif
 		echo "Created symlink for final $$reg: $$(ls -l $(THIS_EVAL_DIR)/final-$$reg.pkl | cut -d' ' -f 10-)"; \
 	done
 
-# TODO: Target to clean EID
+train:
+	@$(MAKE) run ARGS='--seed --procs --online --team1=mlp --hands=1e7 --trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e3 $(ARGS)' TARGET=$@
+
+eval:
+	@# NOTE: batch size = hands / logint / procs
+	@$(MAKE) run ARGS='--seed --procs --team1=mlp --team1-best --hands=5e5 --trainingint=5e5 --chkint=5e5 --logint=1e5 --batchsize=5e4 $(ARGS)' TARGET=$@
 
 store:
-	$(eval ARGS := --hands=1e6 --seed --store-data --chkint=1e6 $(ARGS))
-	$(MAKE) run
+	# TODO
 
-run-args:
-	$(MAKE) run --args # placeholder for "simplified" invocation
+initial-training:
+	# TODO
+
+link-model:
+ifndef MOD
+	$(error Must specify model)
+endif
+ifndef MOD_NAME
+	$(error Must specify model name for symlink)
+endif
+	@for reg in $(EID)/final-*.pkl; do \
+		pushd $(MODELS_DIR)/$(MOD) > /dev/null; \
+		ln -s ../../$(EVAL_DIR)/$(EID)/$$(basename $$reg) $(MOD_NAME); \
+		popd > /dev/null; \
+		echo "Created symlink: $$(ls -l $(MODELS_DIR)/$(MOD)/$(MOD_NAME) | cut -d' ' -f 10-)"; \
+	done
 
 lint:
-	$(eval LINT_FILES := src/*.py)
-	$(BIN)/pylint $(LINT_FILES) --ignore=venv/ -f colorized -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
+	@$(BIN)/pylint $(LINT_FILES) --ignore=venv/ -f colorized -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
 
 explore:
 	$(BIN)/ipython -m src.explore -i
 
+wait:
+ifndef PID
+	$(error Must specify pid)
+endif
+	@while [ -d /proc/$$PID ]; do \
+		sleep 1; \
+	done
 
 archive:
 	for eval in $(EVAL_DIR)/*; do \
