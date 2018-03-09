@@ -96,7 +96,7 @@ class LearnerPlayer(Player):
     return card
 
   def train(self, training_data, log):
-    log.warning("Training model {} with {} new samples (currently has {})".format(
+    log.info("Training model {} with {} new samples (currently has {})".format(
       self.regressor.__class__.__name__, utils.format_human(len(training_data)),
       utils.format_human(self.regressor.training_samples)))
     self.regressor.partial_fit(training_data[:, :-1], training_data[:, -1])

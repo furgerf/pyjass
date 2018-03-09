@@ -71,7 +71,7 @@ class Game:
       training_description = "(training online)"
     else:
       training_description = ""
-    self.log.error("Starting game of {} hands: {}{} vs {}{} {} ({} processes, {} batch size, {} batches)"
+    self.log.error("Starting game of {} hands: {}{} vs {}{} {} ({} processes, {} batch size, {} rounds)"
         .format(utils.format_human(Config.TOTAL_HANDS),
       Config.TEAM_1_STRATEGY, " (best)" if Config.TEAM_1_BEST else "",
       Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "", training_description,
@@ -89,7 +89,6 @@ class Game:
 
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       training_samples_per_batch = 32*Config.BATCH_SIZE
-      training_samples_per_round = Config.PARALLEL_PROCESSES * training_samples_per_batch
       training_samples_per_training = 32*Config.TRAINING_INTERVAL
       training_data = np.ones((training_samples_per_training, 37), dtype=int)
 
@@ -99,7 +98,7 @@ class Game:
       pool_pids = [result.get() for result in results]
       assert len(set(pool_pids)) == len(pool_pids)
       pids = [os.getpid()] + pool_pids
-      self.log.info("Found {} processes: {}".format(len(pids), " ".join(str(p) for p in pids)))
+      self.log.info("Found 1+{} processes: {}".format(len(pids)-1, " ".join(str(p) for p in pids)))
       processes = [Process(pid) for pid in pids]
 
       while played_hands < Config.TOTAL_HANDS:
@@ -140,12 +139,13 @@ class Game:
 
         # handle new training data if required - train before checkpoint!
         if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
-          start_index = int(((played_hands - Config.BATCH_SIZE * Config.PARALLEL_PROCESSES) % Config.TRAINING_INTERVAL) / Config.BATCH_SIZE)
+          start_index = int(((played_hands - Config.BATCH_SIZE * Config.PARALLEL_PROCESSES)
+            % Config.TRAINING_INTERVAL) / Config.BATCH_SIZE)
           for i, result in enumerate(results):
             from_index = (start_index+i) * training_samples_per_batch
             to_index = (start_index+i+1) * training_samples_per_batch
             assert from_index == last_to_index
-            last_to_index = to_index
+            last_to_index = to_index % len(training_data)
             training_data[from_index:to_index] = result[5]
           if played_hands % Config.TRAINING_INTERVAL == 0:
             # for row in training_data:

@@ -70,7 +70,7 @@ def parse_arguments():
   return parser.parse_args()
 
 def apply_arguments(args):
-  # pylint: disable=too-many-branches
+  # pylint: disable=too-many-branches,too-many-statements
   if args.seed:
     np.random.seed(args.seed)
   if args.seed2:
@@ -125,7 +125,7 @@ def apply_arguments(args):
   Config.set_batch_parameters()
 
 def check_config(log):
-  # pylint: disable=too-many-return-statements
+  # pylint: disable=too-many-return-statements,too-many-branches
   model_based_strategies = ["sgd", "mlp"]
   uses_model = Config.TEAM_1_STRATEGY in model_based_strategies or \
       Config.TEAM_2_STRATEGY in model_based_strategies
@@ -160,12 +160,13 @@ def check_config(log):
       utils.format_human(Config.BATCH_SIZE), Config.PARALLEL_PROCESSES, utils.format_human(Config.CHECKPOINT_INTERVAL)))
     return False
 
-  if Config.TOTAL_HANDS % Config.TRAINING_INTERVAL != 0:
+  if (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and Config.TOTAL_HANDS % Config.TRAINING_INTERVAL != 0:
     log.error("Training interval {} must divide total hands {}".format(
       utils.format_human(Config.TRAINING_INTERVAL), utils.format_human(Config.TOTAL_HANDS)))
     return False
 
-  if Config.TRAINING_INTERVAL % (Config.BATCH_SIZE*Config.PARALLEL_PROCESSES) != 0:
+  if (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and \
+      Config.TRAINING_INTERVAL % (Config.BATCH_SIZE*Config.PARALLEL_PROCESSES) != 0:
     log.error("Batch size {} times processes {} must divide training interval {}".format(
       utils.format_human(Config.BATCH_SIZE), Config.PARALLEL_PROCESSES, utils.format_human(Config.TRAINING_INTERVAL)))
     return False
@@ -232,6 +233,7 @@ def get_encodings():
       "09": encoding_6,
       "10": encoding_7,
       "11": encoding_8,
+      "12": encoding_5,
       }
 
 def main():

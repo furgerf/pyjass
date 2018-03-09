@@ -87,6 +87,7 @@ class ParallelGame:
 
   @property
   def _id(self):
+    # pylint: disable=protected-access,not-callable
     if current_process()._identity:
-      return current_process()._identity[0] # pylint: disable=protected-access,not-callable
+      return current_process()._identity[0]
     return "0"
