@@ -129,14 +129,6 @@ class Game:
         played_hands += Config.BATCH_SIZE * Config.PARALLEL_PROCESSES
         batch_round += 1
 
-        # logging
-        if batch_round % Config.LOGGING_INTERVAL == 0:
-          memory = [round(process.memory_info().rss/1e6, 1) for process in processes]
-          self.log.info("Finished round {}/{} ({:.1f}%), hands: {}/{}, memory: {}={:.1f}M".format(
-            utils.format_human(batch_round), utils.format_human(Config.BATCH_COUNT), 100.0*batch_round/Config.BATCH_COUNT,
-            utils.format_human(played_hands), utils.format_human(Config.TOTAL_HANDS),
-            "+".join(str(m) for m in memory), sum(memory)))
-
         # handle new training data if required - train before checkpoint!
         if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
           start_index = int(((played_hands - Config.BATCH_SIZE * Config.PARALLEL_PROCESSES)
@@ -160,6 +152,15 @@ class Game:
           self._create_checkpoint(played_hands, Config.TOTAL_HANDS)
           if Config.STORE_SCORES:
             self._checkpoint_data.clear()
+
+        # logging
+        if played_hands % Config.LOGGING_INTERVAL == 0:
+          memory = [round(process.memory_info().rss/1e6, 1) for process in processes]
+          self.log.info("Finished round {}/{} ({:.1f}%), hands: {}/{}, memory: {}={:.1f}M".format(
+            utils.format_human(batch_round), utils.format_human(Config.BATCH_COUNT),
+            100.0*batch_round/Config.BATCH_COUNT,
+            utils.format_human(played_hands), utils.format_human(Config.TOTAL_HANDS),
+            "+".join(str(m) for m in memory), sum(memory)))
 
     # the game is over
     self._print_results()

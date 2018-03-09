@@ -66,6 +66,8 @@ def parse_arguments():
       help="Checkpoint data resolution (hands), defaults to checkpoint interval/10")
   parser.add_argument("--batchsize", type=float, nargs="?",
       help="Size of a single batch to run on a process, defaults to 1e3")
+  parser.add_argument("--logint", type=float, nargs="?",
+      help="Logging interval, defaults to hands/20")
 
   return parser.parse_args()
 
@@ -121,6 +123,10 @@ def apply_arguments(args):
     Config.BATCH_SIZE = int(args.batchsize)
   else:
     Config.BATCH_SIZE = int(1e3)
+  if args.logint:
+    Config.LOGGING_INTERVAL = int(args.logint)
+  else:
+    Config.LOGGING_INTERVAL = int(Config.TOTAL_HANDS / 20)
 
   Config.set_batch_parameters()
 
@@ -153,6 +159,11 @@ def check_config(log):
   if Config.TOTAL_HANDS % Config.CHECKPOINT_INTERVAL != 0:
     log.error("Checkpoint interval {} must divide total hands {}".format(
       utils.format_human(Config.CHECKPOINT_INTERVAL), utils.format_human(Config.TOTAL_HANDS)))
+    return False
+
+  if Config.LOGGING_INTERVAL % (Config.BATCH_SIZE*Config.PARALLEL_PROCESSES) != 0:
+    log.error("Batch size {} times processes {} must divide logging interval {}".format(
+      utils.format_human(Config.BATCH_SIZE), Config.PARALLEL_PROCESSES, utils.format_human(Config.LOGGING_INTERVAL)))
     return False
 
   if Config.CHECKPOINT_INTERVAL % (Config.BATCH_SIZE*Config.PARALLEL_PROCESSES) != 0:

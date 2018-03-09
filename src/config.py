@@ -20,6 +20,7 @@ class Config:
   TRAINING_INTERVAL = None
   CHECKPOINT_INTERVAL = None
   CHECKPOINT_RESOLUTION = None
+  LOGGING_INTERVAL = None
 
   # files/directories
   MODEL_DIRECTORY = None
