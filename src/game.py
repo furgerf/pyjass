@@ -84,7 +84,6 @@ class Game:
     played_hands = 0
     batch_round = 0
     parallel_games = [ParallelGame(self.players) for _ in range(Config.PARALLEL_PROCESSES)]
-    game_scores = [(0, (0, 0)) for game in parallel_games]
     last_to_index = 0
 
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
@@ -104,23 +103,17 @@ class Game:
       while played_hands < Config.TOTAL_HANDS:
         self.log.debug("Starting batch {}".format(batch_round+1))
         if Config.PARALLEL_PROCESSES > 1:
-          batch = [pool.apply_async(game.play_hands,
-            (Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE, *game_scores[i]))
+          batch = [pool.apply_async(game.play_hands, (Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE))
             for i, game in enumerate(parallel_games)]
           self.log.debug("Started parallel batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
           results = [b.get() for b in batch]
         else:
           ParallelGame.inject_log(self.log)
           self.log.debug("Starting sequential batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
-          results = [game.play_hands(Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE, *game_scores[i])
+          results = [game.play_hands(Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE)
               for i, game in enumerate(parallel_games)]
 
-        # process results
         self.log.debug("Processing results of batch")
-        # dealer/current score are passed as initialization to the next batch
-        # TODO: Try and see if that can't be avoided
-        game_scores = list(map(lambda result: (result[0], result[1]), results))
-        # global total score/wins are updated
         self._total_score_team_1 += sum(map(lambda result: result[2][0], results))
         self._total_score_team_2 += sum(map(lambda result: result[2][1], results))
         self._wins_team_1 += sum(map(lambda result: result[3][0], results))

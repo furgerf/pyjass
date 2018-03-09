@@ -18,17 +18,19 @@ class ParallelGame:
     # NOTE: The players (their models) get updated because they still share the same reference
     self.players = players
     self._cards = [Card(suit, value) for suit in range(4) for value in range(9)]
+    self.dealer = 0
+    self.current_score_team_1 = 0
+    self.current_score_team_2 = 0
 
   @staticmethod
   def inject_log(log):
     global LOG # pylint: disable=global-statement
     LOG = log
 
-  def play_hands(self, hands_to_play, already_played_hands, dealer, scores):
+  def play_hands(self, hands_to_play, already_played_hands):
     # TODO: Try improving memory consumption with pre-allocated (numpy) arrays
     training_data = list()
     checkpoint_data = list()
-    current_score_team_1, current_score_team_2 = scores
     batch_score_team_1 = 0
     batch_score_team_2 = 0
     batch_wins_team_1 = 0
@@ -42,10 +44,11 @@ class ParallelGame:
     for i in range(int(hands_to_play)):
       # set up and play new hand
       hand = Hand(self.players, self._cards, LOG)
-      (score_team_1, score_team_2), winner = hand.play(dealer, current_score_team_1, current_score_team_2)
+      (score_team_1, score_team_2), winner = hand.play(self.dealer,
+          self.current_score_team_1, self.current_score_team_2)
 
       # the next hand is started by the next player
-      dealer = (dealer + 1) % 4
+      self.dealer = (self.dealer + 1) % 4
 
       # update scores and win counts
       batch_score_team_1 += score_team_1
@@ -59,11 +62,11 @@ class ParallelGame:
         if winner == 2:
           batch_wins_team_2 += 1
           checkpoint_wins_team_2 += 1
-        current_score_team_1 = 0
-        current_score_team_2 = 0
+        self.current_score_team_1 = 0
+        self.current_score_team_2 = 0
       else:
-        current_score_team_1 += score_team_1
-        current_score_team_2 += score_team_2
+        self.current_score_team_1 += score_team_1
+        self.current_score_team_2 += score_team_2
 
       # update stats for current checkpoint
       if Config.STORE_SCORES and (i+1) % Config.CHECKPOINT_RESOLUTION == 0:
@@ -77,7 +80,7 @@ class ParallelGame:
 
     LOG.debug("[{}]: ... finished playing {} hands".format(self._id, utils.format_human(hands_to_play)))
 
-    return dealer, (current_score_team_1, current_score_team_2), (batch_score_team_1, batch_score_team_2), \
+    return None, None, (batch_score_team_1, batch_score_team_2), \
         (batch_wins_team_1, batch_wins_team_2), checkpoint_data, training_data
 
   @staticmethod
