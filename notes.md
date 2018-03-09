@@ -12,6 +12,7 @@
 - Training with with playing the best card seems to be better
   - This seems to be true for training on bad data but probably not for better data!
 - So far, encodings 3 and 4 seem to perform similarly
+- Training interval has an impact on learning performance
 
 # To try
 - How do methods compare against better baseline?
