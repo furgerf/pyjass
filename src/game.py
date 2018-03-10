@@ -65,14 +65,14 @@ class Game:
       self._training_data_writer = csv.writer(self._training_data_fh, lineterminator="\n")
 
     if Config.STORE_TRAINING_DATA and Config.ONLINE_TRAINING:
-      training_description = "(training online AND storing data)"
+      training_description = "(training online AND storing data) "
     elif Config.STORE_TRAINING_DATA:
-      training_description = "(storing training data)"
+      training_description = "(storing training data) "
     elif Config.ONLINE_TRAINING:
-      training_description = "(training online)"
+      training_description = "(training online) "
     else:
       training_description = ""
-    self.log.error("Starting game of {} hands: {}{} vs {}{} {} ({} processes, {} batch size, {} rounds)"
+    self.log.error("Starting game of {} hands: {}{} vs {}{} {}({} processes, {} batch size, {} rounds)"
         .format(utils.format_human(Config.TOTAL_HANDS),
       Config.TEAM_1_STRATEGY, " (best)" if Config.TEAM_1_BEST else "",
       Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "", training_description,
@@ -94,11 +94,11 @@ class Game:
 
     with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(self.log,)) as pool:
       # retrieve processes
-      results = [pool.apply_async(ParallelGame.pid, ()) for i in range(Config.PARALLEL_PROCESSES)]
+      results = [pool.apply_async(ParallelGame.set_seed_and_get_pid, (i+1,)) for i in range(Config.PARALLEL_PROCESSES)]
       pool_pids = [result.get() for result in results]
       assert len(set(pool_pids)) == len(pool_pids)
       pids = [os.getpid()] + pool_pids
-      self.log.info("Found 1+{} processes: {}".format(len(pids)-1, " ".join(str(p) for p in pids)))
+      self.log.info("Running with 1+{} processes: {}".format(len(pids)-1, " ".join(str(p) for p in pids)))
       processes = [Process(pid) for pid in pids]
 
       while played_hands < Config.TOTAL_HANDS:
@@ -204,8 +204,6 @@ class Game:
       Config.ENCODING.round_score_factor, Config.ENCODING.hand_score_factor))
 
   def _write_training_data(self, training_data):
-    if not training_data:
-      return
     self.log.info("Writing {} training samples to {}".format(
       utils.format_human(len(training_data)), self._training_data_fh.name))
     self._training_data_writer.writerows(training_data)

@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import os
+from config import Config
 from multiprocessing import current_process
 from time import sleep
 
+import numpy as np
+
 import utils
 from card import Card
-from config import Config
 from const import Const
 from hand import Hand
 
@@ -85,9 +87,17 @@ class ParallelGame:
         training_data, checkpoint_data
 
   @staticmethod
-  def pid():
+  def set_seed_and_get_pid(worker_id):
     sleep(0.1)
-    return os.getpid()
+    if Config.SEED:
+      seed = Config.SEED + worker_id
+      np.random.seed(seed)
+    else:
+      np.random.seed()
+      seed = "random"
+    pid = os.getpid()
+    LOG.info("Found PID {} for worker {} (seed: {})".format(pid, worker_id, seed))
+    return pid
 
   @property
   def _id(self):

@@ -74,9 +74,11 @@ def parse_arguments():
 def apply_arguments(args):
   # pylint: disable=too-many-branches,too-many-statements
   if args.seed:
-    np.random.seed(args.seed)
+    Config.SEED = args.seed
   if args.seed2:
-    np.random.seed(args.seed2)
+    Config.SEED = args.seed2
+  if Config.SEED:
+    np.random.seed(Config.SEED)
   Config.PARALLEL_PROCESSES = args.procs
 
   if args.store_data:

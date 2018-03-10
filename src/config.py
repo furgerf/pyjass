@@ -4,6 +4,7 @@
 
 class Config:
   # training/model
+  SEED = None
   ENCODING = None
   STORE_TRAINING_DATA = False
   ONLINE_TRAINING = False
