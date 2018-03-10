@@ -25,7 +25,7 @@ def store_model(model, file_name):
 
 
 def visualize_scores(eid="foo", ymin=0.0, ymax=1.0):
-  scores_file = "evaluations/{}/scores.csv".format(eid)
+  scores_file = "evaluations/{}/curve_scores.csv".format(eid)
   df = pd.read_csv(scores_file)
 
   # prepare data
