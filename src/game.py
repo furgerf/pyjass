@@ -10,6 +10,7 @@ import utils
 from baseline_players import (HighestCardPlayer, RandomCardPlayer,
                               SimpleRulesPlayer)
 from config import Config
+from const import Const
 from learner_players import MlpPlayer, SgdPlayer
 from parallel_game import ParallelGame
 from psutil import Process
@@ -87,9 +88,9 @@ class Game:
     last_to_index = 0
 
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
-      training_samples_per_batch = 32*Config.BATCH_SIZE
-      training_samples_per_training = 32*Config.TRAINING_INTERVAL
-      training_data = np.ones((training_samples_per_training, 37), dtype=int)
+      training_samples_per_batch = Const.DECISIONS_PER_HAND * Config.BATCH_SIZE
+      training_samples_per_training = Const.DECISIONS_PER_HAND * Config.TRAINING_INTERVAL
+      training_data = np.ones((training_samples_per_training, Const.CARDS_PER_HAND + 1), dtype=int)
 
     with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(self.log,)) as pool:
       # retrieve processes
@@ -114,10 +115,10 @@ class Game:
               for i, game in enumerate(parallel_games)]
 
         self.log.debug("Processing results of batch")
-        self._total_score_team_1 += sum(map(lambda result: result[2][0], results))
-        self._total_score_team_2 += sum(map(lambda result: result[2][1], results))
-        self._wins_team_1 += sum(map(lambda result: result[3][0], results))
-        self._wins_team_2 += sum(map(lambda result: result[3][1], results))
+        self._total_score_team_1 += sum(map(lambda result: result[0][0], results))
+        self._total_score_team_2 += sum(map(lambda result: result[0][1], results))
+        self._wins_team_1 += sum(map(lambda result: result[1][0], results))
+        self._wins_team_2 += sum(map(lambda result: result[1][1], results))
 
         played_hands += Config.BATCH_SIZE * Config.PARALLEL_PROCESSES
         batch_round += 1
@@ -131,7 +132,7 @@ class Game:
             to_index = (start_index+i+1) * training_samples_per_batch
             assert from_index == last_to_index
             last_to_index = to_index % len(training_data)
-            training_data[from_index:to_index] = result[5]
+            training_data[from_index:to_index] = result[2]
           if played_hands % Config.TRAINING_INTERVAL == 0:
             # for row in training_data:
             #   assert row.sum() > 0
@@ -140,7 +141,7 @@ class Game:
         # checkpoint
         if Config.STORE_SCORES:
           for result in results:
-            self._checkpoint_data.extend(result[4])
+            self._checkpoint_data.extend(result[3])
         if played_hands % Config.CHECKPOINT_INTERVAL == 0:
           self._create_checkpoint(played_hands, Config.TOTAL_HANDS)
           if Config.STORE_SCORES:

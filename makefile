@@ -32,7 +32,8 @@ run:
 ifndef MOD
 	$(error Must specify model)
 endif
-	$(UNBUF) $(NICE) $(BIN)/python src/run.py --eid=$(EID) --model=$(MOD) $(ARGS) 2>&1 | tee $(EVAL_LOG)
+	$(UNBUF) $(NICE) $(BIN)/python src/run.py --eid=$(EID) --model=$(MOD) $(ARGS) 2>&1 \
+		| tee $(EVAL_LOG); [ $${PIPESTATUS[0]} -eq 0 ]
 	@for reg in $(REGRESSORS); do \
 		unset -v latest; \
 		for pkl in $(THIS_EVAL_DIR)/p*_"$$reg"_*.pkl; do \
@@ -44,11 +45,13 @@ endif
 	done
 
 train:
-	@$(MAKE) run ARGS='--seed --procs --online --team1=mlp --hands=1e7 --trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e3 $(ARGS)' TARGET=$@
+	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=1e7 \
+		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e3 $(ARGS)' TARGET=$@
 
 eval:
 	@# NOTE: batch size = hands / logint / procs
-	@$(MAKE) run ARGS='--seed --procs --team1=mlp --team1-best --hands=5e5 --trainingint=5e5 --chkint=5e5 --logint=1e5 --batchsize=5e4 $(ARGS)' TARGET=$@
+	@$(MAKE) run ARGS='--seed --procs --team1=mlp --team1-best --hands=5e5 \
+		--trainingint=5e5 --chkint=5e5 --logint=1e5 --batchsize=5e4 $(ARGS)' TARGET=$@
 
 store:
 	# TODO
@@ -67,7 +70,7 @@ endif
 		pushd $(MODELS_DIR)/$(MOD) > /dev/null; \
 		ln -s ../../$(EVAL_DIR)/$(EID)/$$(basename $$reg) $(MOD_NAME); \
 		popd > /dev/null; \
-		echo "Created symlink: $$(ls -l $(MODELS_DIR)/$(MOD)/$(MOD_NAME) | cut -d' ' -f 10-)"; \
+		echo "Created symlink: $$(ls -l $(MODELS_DIR)/$(MOD)/$(MOD_NAME) | cut -d' ' -f 9-)"; \
 	done
 
 lint:

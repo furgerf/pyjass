@@ -8,6 +8,7 @@ from time import sleep
 import utils
 from card import Card
 from config import Config
+from const import Const
 from hand import Hand
 
 LOG = None
@@ -17,7 +18,7 @@ class ParallelGame:
   def __init__(self, players):
     # NOTE: The players (their models) get updated because they still share the same reference
     self.players = players
-    self._cards = [Card(suit, value) for suit in range(4) for value in range(9)]
+    self._cards = [Card(suit, value) for suit in range(Const.PLAYER_COUNT) for value in range(Const.CARDS_PER_PLAYER)]
     self.dealer = 0
     self.current_score_team_1 = 0
     self.current_score_team_2 = 0
@@ -48,7 +49,7 @@ class ParallelGame:
           self.current_score_team_1, self.current_score_team_2)
 
       # the next hand is started by the next player
-      self.dealer = (self.dealer + 1) % 4
+      self.dealer = (self.dealer + 1) % Const.PLAYER_COUNT
 
       # update scores and win counts
       batch_score_team_1 += score_team_1
@@ -80,8 +81,8 @@ class ParallelGame:
 
     LOG.debug("[{}]: ... finished playing {} hands".format(self._id, utils.format_human(hands_to_play)))
 
-    return None, None, (batch_score_team_1, batch_score_team_2), \
-        (batch_wins_team_1, batch_wins_team_2), checkpoint_data, training_data
+    return (batch_score_team_1, batch_score_team_2), (batch_wins_team_1, batch_wins_team_2), \
+        training_data, checkpoint_data
 
   @staticmethod
   def pid():

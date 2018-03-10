@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-
 import utils
+from const import Const
 
 
 class Round:
@@ -31,8 +31,8 @@ class Round:
     states = []
 
     # play round
-    for i in range(4):
-      current_player = self._players[(dealer+i) % 4]
+    for i in range(Const.PLAYER_COUNT):
+      current_player = self._players[(dealer+i) % Const.PLAYER_COUNT]
       played_card, player_state = current_player.select_card_to_play(played_cards, self._known_cards, self.log)
       current_player.hand.remove(played_card)
 
@@ -48,12 +48,12 @@ class Round:
   def _evaluate(played_cards, dealer):
     # find the index of the best card among the played cards
     best_index = 0
-    for i in range(1, 4):
+    for i in range(1, Const.PLAYER_COUNT):
       if played_cards[best_index].is_beaten_by(played_cards[i]):
         best_index = i
 
     # the winner is the best card offset by the initial dealer
-    winner = (dealer + best_index) % 4
+    winner = (dealer + best_index) % Const.PLAYER_COUNT
 
     score = sum(map(lambda c: c.score, played_cards))
     return winner, score
@@ -62,7 +62,7 @@ class Round:
     print("\t{}: {}".format(self.p3.name, utils.format_cards(self.p3.hand)))
 
     print("{}:\t\t\t\t\t{}:".format(self.p4.name, self.p2.name))
-    for i in range(9):
+    for i in range(Const.CARDS_PER_PLAYER):
       if i >= len(self.p2.hand):
         print("")
         continue

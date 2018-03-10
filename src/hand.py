@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-
 import utils
 from config import Config
+from const import Const
 from round import Round
 
 
@@ -14,12 +14,12 @@ class Hand:
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       self._training_data = list()
     self.log = log
-    self._known_cards = np.zeros(36, dtype=int)
+    self._known_cards = np.zeros(Const.CARDS_PER_HAND, dtype=int)
 
     # shuffle and distribute cards
     self.cards = np.random.permutation(cards)
     for i in range(len(self._players)):
-      self._players[i].hand = self.cards[i*9:(i+1)*9]
+      self._players[i].hand = self.cards[i*Const.CARDS_PER_PLAYER:(i+1)*Const.CARDS_PER_PLAYER]
 
 
   def play(self, dealer, initial_score_team_1, initial_score_team_2):
@@ -39,13 +39,13 @@ class Hand:
     training_data_team_2 = []
     winner = None
 
-    for i in range(9):
+    for i in range(Const.CARDS_PER_PLAYER):
       self.log.debug("---------- Round {} ----------".format(i+1))
       current_round = Round(self._players, self._known_cards, self.log,)
       dealer, score, played_cards, states = current_round.play(dealer)
 
       # update known cards - mark the cards that were played during this round
-      for j in range(4):
+      for j in range(Const.PLAYER_COUNT):
         assert self._known_cards[played_cards[j].card_index] == 0, "Can't change known card"
         self._known_cards[played_cards[j].card_index] = Config.ENCODING.card_code_players[j]
       self.log.debug("Known cards: {}".format(utils.format_cards(self._known_cards)))
@@ -53,27 +53,27 @@ class Hand:
       # update score
       if dealer % 2 == 0:
         _score_team_1 += score
-        if not winner and _score_team_1 + initial_score_team_1 > 1000:
+        if not winner and _score_team_1 + initial_score_team_1 > Const.WINNING_SCORE:
           winner = 1
       else:
         _score_team_2 += score
-        if not winner and _score_team_2 + initial_score_team_2 > 1000:
+        if not winner and _score_team_2 + initial_score_team_2 > Const.WINNING_SCORE:
           winner = 2
 
       # if we gather training data and actually had a decision to make, update training data
-      if i < 8 and (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING):
+      if i < Const.CARDS_PER_PLAYER-1 and (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING):
         Hand._update_current_training_data(training_data_team_1, training_data_team_2, states, score, dealer)
 
     # the hand is done, add 5 points for the last stich
     if dealer % 2 == 0:
       self.log.debug("Team 1 made the last stich")
       _score_team_1 += 5
-      if not winner and _score_team_1 + initial_score_team_1 > 1000:
+      if not winner and _score_team_1 + initial_score_team_1 > Const.WINNING_SCORE:
         winner = 1
     else:
       self.log.debug("Team 2 made the last stich")
       _score_team_2 += 5
-      if not winner and _score_team_2 + initial_score_team_2 > 1000:
+      if not winner and _score_team_2 + initial_score_team_2 > Const.WINNING_SCORE:
         winner = 2
 
     # after concluding the hand, update the global training data
@@ -84,11 +84,11 @@ class Hand:
         team_2_training_entry[-1] += _score_team_2 * Config.ENCODING.hand_score_factor
 
       # pylint: disable=consider-using-enumerate
-      for i in range(len(training_data_team_1)):
-        self._training_data.append(training_data_team_1[i])
-        self._training_data.append(training_data_team_2[i])
-      # self._training_data.extend(training_data_team_1)
-      # self._training_data.extend(training_data_team_2)
+      # for i in range(len(training_data_team_1)):
+      #   self._training_data.append(training_data_team_1[i])
+      #   self._training_data.append(training_data_team_2[i])
+      self._training_data.extend(training_data_team_1)
+      self._training_data.extend(training_data_team_2)
 
     return (_score_team_1, _score_team_2), winner
 
