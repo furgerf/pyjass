@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+class Const:
+  CARDS_PER_PLAYER = 9
+  PLAYER_COUNT = 4
+
+  CARDS_PER_HAND = CARDS_PER_PLAYER * PLAYER_COUNT
+  DECISIONS_PER_HAND = (CARDS_PER_PLAYER - 1) * PLAYER_COUNT
+
+  WINNING_SCORE = 1000
