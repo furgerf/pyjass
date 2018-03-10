@@ -31,8 +31,8 @@ class ParallelGame:
     LOG = log
 
   def play_hands(self, hands_to_play, already_played_hands):
-    # TODO: Try improving memory consumption with pre-allocated (numpy) arrays
-    training_data = list()
+    training_data = np.ones((Const.DECISIONS_PER_HAND * Config.BATCH_SIZE, Const.CARDS_PER_HAND + 1), dtype=int)
+    last_to_index = 0
     checkpoint_data = list()
     batch_score_team_1 = 0
     batch_score_team_2 = 0
@@ -79,10 +79,16 @@ class ParallelGame:
           ])
 
       if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
-        training_data.extend(hand.new_training_data)
+        from_index = i * Const.DECISIONS_PER_HAND
+        to_index = (i+1) * Const.DECISIONS_PER_HAND
+        assert from_index == last_to_index
+        last_to_index = to_index
+        training_data[from_index:to_index] = hand.new_training_data
 
     LOG.debug("[{}]: ... finished playing {} hands".format(self._id, utils.format_human(hands_to_play)))
 
+    # for row in training_data:
+    #   assert row.sum() > 0
     return (batch_score_team_1, batch_score_team_2), (batch_wins_team_1, batch_wins_team_2), \
         training_data, checkpoint_data
 

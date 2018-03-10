@@ -90,6 +90,7 @@ class Game:
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       training_samples_per_batch = Const.DECISIONS_PER_HAND * Config.BATCH_SIZE
       training_samples_per_training = Const.DECISIONS_PER_HAND * Config.TRAINING_INTERVAL
+      # setting it to ones immediately allocates space (which prevents surprises later on...)
       training_data = np.ones((training_samples_per_training, Const.CARDS_PER_HAND + 1), dtype=int)
 
     with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(self.log,)) as pool:
