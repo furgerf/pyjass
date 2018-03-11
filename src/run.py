@@ -247,6 +247,7 @@ def get_encodings():
       "10": encoding_7,
       "11": encoding_8,
       "12": encoding_5,
+      "13": encoding_5,
       }
 
 def main():

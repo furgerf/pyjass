@@ -25,6 +25,13 @@ class LearnerPlayer(Player):
     if os.path.exists(pickle_file_name):
       with open(pickle_file_name, "rb") as fh:
         model = pickle.load(fh)
+        # TODO: Require a regressor name and use Config rather than default
+
+        # param_name = "max_iter"
+        # param_value = 100
+        # log.fatal("Setting parameter '{}' from {} to {}!".format(param_name, model.get_params()[param_name], param_value))
+        # model = model.set_params(**{param_name: param_value})
+
         real_path = os.path.realpath(pickle_file_name)[len(os.getcwd())+1:]
         path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
         log.error("Loaded model from {}{} (trained on {} samples)".format(pickle_file_name,
@@ -42,7 +49,7 @@ class LearnerPlayer(Player):
     regressor.training_samples = 0
     log.info("Training model: {}".format(regressor))
     offset = 0
-    chunk_size = int(1e6)
+    chunk_size = int(3.2e6)
 
     iterator = iter(utils.process_csv_file(Config.TRAINING_DATA_FILE_NAME))
     log.info("Skipping header '{}'".format(next(iterator)))

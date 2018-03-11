@@ -56,8 +56,9 @@ eval:
 		--trainingint=5e5 --chkint=5e5 --logint=1e5 --batchsize=5e4 $(ARGS)' TARGET=$@
 
 store:
+	mkdir -p $(MODELS_DIR)/$(MOD)
 	@$(MAKE) run ARGS='--seed --procs --store-data --hands=1e6 \
-		--trainingint=5e4 --chkint=1e6 --logint=1e5 --batchsize=1e3 $(ARGS)' TARGET=$@
+		--trainingint=1e5 --chkint=1e6 --logint=1e5 --batchsize=5e3 $(ARGS)' TARGET=$@
 
 initial-training:
 	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \

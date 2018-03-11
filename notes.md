@@ -12,12 +12,12 @@
 - Training with with playing the best card seems to be better
   - This seems to be true for training on bad data but probably not for better data!
 - So far, encodings 3 and 4 seem to perform similarly
-- Training interval has an impact on learning performance
+- Training interval has an impact on learning performance - sometimes(?)
+- Changing model parameters on a trained model doesn't seem to work (no change
+  when modifying learning\_rate\_init and max\_iter) but change when when
+  modifying batch\_size!)
 
 # To try
-- How do methods compare against better baseline?
-- Is training more effective against better-than-random player?
-  -> Would make sense, since we're interested in the good decisions
 - Cost? Encoding? Model parameters? Models?
 - How much data is needed/useful for MLP?
 - Encodings 3, 4 -> ?
