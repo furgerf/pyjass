@@ -13,9 +13,7 @@ DIRECTORIES=$(DATA_DIR) $(MODELS_DIR) $(EVAL_DIR) $(OLD_EVAL_DIR)
 REGRESSORS=SGDRegressor MLPRegressor
 
 # TODO
-# - Target to clean eval directory by EID
 # - Special archiving for (tracked) evaluations
-# - PID file for STOP/CONT, targets to work with them
 
 ARGS=
 MOD=
@@ -116,8 +114,33 @@ ifndef PID
 	$(error Must specify pid)
 endif
 	@while [ -d /proc/$$PID ]; do \
-		sleep 1; \
+		sleep 30; \
 	done
+
+pause:
+ifndef PID
+	$(error Must specify pid)
+endif
+	kill -STOP $(PID) $$(ps -o pid= --ppid $(PID))
+
+resume:
+ifndef PID
+	$(error Must specify pid)
+endif
+	kill -CONT $(PID) $$(ps -o pid= --ppid $(PID))
+
+stop:
+ifndef PID
+	$(error Must specify pid)
+endif
+	kill -TERM $(PID) $$(ps -o pid= --ppid $(PID))
+
+clean-eval:
+ifndef EID
+	$(error Must specify evaluation ID)
+endif
+	ls -l $(THIS_EVAL_DIR)
+	rm -r $(THIS_EVAL_DIR)
 
 archive:
 	for eval in $(EVAL_DIR)/*; do \
