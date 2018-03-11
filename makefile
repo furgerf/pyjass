@@ -17,6 +17,7 @@ REGRESSORS=SGDRegressor MLPRegressor
 
 ARGS=
 MOD=
+REG=
 UUID=$(shell uuidgen)
 TARGET=run
 EID:=$(TARGET)-$(UUID)
@@ -33,7 +34,7 @@ run:
 ifndef MOD
 	$(error Must specify model)
 endif
-	$(UNBUF) $(NICE) $(BIN)/python src/run.py --eid=$(EID) --model=$(MOD) $(ARGS) 2>&1 \
+	$(UNBUF) $(NICE) $(BIN)/python src/run.py --eid=$(EID) --model=$(MOD) --regressor=$(REG) $(ARGS) 2>&1 \
 		| tee $(EVAL_LOG); [ $${PIPESTATUS[0]} -eq 0 ]
 	@for reg in $(REGRESSORS); do \
 		unset -v latest; \
@@ -55,10 +56,12 @@ eval:
 		--trainingint=5e5 --chkint=5e5 --logint=1e5 --batchsize=5e4 $(ARGS)' TARGET=$@
 
 store:
-	# TODO
+	@$(MAKE) run ARGS='--seed --procs --store-data --hands=1e6 \
+		--trainingint=5e4 --chkint=1e6 --logint=1e5 --batchsize=1e3 $(ARGS)' TARGET=$@
 
 initial-training:
-	# TODO
+	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \
+		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e3 $(ARGS)' TARGET=$@
 
 link-model:
 ifndef MOD

@@ -35,7 +35,8 @@ class LearnerPlayer(Player):
         return model
 
     assert Config.TRAINING_DATA_FILE_NAME and os.path.exists(Config.TRAINING_DATA_FILE_NAME), \
-        "Unable to train model: training data file '{}' doesn't exist".format(Config.TRAINING_DATA_FILE_NAME)
+        "Found neither regressor '{}' nor training data file '{}'".format(
+            Config.REGRESSOR_NAME, Config.TRAINING_DATA_FILE_NAME)
 
     regressor = regressor_constructor(**regressor_args)
     regressor.training_samples = 0
