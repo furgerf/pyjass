@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 import math
 import os
 import pickle
-from config import Config
+import time
 
 import numpy as np
-
 import utils
+from config import Config
 from player import Player
 from sklearn.linear_model import SGDRegressor
 from sklearn.neural_network import MLPRegressor
@@ -18,28 +17,32 @@ from sklearn.neural_network import MLPRegressor
 class LearnerPlayer(Player):
   def __init__(self, name, play_best_card, regressor, log):
     self.regressor = regressor
+    self.last_training_done = time.time()
+
+    if Config.ONLINE_TRAINING: # TODO move file to config
+      if not os.path.exists("{}/loss.csv".format(Config.EVALUATION_DIRECTORY)):
+        with open("{}/loss.csv".format(Config.EVALUATION_DIRECTORY), "w") as fh:
+          fh.write("samples,loss\n")
+
     super(LearnerPlayer, self).__init__(name, play_best_card, log)
 
   @staticmethod
-  def _get_regressor(pickle_file_name, regressor_constructor, regressor_args, log):
+  def _get_regressor(regressor_constructor, regressor_args, log):
+    pickle_file_name = "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME)
+    # TODO: Come up with something for model args
     if os.path.exists(pickle_file_name):
       with open(pickle_file_name, "rb") as fh:
         model = pickle.load(fh)
-        # TODO: Require a regressor name and use Config rather than default
-
-        # param_name = "max_iter"
-        # param_value = 100
-        # log.fatal("Setting parameter '{}' from {} to {}!".format(param_name, model.get_params()[param_name], param_value))
-        # model = model.set_params(**{param_name: param_value})
-
         real_path = os.path.realpath(pickle_file_name)[len(os.getcwd())+1:]
         path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
         log.error("Loaded model from {}{} (trained on {} samples)".format(pickle_file_name,
           path_difference, utils.format_human(model.training_samples)))
         assert model.__class__.__name__ == regressor_constructor.__name__, \
             "Loaded model is a different type than desired, aborting"
-
+        log.info("Model details: {}".format(model))
         return model
+
+    assert Config.ONLINE_TRAINING, "Must do online training when starting with a model from scratch"
 
     assert Config.TRAINING_DATA_FILE_NAME and os.path.exists(Config.TRAINING_DATA_FILE_NAME), \
         "Found neither regressor '{}' nor training data file '{}'".format(
@@ -49,23 +52,21 @@ class LearnerPlayer(Player):
     regressor.training_samples = 0
     log.info("Training model: {}".format(regressor))
     offset = 0
-    chunk_size = int(3.2e6)
+    chunk_size = int(1.6e6)
 
     iterator = iter(utils.process_csv_file(Config.TRAINING_DATA_FILE_NAME))
     log.info("Skipping header '{}'".format(next(iterator)))
     for chunk in utils.batch(iterator, chunk_size):
       training_data = np.array(list(chunk), dtype=int)
       offset += len(training_data)
-      log.info("Loaded {} lines from {} ({} lines done)".format(
+      log.debug("Loaded {} lines from {} ({} lines done)".format(
         utils.format_human(len(training_data)), Config.TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
-      regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
-      regressor.training_samples += len(training_data)
-      log.info("Fitted regressor with {} samples ({} total)".format(
-        utils.format_human(len(training_data)), utils.format_human(regressor.training_samples)))
+      LearnerPlayer._train_regressor(regressor, training_data, log)
 
     log.warning("Writing newly-trained model to {}".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:
       pickle.dump(regressor, fh)
+
     return regressor
 
   def _select_card(self, args, log):
@@ -104,11 +105,27 @@ class LearnerPlayer(Player):
     return card
 
   def train(self, training_data, log):
-    log.info("Training model {} with {} new samples (currently has {})".format(
-      self.regressor.__class__.__name__, utils.format_human(len(training_data)),
-      utils.format_human(self.regressor.training_samples)))
-    self.regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
-    self.regressor.training_samples += len(training_data)
+    LearnerPlayer._train_regressor(self.regressor, training_data, log, self.last_training_done)
+    self.last_training_done = time.time()
+
+  @staticmethod
+  def _train_regressor(regressor, training_data, log, last_training_done=None):
+    training_start = time.time()
+    regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
+    regressor.training_samples += len(training_data)
+
+    with open("{}/loss.csv".format(Config.EVALUATION_DIRECTORY), "a") as fh:
+      fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
+
+    training_mins, training_secs = divmod(time.time() - training_start, 60)
+    since_last = ""
+    if last_training_done:
+      last_mins, last_secs = divmod(time.time() - last_training_done, 60)
+      " ({}m{}s since last)".format(int(last_mins), int(last_secs))
+    log.info("Trained {} on {} new samples (now has {}) in {}m{}s{}; loss {:.1f}".format(
+      regressor.__class__.__name__, utils.format_human(len(training_data)),
+      utils.format_human(regressor.training_samples),
+      int(training_mins), int(training_secs), since_last, regressor.loss_))
 
   def checkpoint(self, current_iteration, total_iterations, log):
     unformatted_file_name = "{}_{}_{:0" + str(int(math.log10(total_iterations))+1) + "d}.pkl"
@@ -131,9 +148,7 @@ class SgdPlayer(LearnerPlayer):
 
   def __init__(self, name, play_best_card, log):
     if SgdPlayer._sgd_regressor is None:
-      SgdPlayer._sgd_regressor = LearnerPlayer._get_regressor(
-          "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME or "sgd-model.pkl"),
-          SGDRegressor, {
+      SgdPlayer._sgd_regressor = LearnerPlayer._get_regressor(SGDRegressor, {
             "warm_start": True
             }, log)
 
@@ -145,9 +160,7 @@ class MlpPlayer(LearnerPlayer):
 
   def __init__(self, name, play_best_card, log):
     if MlpPlayer._mlp_regressor is None:
-      MlpPlayer._mlp_regressor = LearnerPlayer._get_regressor(
-          "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME or "mlp-model.pkl"),
-          MLPRegressor, {
+      MlpPlayer._mlp_regressor = LearnerPlayer._get_regressor(MLPRegressor, {
             "warm_start": True
             }, log)
 

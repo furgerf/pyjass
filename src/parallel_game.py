@@ -31,7 +31,10 @@ class ParallelGame:
     LOG = log
 
   def play_hands(self, hands_to_play, already_played_hands):
-    training_data = np.ones((Const.DECISIONS_PER_HAND * Config.BATCH_SIZE, Const.CARDS_PER_HAND + 1), dtype=int)
+    if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
+      training_data = np.ones((Const.DECISIONS_PER_HAND * Config.BATCH_SIZE, Const.CARDS_PER_HAND + 1), dtype=int)
+    else:
+      training_data = None
     last_to_index = 0
     checkpoint_data = list()
     batch_score_team_1 = 0

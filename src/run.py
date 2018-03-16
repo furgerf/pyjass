@@ -146,6 +146,9 @@ def check_config(log):
     if not os.path.exists(Config.MODEL_DIRECTORY):
       log.error("Model directory doesn't exist")
       return False
+    if not Config.REGRESSOR_NAME:
+      log.error("No regressor name provided")
+      return False
   elif Config.ONLINE_TRAINING:
     log.error("Cannot train online when not using models")
     return False

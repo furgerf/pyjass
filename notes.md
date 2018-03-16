@@ -7,18 +7,19 @@
 - Use seed for reproducibility
 
 # Discoveries
-- Encoding 2 doesn't work
+- Encodings 1-4 are retired (useless attempts)
 - SGD doesn't work
-- Training with with playing the best card seems to be better
-  - This seems to be true for training on bad data but probably not for better data!
-- So far, encodings 3 and 4 seem to perform similarly
-- Training interval has an impact on learning performance - sometimes(?)
-- Changing model parameters on a trained model doesn't seem to work (no change
-  when modifying learning\_rate\_init and max\_iter) but change when when
-  modifying batch\_size!)
+- Training doesn't work as well when playing the best card
+- Training interval has an impact on learning performance - really, or is this
+  due to the comparison of bad models?
+- 1 hidden layer is insufficient, 2 also doesn't seem to be optimal
+- Training time: maybe 1 -> x layers = +4h; +100 neurons -> +4h
+- Small layers are useless (when all layers are the same width)
 
 # To try
 - Cost? Encoding? Model parameters? Models?
 - How much data is needed/useful for MLP?
 - Encodings 3, 4 -> ?
+- "relative" player encoding -> does that reduce data need 4-fold?
+- "uneven" layer architectures
 

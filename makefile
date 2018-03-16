@@ -24,10 +24,13 @@ EID:=$(TARGET)-$(UUID)
 THIS_EVAL_DIR:=$(EVAL_DIR)/$(EID)
 EVAL_LOG:=$(THIS_EVAL_DIR)/evaluation_$(shell date '+%Y%m%d_%H%M%S').log
 
-learning-curve: SCORES := $(THIS_EVAL_DIR)/scores.csv
-learning-curve: CURVE_SCORES := $(THIS_EVAL_DIR)/curve_scores.csv
+lc: SCORES := $(THIS_EVAL_DIR)/scores.csv
+lc: CURVE_SCORES := $(THIS_EVAL_DIR)/curve_scores.csv
 lint: LINT_FILES:=src/*.py
 wait: PID=
+
+.PHONY: run train eval store initial-training link-model lc lint explore wait \
+	pause resume kill clean-eval archive venv freeze install clean uninstall
 
 run:
 	mkdir -p $(THIS_EVAL_DIR)
@@ -68,17 +71,17 @@ link-model:
 ifndef MOD
 	$(error Must specify model)
 endif
-ifndef MOD_NAME
+ifndef REG
 	$(error Must specify model name for symlink)
 endif
 	@for reg in $(THIS_EVAL_DIR)/final-*.pkl; do \
 		pushd $(MODELS_DIR)/$(MOD) > /dev/null; \
-		ln -s ../../$(THIS_EVAL_DIR)/$$(basename $$reg) $(MOD_NAME); \
+		ln -s ../../$(THIS_EVAL_DIR)/$$(basename $$reg) $(REG); \
 		popd > /dev/null; \
-		echo "Created symlink: $$(ls -l $(MODELS_DIR)/$(MOD)/$(MOD_NAME) | cut -d' ' -f 9-)"; \
+		echo "Created symlink: $$(ls -l $(MODELS_DIR)/$(MOD)/$(REG) | cut -d' ' -f 9-)"; \
 	done
 
-learning-curve:
+lc:
 ifndef MOD
 	$(error Must specify model)
 endif
@@ -89,6 +92,7 @@ endif
 	@count=0; \
 	for reg in $(THIS_EVAL_DIR)/p1_MLPRegressor_*.pkl; do \
 		reg_path=../../$(THIS_EVAL_DIR)/$$(basename $$reg); \
+		echo "Processing $$reg..."; \
 		# we want to write another evaluation to this directory \
 		[ -f $(THIS_EVAL_DIR)/has-eval ] && rm $(THIS_EVAL_DIR)/has-eval; \
 		# about the seed: always play the "same" game but do a different one than what was trained \
@@ -133,7 +137,7 @@ ifndef PID
 endif
 	kill -CONT $(PID) $$(ps -o pid= --ppid $(PID))
 
-stop:
+kill:
 ifndef PID
 	$(error Must specify pid)
 endif
