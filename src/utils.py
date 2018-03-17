@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import argparse
 import csv
 import logging
 import math
@@ -66,3 +67,11 @@ def format_human(number):
   if scaled_number == int(scaled_number):
     scaled_number = int(scaled_number)
   return "{}{}".format(scaled_number, pre)
+
+class StoreDictKeyPair(argparse.Action):
+  def __call__(self, parser, namespace, values, option_string=None):
+    my_dict = {}
+    for kv in values.split(","):
+      key, val = kv.split("=")
+      my_dict[key] = eval(val) # pylint: disable=eval-used
+    setattr(namespace, self.dest, my_dict)

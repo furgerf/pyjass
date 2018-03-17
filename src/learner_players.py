@@ -27,9 +27,8 @@ class LearnerPlayer(Player):
     super(LearnerPlayer, self).__init__(name, play_best_card, log)
 
   @staticmethod
-  def _get_regressor(regressor_constructor, regressor_args, log):
+  def _get_regressor(regressor_constructor, log):
     pickle_file_name = "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME)
-    # TODO: Come up with something for model args
     if os.path.exists(pickle_file_name):
       with open(pickle_file_name, "rb") as fh:
         model = pickle.load(fh)
@@ -48,6 +47,10 @@ class LearnerPlayer(Player):
         "Found neither regressor '{}' nor training data file '{}'".format(
             Config.REGRESSOR_NAME, Config.TRAINING_DATA_FILE_NAME)
 
+    regressor_args = Config.TEAM_1_MODEL_ARGS or {}
+    if regressor_args:
+      log.warning("Applying custom arguments: '{}'".format(regressor_args))
+    regressor_args["warm_start"] = True
     regressor = regressor_constructor(**regressor_args)
     regressor.training_samples = 0
     log.info("Training model: {}".format(regressor))
@@ -121,7 +124,7 @@ class LearnerPlayer(Player):
     since_last = ""
     if last_training_done:
       last_mins, last_secs = divmod(time.time() - last_training_done, 60)
-      " ({}m{}s since last)".format(int(last_mins), int(last_secs))
+      since_last = " ({}m{}s since last)".format(int(last_mins), int(last_secs))
     log.info("Trained {} on {} new samples (now has {}) in {}m{}s{}; loss {:.1f}".format(
       regressor.__class__.__name__, utils.format_human(len(training_data)),
       utils.format_human(regressor.training_samples),
@@ -148,10 +151,7 @@ class SgdPlayer(LearnerPlayer):
 
   def __init__(self, name, play_best_card, log):
     if SgdPlayer._sgd_regressor is None:
-      SgdPlayer._sgd_regressor = LearnerPlayer._get_regressor(SGDRegressor, {
-            "warm_start": True
-            }, log)
-
+      SgdPlayer._sgd_regressor = LearnerPlayer._get_regressor(SGDRegressor, log)
     super(SgdPlayer, self).__init__(name, play_best_card, SgdPlayer._sgd_regressor, log)
 
 
@@ -160,8 +160,5 @@ class MlpPlayer(LearnerPlayer):
 
   def __init__(self, name, play_best_card, log):
     if MlpPlayer._mlp_regressor is None:
-      MlpPlayer._mlp_regressor = LearnerPlayer._get_regressor(MLPRegressor, {
-            "warm_start": True
-            }, log)
-
+      MlpPlayer._mlp_regressor = LearnerPlayer._get_regressor(MLPRegressor, log)
     super(MlpPlayer, self).__init__(name, play_best_card, MlpPlayer._mlp_regressor, log)

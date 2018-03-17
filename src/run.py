@@ -7,13 +7,13 @@ import sys
 import time
 import traceback
 from argparse import ArgumentParser
-from config import Config
 
 import numpy as np
-
 import utils
-from game import Game
+from config import Config
 from encoding import Encoding
+from game import Game
+
 
 def parse_arguments():
   parser = ArgumentParser()
@@ -48,6 +48,8 @@ def parse_arguments():
       help="Strategy for team 1")
   parser.add_argument("--team1-best", action="store_true",
       help="True if team 1 should always choose the best card")
+  parser.add_argument("--team1-args", action=utils.StoreDictKeyPair, metavar="KEY1=VAL1,KEY2=VAL2...",
+      help="Arguments for the model constructor for team 1")
   parser.add_argument("--team2", choices=Game.PLAYER_TYPES.keys(), default="simple",
       help="Strategy for team 2")
   parser.add_argument("--team2-best", action="store_true",
@@ -102,6 +104,8 @@ def apply_arguments(args):
     Config.TEAM_1_STRATEGY = args.team1
   if args.team1_best:
     Config.TEAM_1_BEST = args.team1_best
+  if args.team1_args:
+    Config.TEAM_1_ARGS = args.team1_args
   if args.team2:
     Config.TEAM_2_STRATEGY = args.team2
   if args.team2_best:
