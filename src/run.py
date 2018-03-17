@@ -7,12 +7,15 @@ import sys
 import time
 import traceback
 from argparse import ArgumentParser
+from config import Config
+from multiprocessing import Pool
 
 import numpy as np
+
 import utils
-from config import Config
 from encoding import Encoding
 from game import Game
+from parallel_game import ParallelGame
 
 
 def parse_arguments():
@@ -105,7 +108,7 @@ def apply_arguments(args):
   if args.team1_best:
     Config.TEAM_1_BEST = args.team1_best
   if args.team1_args:
-    Config.TEAM_1_ARGS = args.team1_args
+    Config.TEAM_1_MODEL_ARGS = args.team1_args
   if args.team2:
     Config.TEAM_2_STRATEGY = args.team2
   if args.team2_best:
@@ -286,8 +289,10 @@ def main():
   open(evaluation_lock, "a").close() # touch eval lock
 
   try:
-    game = Game(log)
-    game.play()
+    # fork as early as possible
+    with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(log,)) as pool:
+      game = Game(start_time, pool, log)
+      game.play()
   except Exception as ex:
     log.critical("{} during evaluation: {}".format(type(ex).__name__, str(ex)))
     log.critical(traceback.format_exc())

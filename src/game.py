@@ -3,17 +3,18 @@
 
 import csv
 import os
-from multiprocessing import Pool
+import time
+from config import Config
 
 import numpy as np
+from psutil import Process
+
 import utils
 from baseline_players import (HighestCardPlayer, RandomCardPlayer,
                               SimpleRulesPlayer)
-from config import Config
 from const import Const
 from learner_players import MlpPlayer, SgdPlayer
 from parallel_game import ParallelGame
-from psutil import Process
 
 
 class Game:
@@ -25,7 +26,9 @@ class Game:
       "mlp": MlpPlayer
       }
 
-  def __init__(self, log):
+  def __init__(self, start_time, pool, log):
+    self.start_time = start_time
+    self.pool = pool
     self.log = log
     self.players = (
         Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p1", Config.TEAM_1_BEST, self.log),
@@ -93,9 +96,9 @@ class Game:
       # setting it to ones immediately allocates space (which prevents surprises later on...)
       training_data = np.ones((training_samples_per_training, Const.CARDS_PER_HAND + 1), dtype=int)
 
-    with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(self.log,)) as pool:
       # retrieve processes
-      results = [pool.apply_async(ParallelGame.set_seed_and_get_pid, (i+1,)) for i in range(Config.PARALLEL_PROCESSES)]
+      results = [self.pool.apply_async(ParallelGame.set_seed_and_get_pid, (i+1,))
+          for i in range(Config.PARALLEL_PROCESSES)]
       pool_pids = [result.get() for result in results]
       assert len(set(pool_pids)) == len(pool_pids)
       pids = [os.getpid()] + pool_pids
@@ -105,7 +108,7 @@ class Game:
       while played_hands < Config.TOTAL_HANDS:
         self.log.debug("Starting batch {}".format(batch_round+1))
         if Config.PARALLEL_PROCESSES > 1:
-          batch = [pool.apply_async(game.play_hands, (Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE))
+          batch = [self.pool.apply_async(game.play_hands, (Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE))
             for i, game in enumerate(parallel_games)]
           self.log.debug("Started parallel batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
           results = [b.get() for b in batch]
@@ -151,9 +154,12 @@ class Game:
         # logging
         if played_hands % Config.LOGGING_INTERVAL == 0:
           memory = [round(process.memory_info().rss/1e6, 1) for process in processes]
-          self.log.info("Finished round {}/{} ({:.1f}%), hands: {}/{}, memory: {}={:.1f}M".format(
+          percentage = batch_round / Config.BATCH_COUNT
+          elapsed_hours = (time.time() - self.start_time) / 3600
+          estimated_hours = elapsed_hours / percentage - elapsed_hours
+          self.log.info("Finished round {}/{} ({:.1f}%, ETA: {:.1f}h), hands: {}/{}, memory: {}={:.1f}M".format(
             utils.format_human(batch_round), utils.format_human(Config.BATCH_COUNT),
-            100.0*batch_round/Config.BATCH_COUNT,
+            100.0 * percentage, estimated_hours,
             utils.format_human(played_hands), utils.format_human(Config.TOTAL_HANDS),
             "+".join(str(m) for m in memory), sum(memory)))
 

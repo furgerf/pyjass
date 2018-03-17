@@ -53,7 +53,7 @@ class LearnerPlayer(Player):
     regressor_args["warm_start"] = True
     regressor = regressor_constructor(**regressor_args)
     regressor.training_samples = 0
-    log.info("Training model: {}".format(regressor))
+    log.info("Training new model: {}".format(regressor))
     offset = 0
     chunk_size = int(1.6e6)
 
