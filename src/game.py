@@ -98,72 +98,72 @@ class Game:
       # setting it to ones immediately allocates space (which prevents surprises later on...)
       training_data = np.ones((training_samples_per_training, Const.CARDS_PER_HAND + 1), dtype=int)
 
-      # retrieve processes
-      results = [self.pool.apply_async(ParallelGame.set_seed_and_get_pid, (i+1,))
-          for i in range(Config.PARALLEL_PROCESSES)]
-      pool_pids = [result.get() for result in results]
-      assert len(set(pool_pids)) == len(pool_pids)
-      pids = [os.getpid()] + pool_pids
-      self.log.info("Running with 1+{} processes: {}".format(len(pids)-1, " ".join(str(p) for p in pids)))
-      processes = [Process(pid) for pid in pids]
+    # retrieve processes
+    results = [self.pool.apply_async(ParallelGame.set_seed_and_get_pid, (i+1,))
+        for i in range(Config.PARALLEL_PROCESSES)]
+    pool_pids = [result.get() for result in results]
+    assert len(set(pool_pids)) == len(pool_pids)
+    pids = [os.getpid()] + pool_pids
+    self.log.info("Running with 1+{} processes: {}".format(len(pids)-1, " ".join(str(p) for p in pids)))
+    processes = [Process(pid) for pid in pids]
 
-      while played_hands < Config.TOTAL_HANDS:
-        self.log.debug("Starting batch {}".format(batch_round+1))
-        if Config.PARALLEL_PROCESSES > 1:
-          batch = [self.pool.apply_async(game.play_hands, (Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE))
+    while played_hands < Config.TOTAL_HANDS:
+      self.log.debug("Starting batch {}".format(batch_round+1))
+      if Config.PARALLEL_PROCESSES > 1:
+        batch = [self.pool.apply_async(game.play_hands, (Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE))
+          for i, game in enumerate(parallel_games)]
+        self.log.debug("Started parallel batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
+        results = [b.get() for b in batch]
+      else:
+        ParallelGame.inject_log(self.log)
+        self.log.debug("Starting sequential batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
+        results = [game.play_hands(Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE)
             for i, game in enumerate(parallel_games)]
-          self.log.debug("Started parallel batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
-          results = [b.get() for b in batch]
-        else:
-          ParallelGame.inject_log(self.log)
-          self.log.debug("Starting sequential batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
-          results = [game.play_hands(Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE)
-              for i, game in enumerate(parallel_games)]
 
-        self.log.debug("Processing results of batch")
-        self._total_score_team_1 += sum(map(lambda result: result[0][0], results))
-        self._total_score_team_2 += sum(map(lambda result: result[0][1], results))
-        self._wins_team_1 += sum(map(lambda result: result[1][0], results))
-        self._wins_team_2 += sum(map(lambda result: result[1][1], results))
+      self.log.debug("Processing results of batch")
+      self._total_score_team_1 += sum(map(lambda result: result[0][0], results))
+      self._total_score_team_2 += sum(map(lambda result: result[0][1], results))
+      self._wins_team_1 += sum(map(lambda result: result[1][0], results))
+      self._wins_team_2 += sum(map(lambda result: result[1][1], results))
 
-        played_hands += Config.BATCH_SIZE * Config.PARALLEL_PROCESSES
-        batch_round += 1
+      played_hands += Config.BATCH_SIZE * Config.PARALLEL_PROCESSES
+      batch_round += 1
 
-        # handle new training data if required - train before checkpoint!
-        if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
-          start_index = int(((played_hands - Config.BATCH_SIZE * Config.PARALLEL_PROCESSES)
-            % Config.TRAINING_INTERVAL) / Config.BATCH_SIZE)
-          for i, result in enumerate(results):
-            from_index = (start_index+i) * training_samples_per_batch
-            to_index = (start_index+i+1) * training_samples_per_batch
-            assert from_index == last_to_index
-            last_to_index = to_index % len(training_data)
-            training_data[from_index:to_index] = result[2]
-          if played_hands % Config.TRAINING_INTERVAL == 0:
-            # for row in training_data:
-            #   assert row.sum() > 0
-            self._handle_training_data(training_data)
+      # handle new training data if required - train before checkpoint!
+      if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
+        start_index = int(((played_hands - Config.BATCH_SIZE * Config.PARALLEL_PROCESSES)
+          % Config.TRAINING_INTERVAL) / Config.BATCH_SIZE)
+        for i, result in enumerate(results):
+          from_index = (start_index+i) * training_samples_per_batch
+          to_index = (start_index+i+1) * training_samples_per_batch
+          assert from_index == last_to_index
+          last_to_index = to_index % len(training_data)
+          training_data[from_index:to_index] = result[2]
+        if played_hands % Config.TRAINING_INTERVAL == 0:
+          # for row in training_data:
+          #   assert row.sum() > 0
+          self._handle_training_data(training_data)
 
-        # checkpoint
+      # checkpoint
+      if Config.STORE_SCORES:
+        for result in results:
+          self._checkpoint_data.extend(result[3])
+      if played_hands % Config.CHECKPOINT_INTERVAL == 0:
+        self._create_checkpoint(played_hands, Config.TOTAL_HANDS)
         if Config.STORE_SCORES:
-          for result in results:
-            self._checkpoint_data.extend(result[3])
-        if played_hands % Config.CHECKPOINT_INTERVAL == 0:
-          self._create_checkpoint(played_hands, Config.TOTAL_HANDS)
-          if Config.STORE_SCORES:
-            self._checkpoint_data.clear()
+          self._checkpoint_data.clear()
 
-        # logging
-        if played_hands % Config.LOGGING_INTERVAL == 0:
-          memory = [round(process.memory_info().rss/1e6, 1) for process in processes]
-          percentage = batch_round / Config.BATCH_COUNT
-          elapsed_hours = (time.time() - start_time) / 3600
-          estimated_hours = elapsed_hours / percentage - elapsed_hours
-          self.log.info("Finished round {}/{} ({:.1f}%, ETA: {:.1f}h), hands: {}/{}, memory: {}={:.1f}M".format(
-            utils.format_human(batch_round), utils.format_human(Config.BATCH_COUNT),
-            100.0 * percentage, estimated_hours,
-            utils.format_human(played_hands), utils.format_human(Config.TOTAL_HANDS),
-            "+".join(str(m) for m in memory), sum(memory)))
+      # logging
+      if played_hands % Config.LOGGING_INTERVAL == 0:
+        memory = [round(process.memory_info().rss/1e6, 1) for process in processes]
+        percentage = batch_round / Config.BATCH_COUNT
+        elapsed_hours = (time.time() - start_time) / 3600
+        estimated_hours = elapsed_hours / percentage - elapsed_hours
+        self.log.info("Finished round {}/{} ({:.1f}%, ETA: {:.1f}h), hands: {}/{}, memory: {}={:.1f}M".format(
+          utils.format_human(batch_round), utils.format_human(Config.BATCH_COUNT),
+          100.0 * percentage, estimated_hours,
+          utils.format_human(played_hands), utils.format_human(Config.TOTAL_HANDS),
+          "+".join(str(m) for m in memory), sum(memory)))
 
     # the game is over
     self._print_results()

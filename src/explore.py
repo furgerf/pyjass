@@ -10,7 +10,7 @@ import pandas as pd
 # import seaborn as sns
 import pickle
 
-from src import utils
+import utils
 
 plt.ion()
 

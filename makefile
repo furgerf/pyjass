@@ -29,8 +29,9 @@ lc: CURVE_SCORES := $(THIS_EVAL_DIR)/curve_scores.csv
 lint: LINT_FILES:=src/*.py
 wait: PID=
 
-.PHONY: run train eval store initial-training link-model lc lint explore wait \
-	pause resume kill clean-eval archive venv freeze install clean uninstall
+.PHONY: run train eval store store-simple initial-training initial-training-simple \
+	link-model lc lint explore wait \
+	pause resume kill remove-eval archive archive-unnamed venv freeze install uninstall
 
 run:
 	mkdir -p $(THIS_EVAL_DIR)
@@ -60,10 +61,19 @@ eval:
 
 store:
 	mkdir -p $(MODELS_DIR)/$(MOD)
+	@$(MAKE) run ARGS='--seed --procs --team1=mlp --team1-best --hands=2e6 --store-data \
+		--trainingint=1e5 --chkint=2e6 --logint=5e5 --batchsize=5e4 $(ARGS)' TARGET=$@
+
+store-simple:
+	mkdir -p $(MODELS_DIR)/$(MOD)
 	@$(MAKE) run ARGS='--seed --procs --store-data --hands=1e6 \
 		--trainingint=1e5 --chkint=1e6 --logint=1e5 --batchsize=5e3 $(ARGS)' TARGET=$@
 
 initial-training:
+	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=8e6 \
+		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=5e4 $(ARGS)' TARGET=$@
+
+initial-training-simple:
 	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \
 		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e3 $(ARGS)' TARGET=$@
 
@@ -115,7 +125,7 @@ lint:
 	@$(BIN)/pylint $(LINT_FILES) --ignore=venv/ -f colorized -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
 
 explore:
-	$(BIN)/ipython -m src.explore -i
+	$(BIN)/ipython --no-banner --no-confirm-exit -i src/explore.py
 
 wait:
 ifndef PID
@@ -150,6 +160,16 @@ endif
 	ls -l $(THIS_EVAL_DIR)
 	rm -r $(THIS_EVAL_DIR)
 
+archive-unnamed:
+	for eval in $(EVAL_DIR)/*; do \
+		if [[ $$(basename $$eval) =~ ^\{?([[:alpha:]-]+-)?[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}\}?$$ ]]; then \
+			tar -czf $$eval.tar.gz -C $(EVAL_DIR) $$(basename $$eval); \
+			rm -r $$eval; \
+			mv $$eval.tar.gz $(OLD_EVAL_DIR); \
+			echo "archived $$(basename $$eval)"; \
+		fi; \
+	done
+
 archive:
 	for eval in $(EVAL_DIR)/*; do \
 		tar -czf $$eval.tar.gz -C $(EVAL_DIR) $$(basename $$eval); \
@@ -167,10 +187,6 @@ freeze: venv
 install: venv
 	$(BIN)/pip install -r requirements.txt
 	mkdir -p $(DIRECTORIES)
-
-clean:
-	find . -type f -name '*.pyc' -exec rm -f {} +
-	find . -type d -name '__pycache__' -exec rm -rf {} +
 
 uninstall:
 	rm -rf $(VENV)
