@@ -57,14 +57,21 @@ class LearnerPlayer(Player):
     offset = 0
     chunk_size = int(1.6e6)
 
-    iterator = iter(utils.process_csv_file(Config.TRAINING_DATA_FILE_NAME))
-    log.info("Skipping header '{}'".format(next(iterator)))
-    for chunk in utils.batch(iterator, chunk_size):
-      training_data = np.array(list(chunk), dtype=int)
-      offset += len(training_data)
-      log.debug("Loaded {} lines from {} ({} lines done)".format(
-        utils.format_human(len(training_data)), Config.TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
-      LearnerPlayer._train_regressor(regressor, training_data, log)
+    if Config.TRAINING_DATA_FILE_NAME.endswith("csv"):
+      iterator = iter(utils.process_csv_file(Config.TRAINING_DATA_FILE_NAME))
+      log.info("Skipping header '{}'".format(next(iterator)))
+      for chunk in utils.batch(iterator, chunk_size):
+        training_data = np.array(list(chunk), dtype=int)
+        offset += len(training_data)
+        log.debug("Loaded {} lines from {} ({} lines done)".format(
+          utils.format_human(len(training_data)), Config.TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
+        LearnerPlayer._train_regressor(regressor, training_data, log)
+    else:
+      for training_data in utils.process_binary_file(Config.TRAINING_DATA_FILE_NAME, chunk_size):
+        offset += len(training_data)
+        log.debug("Loaded {} samples from {} ({} samples done)".format(
+          utils.format_human(len(training_data)), Config.TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
+        LearnerPlayer._train_regressor(regressor, training_data, log)
 
     log.warning("Writing newly-trained model to {}".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:

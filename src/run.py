@@ -291,7 +291,7 @@ def main():
   try:
     # fork as early as possible
     with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(log,)) as pool:
-      game = Game(start_time, pool, log)
+      game = Game(pool, log)
       game.play()
   except Exception as ex:
     log.critical("{} during evaluation: {}".format(type(ex).__name__, str(ex)))

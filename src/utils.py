@@ -5,9 +5,13 @@ import argparse
 import csv
 import logging
 import math
+import struct
 from itertools import chain, islice
 
+import numpy as np
+
 import coloredlogs
+from const import Const
 
 
 def get_logger(name):
@@ -42,6 +46,19 @@ def get_logger(name):
   logger.addHandler(handler)
   logger.setLevel(logging.DEBUG)
   return logger
+
+def process_binary_file(file_name, batch_size):
+  with open(file_name, "rb") as fh:
+    old_position = 0
+    chunk = fh.read(Const.BYTES_PER_SAMPLE * batch_size)
+    while chunk:
+      read_bytes = fh.tell() - old_position
+      old_position = fh.tell()
+      data = np.array([np.array(struct.unpack("={}h".format(Const.CARDS_PER_HAND * "B"),
+          chunk[i*Const.BYTES_PER_SAMPLE:(i+1)*Const.BYTES_PER_SAMPLE]), dtype=int)
+          for i in range(int(read_bytes / Const.BYTES_PER_SAMPLE))])
+      yield data
+      chunk = fh.read(Const.BYTES_PER_SAMPLE * batch_size)
 
 def process_csv_file(file_name):
   with open(file_name, "r") as fh:

@@ -19,6 +19,7 @@
 # To try
 - Cost? Encoding? Model parameters? Models?
 - How much data is needed/useful for MLP?
+- Do initial training on data from model vs simple
 - Encodings 3, 4 -> ?
 - "relative" player encoding -> does that reduce data need 4-fold?
 - "uneven" layer architectures

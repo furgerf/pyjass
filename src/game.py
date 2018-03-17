@@ -3,6 +3,7 @@
 
 import csv
 import os
+import struct
 import time
 from config import Config
 
@@ -26,8 +27,7 @@ class Game:
       "mlp": MlpPlayer
       }
 
-  def __init__(self, start_time, pool, log):
-    self.start_time = start_time
+  def __init__(self, pool, log):
     self.pool = pool
     self.log = log
     self.players = (
@@ -59,13 +59,14 @@ class Game:
   def initialize(self):
     if Config.STORE_SCORES:
       self._score_fh = open("{}/scores.csv".format(Config.EVALUATION_DIRECTORY), "w")
-      Game._write_scores_header(self._score_fh)
+      self._write_scores_header()
       self._score_writer = csv.writer(self._score_fh, lineterminator="\n")
 
     if Config.STORE_TRAINING_DATA:
-      self._training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "w")
-      Game._write_training_data_header(self._training_data_fh)
-      self._training_data_writer = csv.writer(self._training_data_fh, lineterminator="\n")
+      self._training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "wb")
+      self._write_training_data_header()
+      if Config.TRAINING_DATA_FILE_NAME.endswith("csv"):
+        self._training_data_writer = csv.writer(self._training_data_fh, lineterminator="\n")
 
     if Config.STORE_TRAINING_DATA and Config.ONLINE_TRAINING:
       training_description = "(training online AND storing data) "
@@ -85,6 +86,7 @@ class Game:
   def play(self):
     self.initialize()
 
+    start_time = time.time()
     played_hands = 0
     batch_round = 0
     parallel_games = [ParallelGame(self.players) for _ in range(Config.PARALLEL_PROCESSES)]
@@ -155,7 +157,7 @@ class Game:
         if played_hands % Config.LOGGING_INTERVAL == 0:
           memory = [round(process.memory_info().rss/1e6, 1) for process in processes]
           percentage = batch_round / Config.BATCH_COUNT
-          elapsed_hours = (time.time() - self.start_time) / 3600
+          elapsed_hours = (time.time() - start_time) / 3600
           estimated_hours = elapsed_hours / percentage - elapsed_hours
           self.log.info("Finished round {}/{} ({:.1f}%, ETA: {:.1f}h), hands: {}/{}, memory: {}={:.1f}M".format(
             utils.format_human(batch_round), utils.format_human(Config.BATCH_COUNT),
@@ -196,24 +198,32 @@ class Game:
       return [self.players[0]]
     return [self.players[0], self.players[1]]
 
-  @staticmethod
-  def _write_scores_header(fh):
+  def _write_scores_header(self):
     header = "hand,wins_team_1,score_team_1,wins_team_2,score_team_2,team_1_info,team_2_info\n"
-    fh.write(header)
+    self._score_fh.write(header)
 
-  @staticmethod
-  def _write_training_data_header(fh):
+  def _write_training_data_header(self):
+    if not Config.TRAINING_DATA_FILE_NAME.endswith("csv"):
+      return
+
     header = "36 rows for cards with their known state from the view of a player " + \
         "(0 unknown, {} played by player, {} in play, {} in hand, {} selected to play; " + \
         "score of round from the view of the player: round factor {}, hand factor {}\n"
-    fh.write(header.format(Config.ENCODING.card_code_players, Config.ENCODING.card_code_in_play,
+    self._training_data_fh.write(header.format(Config.ENCODING.card_code_players, Config.ENCODING.card_code_in_play,
       Config.ENCODING.card_code_in_hand, Config.ENCODING.card_code_selected,
       Config.ENCODING.round_score_factor, Config.ENCODING.hand_score_factor))
 
   def _write_training_data(self, training_data):
     self.log.info("Writing {} training samples to {}".format(
       utils.format_human(len(training_data)), self._training_data_fh.name))
-    self._training_data_writer.writerows(training_data)
+
+    if Config.TRAINING_DATA_FILE_NAME.endswith("csv"):
+      self._training_data_writer.writerows(training_data)
+      return
+
+    # write each sample separately - not optimal for disk but avoids copying memory
+    for sample in training_data:
+      self._training_data_fh.write(struct.pack("=" + ("{}h".format(Const.CARDS_PER_HAND * "B")), *sample))
 
   def _print_results(self):
     # all hands are played
