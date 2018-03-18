@@ -15,6 +15,7 @@
 - 1 hidden layer is insufficient, 2 also doesn't seem to be optimal
 - Training time: maybe 1 -> x layers = +4h; +100 neurons -> +4h
 - Small layers are useless (when all layers are the same width)
+- Loss increases for online training because that's without playing the best card
 
 # To try
 - Cost? Encoding? Model parameters? Models?
