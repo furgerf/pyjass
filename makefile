@@ -87,8 +87,9 @@ endif
 	@for reg in $(THIS_EVAL_DIR)/final-*.pkl; do \
 		pushd $(MODELS_DIR)/$(MOD) > /dev/null; \
 		ln -s ../../$(THIS_EVAL_DIR)/$$(basename $$reg) $(REG); \
+		success=$?; \
 		popd > /dev/null; \
-		echo "Created symlink: $$(ls -l $(MODELS_DIR)/$(MOD)/$(REG) | cut -d' ' -f 9-)"; \
+		[ $$success -eq 0 ] && echo "Created symlink: $$(ls -l $(MODELS_DIR)/$(MOD)/$(REG) | cut -d' ' -f 9-)"; \
 	done
 
 lc:

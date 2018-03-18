@@ -114,7 +114,7 @@ def apply_arguments(args):
   if args.team2_best:
     Config.TEAM_2_BEST = args.team2_best
 
-  if args.hands:
+  if args.hands is not None:
     Config.TOTAL_HANDS = int(args.hands)
   if args.trainingint:
     Config.TRAINING_INTERVAL = int(args.trainingint)
@@ -258,6 +258,7 @@ def get_encodings():
       "11": encoding_8,
       "12": encoding_5,
       "13": encoding_5,
+      "14": encoding_5,
       }
 
 def main():
@@ -292,7 +293,8 @@ def main():
     # fork as early as possible
     with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(log,)) as pool:
       game = Game(pool, log)
-      game.play()
+      if Config.TOTAL_HANDS:
+        game.play()
   except Exception as ex:
     log.critical("{} during evaluation: {}".format(type(ex).__name__, str(ex)))
     log.critical(traceback.format_exc())

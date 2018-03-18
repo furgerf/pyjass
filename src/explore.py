@@ -28,9 +28,8 @@ def visualize_scores(eid):
   scores_file = "evaluations/{}/curve_scores.csv".format(eid)
   loss_file = "evaluations/{}/loss.csv".format(eid)
 
-  scores = pd.read_csv(scores_file) if os.path.exists(loss_file) else None
+  scores = pd.read_csv(scores_file) if os.path.exists(scores_file) else None
   loss = pd.read_csv(loss_file) if os.path.exists(loss_file) else None
-
 
   # plot
   fig = plt.figure()

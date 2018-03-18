@@ -28,18 +28,27 @@ class LearnerPlayer(Player):
 
   @staticmethod
   def _get_regressor(regressor_constructor, log):
+    # TODO ...
+    if Config.ONLINE_TRAINING: # TODO move file to config
+      if not os.path.exists("{}/loss.csv".format(Config.EVALUATION_DIRECTORY)):
+        with open("{}/loss.csv".format(Config.EVALUATION_DIRECTORY), "w") as fh:
+          fh.write("samples,loss\n")
+
     pickle_file_name = "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME)
     if os.path.exists(pickle_file_name):
       with open(pickle_file_name, "rb") as fh:
-        model = pickle.load(fh)
+        regressor = pickle.load(fh)
         real_path = os.path.realpath(pickle_file_name)[len(os.getcwd())+1:]
         path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
         log.error("Loaded model from {}{} (trained on {} samples)".format(pickle_file_name,
-          path_difference, utils.format_human(model.training_samples)))
-        assert model.__class__.__name__ == regressor_constructor.__name__, \
+          path_difference, utils.format_human(regressor.training_samples)))
+        assert regressor.__class__.__name__ == regressor_constructor.__name__, \
             "Loaded model is a different type than desired, aborting"
-        log.info("Model details: {}".format(model))
-        return model
+        log.info("Model details: {}".format(regressor))
+        if Config.ONLINE_TRAINING and Config.TRAINING_DATA_FILE_NAME:
+          log.info("Training loaded model on stored data from {}".format(Config.TRAINING_DATA_FILE_NAME))
+          LearnerPlayer._train_regressor_from_file(regressor, log)
+        return regressor
 
     assert Config.ONLINE_TRAINING, "Must do online training when starting with a model from scratch"
 
@@ -53,7 +62,17 @@ class LearnerPlayer(Player):
     regressor_args["warm_start"] = True
     regressor = regressor_constructor(**regressor_args)
     regressor.training_samples = 0
-    log.info("Training new model: {}".format(regressor))
+
+    log.info("Training new model on stored data: {}".format(regressor))
+    LearnerPlayer._train_regressor_from_file(regressor, log)
+    log.warning("Writing newly-trained model to {}".format(pickle_file_name))
+    with open(pickle_file_name, "wb") as fh:
+      pickle.dump(regressor, fh)
+
+    return regressor
+
+  @staticmethod
+  def _train_regressor_from_file(regressor, log):
     offset = 0
     chunk_size = int(1.6e6)
 
@@ -72,12 +91,6 @@ class LearnerPlayer(Player):
         log.debug("Loaded {} samples from {} ({} samples done)".format(
           utils.format_human(len(training_data)), Config.TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
         LearnerPlayer._train_regressor(regressor, training_data, log)
-
-    log.warning("Writing newly-trained model to {}".format(pickle_file_name))
-    with open(pickle_file_name, "wb") as fh:
-      pickle.dump(regressor, fh)
-
-    return regressor
 
   def _select_card(self, args, log):
     valid_cards, played_cards, known_cards = args
@@ -124,6 +137,7 @@ class LearnerPlayer(Player):
     regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
     regressor.training_samples += len(training_data)
 
+    # TODO: Do this somehow properly
     with open("{}/loss.csv".format(Config.EVALUATION_DIRECTORY), "a") as fh:
       fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
 
