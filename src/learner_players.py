@@ -44,10 +44,17 @@ class LearnerPlayer(Player):
           path_difference, utils.format_human(regressor.training_samples)))
         assert regressor.__class__.__name__ == regressor_constructor.__name__, \
             "Loaded model is a different type than desired, aborting"
+        with open("{}/loss.csv".format(Config.EVALUATION_DIRECTORY), "a") as fh:
+          fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
         log.info("Model details: {}".format(regressor))
         if Config.ONLINE_TRAINING and Config.TRAINING_DATA_FILE_NAME:
           log.info("Training loaded model on stored data from {}".format(Config.TRAINING_DATA_FILE_NAME))
           LearnerPlayer._train_regressor_from_file(regressor, log)
+
+          trained_pickle_file_name = "{}/{}-trained-offline".format(Config.EVALUATION_DIRECTORY, Config.REGRESSOR_NAME)
+          log.warning("Writing newly-trained model to {}".format(trained_pickle_file_name))
+          with open(trained_pickle_file_name, "wb") as fh:
+            pickle.dump(regressor, fh)
         return regressor
 
     assert Config.ONLINE_TRAINING, "Must do online training when starting with a model from scratch"
