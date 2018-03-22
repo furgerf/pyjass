@@ -221,28 +221,28 @@ def check_config(log):
 
 def get_encodings():
   # NOTE: Retired
-  encoding_1 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 0, None)
+  encoding_1 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 0)
 
   # NOTE: Retired - 10m hands - bad encoding for in hand/in play/selected
-  encoding_2 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 1, "encoding-2.csv")
+  encoding_2 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 1)
 
   # NOTE: Retired - 10m hands - changed card encoding
-  encoding_3 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, "encoding-3.csv")
+  encoding_3 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1)
 
   # NOTE: Retired - 10m hands - should've had different cost but there was a bug...
-  encoding_4 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, "encoding-4.csv")
+  encoding_4 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1)
 
   # NOTE: 1m hands - same encoding as 3 but data from simple
-  encoding_5 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, "encoding-5.csv")
+  encoding_5 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1)
 
   # NOTE: Retired - 1m hands - same encoding as 4 but data from simple
-  encoding_6 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, "encoding-6.csv")
+  encoding_6 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1)
 
   # NOTE: 1m hands -  changed card encoding
-  encoding_7 = Encoding([10, 20, 30, 40], 1000, 4000, 16000, 1, 1, "encoding-7.csv")
+  encoding_7 = Encoding([10, 20, 30, 40], 1000, 4000, 16000, 1, 1)
 
   # NOTE: 1m hands - changed cost
-  encoding_8 = Encoding([1, 2, 3, 4], 10, 20, 30, 4, 1, "encoding-8.csv")
+  encoding_8 = Encoding([1, 2, 3, 4], 10, 20, 30, 4, 1)
 
   return {
       "01": encoding_1,
