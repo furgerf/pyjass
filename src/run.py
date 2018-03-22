@@ -164,7 +164,7 @@ def check_config(log):
     if not Config.TRAINING_DATA_FILE_NAME:
       log.error("Need a training file name when storing data")
       return False
-    if os.path.exists(Config.TRAINING_DATA_FILE_NAME):
+    if os.path.exists(Config.TRAINING_DATA_FILE_NAME) and os.stat(Config.TRAINING_DATA_FILE_NAME).st_size > 0:
       log.error("Training data file exists already")
       return False
 
@@ -259,6 +259,7 @@ def get_encodings():
       "12": encoding_5,
       "13": encoding_5,
       "14": encoding_5,
+      "15": encoding_8,
       }
 
 def main():

@@ -63,10 +63,12 @@ class Game:
       self._score_writer = csv.writer(self._score_fh, lineterminator="\n")
 
     if Config.STORE_TRAINING_DATA:
-      self._training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "wb")
-      self._write_training_data_header()
       if Config.TRAINING_DATA_FILE_NAME.endswith("csv"):
+        self._training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "w")
+        self._write_training_data_header()
         self._training_data_writer = csv.writer(self._training_data_fh, lineterminator="\n")
+      else:
+        self._training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "wb")
 
     if Config.STORE_TRAINING_DATA and Config.ONLINE_TRAINING:
       training_description = "(training online AND storing data) "
@@ -203,9 +205,6 @@ class Game:
     self._score_fh.write(header)
 
   def _write_training_data_header(self):
-    if not Config.TRAINING_DATA_FILE_NAME.endswith("csv"):
-      return
-
     header = "36 rows for cards with their known state from the view of a player " + \
         "(0 unknown, {} played by player, {} in play, {} in hand, {} selected to play; " + \
         "score of round from the view of the player: round factor {}, hand factor {}\n"

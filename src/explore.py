@@ -96,9 +96,9 @@ def visualize_scores(eid):
           xy=(row.team_1_info / 32, plt.ylim()[0] + 0.01 + 0.02*(i%4)), xytext=(row.team_1_info / 32, plt.ylim()[0] + 0.01 + 0.02*(i%4)))
 
   if loss is not None:
-    loss_ax.legend()
+    loss_ax.legend(loc="upper right")
   if scores is not None:
-    score_ax.legend()
+    score_ax.legend(loc="lower left")
 
   plt.title("{}: Team 1 win/score percentage".format(eid))
   plt.tight_layout()
