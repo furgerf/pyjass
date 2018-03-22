@@ -46,15 +46,17 @@ class LearnerPlayer(Player):
             "Loaded model is a different type than desired, aborting"
         with open("{}/loss.csv".format(Config.EVALUATION_DIRECTORY), "a") as fh:
           fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
-        log.info("Model details: {}".format(regressor))
+
         if Config.ONLINE_TRAINING and Config.TRAINING_DATA_FILE_NAME:
-          log.info("Training loaded model on stored data from {}".format(Config.TRAINING_DATA_FILE_NAME))
+          log.info("Training loaded model on stored data {}: {}".format(Config.TRAINING_DATA_FILE_NAME, regressor))
           LearnerPlayer._train_regressor_from_file(regressor, log)
 
           trained_pickle_file_name = "{}/{}-trained-offline".format(Config.EVALUATION_DIRECTORY, Config.REGRESSOR_NAME)
           log.warning("Writing newly-trained model to {}".format(trained_pickle_file_name))
           with open(trained_pickle_file_name, "wb") as fh:
             pickle.dump(regressor, fh)
+        else:
+          log.info("Model details: {}".format(regressor))
         return regressor
 
     assert Config.ONLINE_TRAINING, "Must do online training when starting with a model from scratch"
@@ -70,7 +72,7 @@ class LearnerPlayer(Player):
     regressor = regressor_constructor(**regressor_args)
     regressor.training_samples = 0
 
-    log.info("Training new model on stored data: {}".format(regressor))
+    log.info("Training new model on stored data {}: {}".format(Config.TRAINING_DATA_FILE_NAME, regressor))
     LearnerPlayer._train_regressor_from_file(regressor, log)
     log.warning("Writing newly-trained model to {}".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:

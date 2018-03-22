@@ -88,7 +88,7 @@ def format_human(number):
 class StoreDictKeyPair(argparse.Action):
   def __call__(self, parser, namespace, values, option_string=None):
     my_dict = {}
-    for kv in values.split(","):
+    for kv in values.split(";"):
       key, val = kv.split("=")
       my_dict[key] = eval(val) # pylint: disable=eval-used
     setattr(namespace, self.dest, my_dict)

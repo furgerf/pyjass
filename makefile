@@ -52,30 +52,30 @@ endif
 
 train:
 	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=1e7 \
-		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e3 $(ARGS)' TARGET=$@
+		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 eval:
-	@# NOTE: batch size = hands / logint / procs
+	@# NOTE: batch size = hands / logint / procs - doesn't keep any data
 	@$(MAKE) run ARGS='--seed --procs --team1=mlp --team1-best --hands=5e5 \
 		--trainingint=5e5 --chkint=5e5 --logint=1e5 --batchsize=5e4 $(ARGS)' TARGET=$@
 
 store:
 	mkdir -p $(MODELS_DIR)/$(MOD)
 	@$(MAKE) run ARGS='--seed --procs --team1=mlp --team1-best --hands=2e6 --store-data \
-		--trainingint=1e5 --chkint=2e6 --logint=5e5 --batchsize=5e4 $(ARGS)' TARGET=$@
+		--trainingint=1e5 --chkint=2e6 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 store-simple:
 	mkdir -p $(MODELS_DIR)/$(MOD)
 	@$(MAKE) run ARGS='--seed --procs --store-data --hands=1e6 \
-		--trainingint=1e5 --chkint=1e6 --logint=1e5 --batchsize=5e3 $(ARGS)' TARGET=$@
+		--trainingint=1e5 --chkint=1e6 --logint=1e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 initial-training:
 	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=8e6 \
-		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=5e4 $(ARGS)' TARGET=$@
+		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 initial-training-simple:
 	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \
-		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e3 $(ARGS)' TARGET=$@
+		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 link-model:
 ifndef MOD
@@ -84,13 +84,11 @@ endif
 ifndef REG
 	$(error Must specify model name for symlink)
 endif
-	@for reg in $(THIS_EVAL_DIR)/final-*.pkl; do \
-		pushd $(MODELS_DIR)/$(MOD) > /dev/null; \
-		ln -s ../../$(THIS_EVAL_DIR)/$$(basename $$reg) $(REG); \
-		success=$?; \
-		popd > /dev/null; \
-		[ $$success -eq 0 ] && echo "Created symlink: $$(ls -l $(MODELS_DIR)/$(MOD)/$(REG) | cut -d' ' -f 9-)"; \
-	done
+	@pushd $(MODELS_DIR)/$(MOD) > /dev/null; \
+	for reg in $(THIS_EVAL_DIR)/final-*.pkl; do \
+		ln -s ../../$(THIS_EVAL_DIR)/$$(basename $$reg) $(REG) && echo "Created symlink: $$(ls -l $(REG) | cut -d' ' -f 9-)" || true; \
+	done; \
+	popd > /dev/null
 
 lc:
 ifndef MOD

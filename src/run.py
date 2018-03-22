@@ -22,6 +22,8 @@ def parse_arguments():
   parser = ArgumentParser()
 
   # general
+  parser.add_argument("--test", action="store_true",
+      help="True if nothing should be done (for testing the args)")
   parser.add_argument("--loglevel", type=str, nargs="?", default="INFO",
       help="Minimum log level of logged messages, defaults to INFO")
   parser.add_argument("--seed", type=int, nargs="?", const=42,
@@ -51,7 +53,7 @@ def parse_arguments():
       help="Strategy for team 1")
   parser.add_argument("--team1-best", action="store_true",
       help="True if team 1 should always choose the best card")
-  parser.add_argument("--team1-args", action=utils.StoreDictKeyPair, metavar="KEY1=VAL1,KEY2=VAL2...",
+  parser.add_argument("--team1-args", action=utils.StoreDictKeyPair, metavar="KEY1=VAL1;KEY2=VAL2;...",
       help="Arguments for the model constructor for team 1")
   parser.add_argument("--team2", choices=Game.PLAYER_TYPES.keys(), default="simple",
       help="Strategy for team 2")
@@ -99,8 +101,6 @@ def apply_arguments(args):
     Config.REGRESSOR_NAME = args.regressor_name
   if args.training_file:
     Config.TRAINING_DATA_FILE_NAME = "data/{}".format(args.training_file)
-  else:
-    Config.TRAINING_DATA_FILE_NAME = "data/{}".format(Config.ENCODING.training_data_file_name)
   Config.EVALUATION_DIRECTORY = "evaluations/{}".format(args.eid)
 
   if args.team1:
@@ -279,6 +279,10 @@ def main():
 
   if not check_config(log):
     log.error("Aborting evaluation because config is invalid")
+    return
+
+  if args.test:
+    log.warning("Config looks ok - aborting run")
     return
 
   # make sure the evaluation doesn't overwrite existing data
