@@ -52,7 +52,7 @@ endif
 
 train:
 	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=1e7 \
-		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
+		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 eval:
 	@# NOTE: batch size = hands / logint / procs - doesn't keep any data
@@ -71,11 +71,11 @@ store-simple:
 
 initial-training:
 	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=8e6 \
-		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
+		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 initial-training-simple:
 	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \
-		--trainingint=1e5 --chkint=5e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
+		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 link-model:
 ifndef MOD

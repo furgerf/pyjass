@@ -24,7 +24,7 @@ def store_model(model, file_name):
     return pickle.dump(model, fh)
 
 
-def visualize_scores(eid):
+def visualize_scores(eid, loss_max=1000):
   scores_file = "evaluations/{}/curve_scores.csv".format(eid)
   loss_file = "evaluations/{}/loss.csv".format(eid)
 
@@ -63,7 +63,7 @@ def visualize_scores(eid):
 
   if loss is not None:
     loss_ax = score_ax.twinx()
-    loss_ax.set_ylim(0, 1000)
+    loss_ax.set_ylim(0, loss_max)
 
     loss["loss_rolling"] = loss.loss.rolling(3, center=True).mean()
 
