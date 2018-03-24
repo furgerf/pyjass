@@ -102,6 +102,7 @@ def apply_arguments(args):
   if args.training_file:
     Config.TRAINING_DATA_FILE_NAME = "data/{}".format(args.training_file)
   Config.EVALUATION_DIRECTORY = "evaluations/{}".format(args.eid)
+  Config.LOSS_FILE = "{}/loss.csv".format(Config.EVALUATION_DIRECTORY)
 
   if args.team1:
     Config.TEAM_1_STRATEGY = args.team1
@@ -244,6 +245,9 @@ def get_encodings():
   # NOTE: 1m hands - changed cost
   encoding_8 = Encoding([1, 2, 3, 4], 10, 20, 30, 4, 1)
 
+  # NOTE: 1m hands - changed cost
+  encoding_9 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1)
+
   return {
       "01": encoding_1,
       "02": encoding_1,
@@ -260,6 +264,7 @@ def get_encodings():
       "13": encoding_5,
       "14": encoding_5,
       "15": encoding_8,
+      "16": encoding_9,
       }
 
 def main():

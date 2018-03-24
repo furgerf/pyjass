@@ -29,6 +29,7 @@ class Config:
   REGRESSOR_NAME = None
   TRAINING_DATA_FILE_NAME = None
   EVALUATION_DIRECTORY = None
+  LOSS_FILE = None
 
   # parallel processing
   PARALLEL_PROCESSES = None

@@ -19,19 +19,13 @@ class LearnerPlayer(Player):
     self.regressor = regressor
     self.last_training_done = time.time()
 
-    if Config.ONLINE_TRAINING: # TODO move file to config
-      if not os.path.exists("{}/loss.csv".format(Config.EVALUATION_DIRECTORY)):
-        with open("{}/loss.csv".format(Config.EVALUATION_DIRECTORY), "w") as fh:
-          fh.write("samples,loss\n")
-
     super(LearnerPlayer, self).__init__(name, play_best_card, log)
 
   @staticmethod
   def _get_regressor(regressor_constructor, log):
-    # TODO ...
-    if Config.ONLINE_TRAINING: # TODO move file to config
-      if not os.path.exists("{}/loss.csv".format(Config.EVALUATION_DIRECTORY)):
-        with open("{}/loss.csv".format(Config.EVALUATION_DIRECTORY), "w") as fh:
+    if Config.ONLINE_TRAINING:
+      if not os.path.exists(Config.LOSS_FILE):
+        with open(Config.LOSS_FILE, "w") as fh:
           fh.write("samples,loss\n")
 
     pickle_file_name = "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME)
@@ -44,8 +38,11 @@ class LearnerPlayer(Player):
           path_difference, utils.format_human(regressor.training_samples)))
         assert regressor.__class__.__name__ == regressor_constructor.__name__, \
             "Loaded model is a different type than desired, aborting"
-        with open("{}/loss.csv".format(Config.EVALUATION_DIRECTORY), "a") as fh:
-          fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
+
+        if Config.ONLINE_TRAINING:
+          # this is a bit of a crutch to avoid writing the loss when creating the LC...
+          with open(Config.LOSS_FILE, "a") as fh:
+            fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
 
         if Config.ONLINE_TRAINING and Config.TRAINING_DATA_FILE_NAME:
           log.info("Training loaded model on stored data {}: {}".format(Config.TRAINING_DATA_FILE_NAME, regressor))
@@ -146,8 +143,7 @@ class LearnerPlayer(Player):
     regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
     regressor.training_samples += len(training_data)
 
-    # TODO: Do this somehow properly
-    with open("{}/loss.csv".format(Config.EVALUATION_DIRECTORY), "a") as fh:
+    with open(Config.LOSS_FILE, "a") as fh:
       fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
 
     training_mins, training_secs = divmod(time.time() - training_start, 60)
