@@ -34,6 +34,10 @@ wait: PID=
 	pause resume kill remove-eval archive archive-unnamed venv freeze install uninstall
 
 run:
+ifdef PID
+	$(info Waiting for process $(PID)...)
+	@$(MAKE) -s wait
+endif
 	mkdir -p $(THIS_EVAL_DIR)
 ifndef MOD
 	$(error Must specify model)
@@ -51,30 +55,30 @@ endif
 	done
 
 train:
-	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=1e7 \
+	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --online --hands=1e7 \
 		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 eval:
 	@# NOTE: batch size = hands / logint / procs - doesn't keep any data
-	@$(MAKE) run ARGS='--seed --procs --team1=mlp --team1-best --hands=5e5 \
+	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --team1-best --hands=5e5 \
 		--trainingint=5e5 --chkint=5e5 --logint=1e5 --batchsize=5e4 $(ARGS)' TARGET=$@
 
 store:
 	mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) run ARGS='--seed --procs --team1=mlp --team1-best --hands=2e6 --store-data \
+	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --team1-best --hands=2e6 --store-data \
 		--trainingint=1e5 --chkint=2e6 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 store-simple:
 	mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) run ARGS='--seed --procs --store-data --hands=1e6 \
+	@$(MAKE) -s run ARGS='--seed --procs --store-data --hands=1e6 \
 		--trainingint=1e5 --chkint=1e6 --logint=1e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 initial-training:
-	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=8e6 \
+	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --online --hands=8e6 \
 		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 initial-training-simple:
-	@$(MAKE) run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \
+	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \
 		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 link-model:
@@ -99,7 +103,7 @@ ifndef EID
 endif
 	@> $(CURVE_SCORES)
 	@count=0; \
-	for reg in $(THIS_EVAL_DIR)/p1_MLPRegressor_*.pkl; do \
+	time (for reg in $(THIS_EVAL_DIR)/p1_MLPRegressor_*.pkl; do \
 		reg_path=../../$(THIS_EVAL_DIR)/$$(basename $$reg); \
 		echo "Processing $$reg..."; \
 		# we want to write another evaluation to this directory \
@@ -118,7 +122,7 @@ endif
 		echo -n "$$count," >> $(CURVE_SCORES); \
 		# append sum of the two batch scores\
 		tail -n +2 $(SCORES) | awk -F, 'NR%2 { split($$0, a); next } { for (i=2; i<NF-1; i++) printf "%d,", a[i]+$$i; for (i=NF-1; i<NF; i++) printf "%d,\n", $$i }' >> $(CURVE_SCORES); \
-	done
+	done)
 
 lint:
 	@$(BIN)/pylint $(LINT_FILES) --ignore=venv/ -f colorized -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
