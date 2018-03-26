@@ -74,10 +74,12 @@ store-simple:
 		--trainingint=1e5 --chkint=1e6 --logint=1e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 initial-training:
+	mkdir -p $(MODELS_DIR)/$(MOD)
 	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --online --hands=8e6 \
 		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 initial-training-simple:
+	mkdir -p $(MODELS_DIR)/$(MOD)
 	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \
 		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 

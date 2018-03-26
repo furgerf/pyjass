@@ -242,11 +242,14 @@ def get_encodings():
   # NOTE: 1m hands -  changed card encoding
   encoding_7 = Encoding([10, 20, 30, 40], 1000, 4000, 16000, 1, 1)
 
-  # NOTE: 1m hands - changed cost
+  # NOTE: 3m hands - changed cost
   encoding_8 = Encoding([1, 2, 3, 4], 10, 20, 30, 4, 1)
 
-  # NOTE: 1m hands - changed cost
+  # NOTE: 3m hands - changed cost
   encoding_9 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1)
+
+  # NOTE: 3m hands - changed cost
+  encoding_10 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 2)
 
   return {
       "01": encoding_1,
@@ -265,6 +268,7 @@ def get_encodings():
       "14": encoding_5,
       "15": encoding_8,
       "16": encoding_9,
+      "17": encoding_10,
       }
 
 def main():
