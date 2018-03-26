@@ -34,14 +34,14 @@ wait: PID=
 	pause resume kill remove-eval archive archive-unnamed venv freeze install uninstall
 
 run:
-ifdef PID
-	$(info Waiting for process $(PID)...)
-	@$(MAKE) -s wait
-endif
-	mkdir -p $(THIS_EVAL_DIR)
 ifndef MOD
 	$(error Must specify model)
 endif
+ifdef PID
+	$(info Waiting for process $(PID)...)
+	@$(MAKE) --no-print-directory wait
+endif
+	mkdir -p $(THIS_EVAL_DIR)
 	$(UNBUF) $(NICE) $(BIN)/python src/run.py --eid=$(EID) --model=$(MOD) --regressor=$(REG) $(ARGS) 2>&1 \
 		| tee $(EVAL_LOG); [ $${PIPESTATUS[0]} -eq 0 ]
 	@for reg in $(REGRESSORS); do \
@@ -55,32 +55,32 @@ endif
 	done
 
 train:
-	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --online --hands=1e7 \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --online --hands=1e7 \
 		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 eval:
 	@# NOTE: batch size = hands / logint / procs - doesn't keep any data
-	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --team1-best --hands=5e5 \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --hands=5e5 \
 		--trainingint=5e5 --chkint=5e5 --logint=1e5 --batchsize=5e4 $(ARGS)' TARGET=$@
 
 store:
 	mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --team1-best --hands=2e6 --store-data \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --hands=2e6 --store-data \
 		--trainingint=1e5 --chkint=2e6 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 store-simple:
 	mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) -s run ARGS='--seed --procs --store-data --hands=1e6 \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --store-data --hands=1e6 \
 		--trainingint=1e5 --chkint=1e6 --logint=1e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 initial-training:
 	mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --online --hands=8e6 \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --online --hands=8e6 \
 		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 initial-training-simple:
 	mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) -s run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \
 		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
 link-model:
@@ -102,6 +102,10 @@ ifndef MOD
 endif
 ifndef EID
 	$(error Must specify evaluation ID)
+endif
+ifdef PID
+	$(info Waiting for process $(PID)...)
+	@$(MAKE) --no-print-directory wait
 endif
 	@> $(CURVE_SCORES)
 	@count=0; \

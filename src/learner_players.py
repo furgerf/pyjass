@@ -161,7 +161,7 @@ class LearnerPlayer(Player):
     file_name = unformatted_file_name.format(self.name,
         self.regressor.__class__.__name__, current_iteration)
     file_path = "{}/{}".format(Config.EVALUATION_DIRECTORY, file_name)
-    log.warning("Storing model in '{}' at iteration {}/{} ({:.1f}%)".format(file_name,
+    log.info("Storing model in '{}' at iteration {}/{} ({:.1f}%)".format(file_name,
       utils.format_human(current_iteration), utils.format_human(total_iterations),
       100.0*current_iteration/total_iterations))
 

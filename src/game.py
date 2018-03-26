@@ -162,7 +162,7 @@ class Game:
 
         elapsed_minutes = (time.time() - start_time) / 60
         estimated_hours, estimated_minutes = divmod(elapsed_minutes / percentage - elapsed_minutes, 60)
-        self.log.info("Finished round {}/{} ({:.1f}%, ETA: {:%H:%M} ({}:{:02d})), hands: {}/{}, memory: {}={:.1f}M".format(
+        self.log.warning("Finished round {}/{} ({:.1f}%, ETA: {:%H:%M} ({}:{:02d})), hands: {}/{}, memory: {}={:.1f}M".format(
           utils.format_human(batch_round), utils.format_human(Config.BATCH_COUNT), 100.0 * percentage,
           datetime.now() + timedelta(hours=estimated_hours, minutes=estimated_minutes),
           int(estimated_hours), int(estimated_minutes),
@@ -236,6 +236,6 @@ class Game:
       utils.format_human(self._total_score_team_1), Config.TEAM_1_STRATEGY, " (best)" if Config.TEAM_1_BEST else "",
       utils.format_human(self._total_score_team_2), Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "",
       utils.format_human(self._wins_team_1), utils.format_human(self._wins_team_2),
-      utils.format_human((self._total_score_team_1*2-score_of_both_teams)/2),
+      utils.format_human(int((self._total_score_team_1*2-score_of_both_teams)/2)),
       100.0*(self._total_score_team_1*2-score_of_both_teams)/2/score_of_both_teams,
       100.0*self._wins_team_1/wins_of_both_teams if wins_of_both_teams > 0 else 0))
