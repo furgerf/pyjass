@@ -44,8 +44,8 @@ class LearnerPlayer(Player):
           with open(Config.LOSS_FILE, "a") as fh:
             fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
 
-        if Config.ONLINE_TRAINING and Config.TRAINING_DATA_FILE_NAME:
-          log.info("Training loaded model on stored data {}: {}".format(Config.TRAINING_DATA_FILE_NAME, regressor))
+        if Config.ONLINE_TRAINING and Config.LOAD_TRAINING_DATA_FILE_NAME and os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME):
+          log.info("Training loaded model on stored data {}: {}".format(Config.LOAD_TRAINING_DATA_FILE_NAME, regressor))
           LearnerPlayer._train_regressor_from_file(regressor, log)
 
           trained_pickle_file_name = "{}/{}-trained-offline".format(Config.EVALUATION_DIRECTORY, Config.REGRESSOR_NAME)
@@ -58,9 +58,9 @@ class LearnerPlayer(Player):
 
     assert Config.ONLINE_TRAINING, "Must do online training when starting with a model from scratch"
 
-    assert Config.TRAINING_DATA_FILE_NAME and os.path.exists(Config.TRAINING_DATA_FILE_NAME), \
+    assert Config.LOAD_TRAINING_DATA_FILE_NAME and os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME), \
         "Found neither regressor '{}' nor training data file '{}'".format(
-            Config.REGRESSOR_NAME, Config.TRAINING_DATA_FILE_NAME)
+            Config.REGRESSOR_NAME, Config.LOAD_TRAINING_DATA_FILE_NAME)
 
     regressor_args = Config.TEAM_1_MODEL_ARGS or {}
     if regressor_args:
@@ -69,7 +69,7 @@ class LearnerPlayer(Player):
     regressor = regressor_constructor(**regressor_args)
     regressor.training_samples = 0
 
-    log.info("Training new model on stored data {}: {}".format(Config.TRAINING_DATA_FILE_NAME, regressor))
+    log.info("Training new model on stored data {}: {}".format(Config.LOAD_TRAINING_DATA_FILE_NAME, regressor))
     LearnerPlayer._train_regressor_from_file(regressor, log)
     log.warning("Writing newly-trained model to {}".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:
@@ -82,20 +82,20 @@ class LearnerPlayer(Player):
     offset = 0
     chunk_size = int(1.6e6)
 
-    if Config.TRAINING_DATA_FILE_NAME.endswith("csv"):
-      iterator = iter(utils.process_csv_file(Config.TRAINING_DATA_FILE_NAME))
+    if Config.LOAD_TRAINING_DATA_FILE_NAME.endswith("csv"):
+      iterator = iter(utils.process_csv_file(Config.LOAD_TRAINING_DATA_FILE_NAME))
       log.info("Skipping header '{}'".format(next(iterator)))
       for chunk in utils.batch(iterator, chunk_size):
         training_data = np.array(list(chunk), dtype=int)
         offset += len(training_data)
         log.debug("Loaded {} lines from {} ({} lines done)".format(
-          utils.format_human(len(training_data)), Config.TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
+          utils.format_human(len(training_data)), Config.LOAD_TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
         LearnerPlayer._train_regressor(regressor, training_data, log)
     else:
-      for training_data in utils.process_binary_file(Config.TRAINING_DATA_FILE_NAME, chunk_size):
+      for training_data in utils.process_binary_file(Config.LOAD_TRAINING_DATA_FILE_NAME, chunk_size):
         offset += len(training_data)
         log.debug("Loaded {} samples from {} ({} samples done)".format(
-          utils.format_human(len(training_data)), Config.TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
+          utils.format_human(len(training_data)), Config.LOAD_TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
         LearnerPlayer._train_regressor(regressor, training_data, log)
 
   def _select_card(self, args, log):

@@ -63,12 +63,15 @@ class Game:
       self._score_writer = csv.writer(self._score_fh, lineterminator="\n")
 
     if Config.STORE_TRAINING_DATA:
-      if Config.TRAINING_DATA_FILE_NAME.endswith("csv"):
-        self._training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "w")
+      if os.path.exists(Config.STORE_TRAINING_DATA_FILE_NAME):
+        raise ValueError("Not overwriting training data!")
+
+      if Config.STORE_TRAINING_DATA_FILE_NAME.endswith("csv"):
+        self._training_data_fh = open(Config.STORE_TRAINING_DATA_FILE_NAME, "w")
         self._write_training_data_header()
         self._training_data_writer = csv.writer(self._training_data_fh, lineterminator="\n")
       else:
-        self._training_data_fh = open(Config.TRAINING_DATA_FILE_NAME, "wb")
+        self._training_data_fh = open(Config.STORE_TRAINING_DATA_FILE_NAME, "wb")
 
     if Config.STORE_TRAINING_DATA and Config.ONLINE_TRAINING:
       training_description = "(training online AND storing data) "
@@ -112,7 +115,7 @@ class Game:
     while played_hands < Config.TOTAL_HANDS:
       self.log.debug("Starting batch {}".format(batch_round+1))
       if Config.PARALLEL_PROCESSES > 1:
-        batch = [self.pool.apply_async(game.play_hands, (Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE))
+        batch = [self.pool.apply_async(game.play_hands, (played_hands + i * Config.BATCH_SIZE,))
           for i, game in enumerate(parallel_games)]
         self.log.debug("Started parallel batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
         results = [b.get() for b in batch]
@@ -187,7 +190,7 @@ class Game:
 
   def _create_checkpoint(self, current_iteration, total_iterations):
     if Config.STORE_SCORES:
-      self.log.warning("Writing {} scores at iteration {}/{} ({:.1f}%)"
+      self.log.info("Writing {} scores at iteration {}/{} ({:.1f}%)"
           .format(utils.format_human(len(self._checkpoint_data)),
             utils.format_human(current_iteration), utils.format_human(total_iterations),
             100.0*current_iteration/total_iterations))
@@ -218,7 +221,7 @@ class Game:
     self.log.info("Writing {} training samples to {}".format(
       utils.format_human(len(training_data)), self._training_data_fh.name))
 
-    if Config.TRAINING_DATA_FILE_NAME.endswith("csv"):
+    if Config.STORE_TRAINING_DATA_FILE_NAME.endswith("csv"):
       self._training_data_writer.writerows(training_data)
       return
 

@@ -30,7 +30,7 @@ class ParallelGame:
     global LOG # pylint: disable=global-statement
     LOG = log
 
-  def play_hands(self, hands_to_play, already_played_hands):
+  def play_hands(self, already_played_hands):
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       training_data = np.ones((Const.DECISIONS_PER_HAND * Config.BATCH_SIZE, Const.CARDS_PER_HAND + 1), dtype=int)
     else:
@@ -46,8 +46,8 @@ class ParallelGame:
     checkpoint_wins_team_1 = 0
     checkpoint_wins_team_2 = 0
 
-    LOG.debug("[{}]: Starting to play {} hands...".format(self._id, utils.format_human(hands_to_play)))
-    for i in range(int(hands_to_play)):
+    LOG.debug("[{}]: Starting to play {} hands...".format(self._id, utils.format_human(Config.BATCH_SIZE)))
+    for i in range(int(Config.BATCH_SIZE)):
       # set up and play new hand
       hand = Hand(self.players, self._cards, LOG)
       (score_team_1, score_team_2), winner = hand.play(self.dealer,
@@ -80,6 +80,10 @@ class ParallelGame:
           checkpoint_wins_team_2, checkpoint_score_team_2,
           self.players[0].get_checkpoint_data(), self.players[1].get_checkpoint_data()
           ])
+        checkpoint_score_team_1 = 0
+        checkpoint_score_team_2 = 0
+        checkpoint_wins_team_1 = 0
+        checkpoint_wins_team_2 = 0
 
       if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
         from_index = i * Const.DECISIONS_PER_HAND
@@ -88,7 +92,7 @@ class ParallelGame:
         last_to_index = to_index
         training_data[from_index:to_index] = hand.new_training_data
 
-    LOG.debug("[{}]: ... finished playing {} hands".format(self._id, utils.format_human(hands_to_play)))
+    LOG.debug("[{}]: ... finished playing {} hands".format(self._id, utils.format_human(Config.BATCH_SIZE)))
 
     # for row in training_data:
     #   assert row.sum() > 0

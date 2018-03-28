@@ -38,8 +38,10 @@ def parse_arguments():
   # files
   parser.add_argument("--store-data", action="store_true",
       help="True if trainings data should be stored")
-  parser.add_argument("--training-file",
-      help="Name of the training data file to use, overriding the default file")
+  parser.add_argument("--load-training-file",
+      help="Name of the training data file to train on")
+  parser.add_argument("--store-training-file",
+      help="Name of the training data file to write to")
   parser.add_argument("--model", required=True,
       help="Name of the folder in the models/ directory, determines the encoding to use")
   parser.add_argument("--regressor-name",
@@ -99,8 +101,10 @@ def apply_arguments(args):
     Config.ENCODING = get_encodings().get(args.model)
   if args.regressor_name:
     Config.REGRESSOR_NAME = args.regressor_name
-  if args.training_file:
-    Config.TRAINING_DATA_FILE_NAME = "data/{}".format(args.training_file)
+  if args.load_training_file:
+    Config.LOAD_TRAINING_DATA_FILE_NAME = "data/{}".format(args.load_training_file)
+  if args.store_training_file:
+    Config.STORE_TRAINING_DATA_FILE_NAME = "data/{}".format(args.store_training_file)
   Config.EVALUATION_DIRECTORY = "evaluations/{}".format(args.eid)
   Config.LOSS_FILE = "{}/loss.csv".format(Config.EVALUATION_DIRECTORY)
 
@@ -117,6 +121,10 @@ def apply_arguments(args):
 
   if args.hands is not None:
     Config.TOTAL_HANDS = int(args.hands)
+  if args.batchsize:
+    Config.BATCH_SIZE = int(args.batchsize)
+  else:
+    Config.BATCH_SIZE = int(1e3)
   if args.trainingint:
     Config.TRAINING_INTERVAL = int(args.trainingint)
   else:
@@ -128,11 +136,7 @@ def apply_arguments(args):
   if args.chkresolution:
     Config.CHECKPOINT_RESOLUTION = int(args.chkresolution)
   else:
-    Config.CHECKPOINT_RESOLUTION = Config.CHECKPOINT_INTERVAL / 10
-  if args.batchsize:
-    Config.BATCH_SIZE = int(args.batchsize)
-  else:
-    Config.BATCH_SIZE = int(1e3)
+    Config.CHECKPOINT_RESOLUTION = min(Config.CHECKPOINT_INTERVAL / 10, Config.BATCH_SIZE)
   if args.logint:
     Config.LOGGING_INTERVAL = int(args.logint)
   else:
@@ -162,10 +166,10 @@ def check_config(log):
     return False
 
   if Config.STORE_TRAINING_DATA:
-    if not Config.TRAINING_DATA_FILE_NAME:
+    if not Config.STORE_TRAINING_DATA_FILE_NAME:
       log.error("Need a training file name when storing data")
       return False
-    if os.path.exists(Config.TRAINING_DATA_FILE_NAME) and os.stat(Config.TRAINING_DATA_FILE_NAME).st_size > 0:
+    if os.path.exists(Config.STORE_TRAINING_DATA_FILE_NAME) and os.stat(Config.STORE_TRAINING_DATA_FILE_NAME).st_size > 0:
       log.error("Training data file exists already")
       return False
 

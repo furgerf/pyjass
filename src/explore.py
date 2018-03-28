@@ -25,14 +25,18 @@ def store_model(model, file_name):
 
 
 def visualize_scores(eid, loss_max=1000):
-  scores_file = "evaluations/{}/curve_scores.csv".format(eid)
+  scores_file = "evaluations/{}/scores.csv".format(eid)
+  curve_scores_file = "evaluations/{}/curve_scores.csv".format(eid)
   loss_file = "evaluations/{}/loss.csv".format(eid)
 
-  scores = pd.read_csv(scores_file) if os.path.exists(scores_file) else None
+  scores = pd.read_csv(curve_scores_file) if os.path.exists(curve_scores_file) else None
   loss = pd.read_csv(loss_file) if os.path.exists(loss_file) else None
 
   if scores is None:
-    print("Scores file '{}' not found".format(scores_file))
+    print("Curve scores file '{}' not found".format(curve_scores_file))
+    scores = pd.read_csv(scores_file) if os.path.exists(scores_file) else None
+    if scores is None:
+      print("Scores file *ALSO* '{}' not found".format(curve_scores_file))
   if loss is None:
     print("loss file '{}' not found".format(loss_file))
 
@@ -49,16 +53,30 @@ def visualize_scores(eid, loss_max=1000):
 
   if scores is not None:
     scores["win_percentage"] = scores.wins_team_1 / (scores.wins_team_1 + scores.wins_team_2)
-    scores["win_percentage_rolling"] = scores.win_percentage.rolling(3, center=True).mean()
+    win_percentage_mean = scores.groupby("team_1_info").mean()
+    win_percentage_std = scores.groupby("team_1_info").std()
+    win_percentage_rolling = win_percentage_mean.win_percentage.rolling(3, center=True).mean()
     scores["score_percentage"] = scores.score_team_1 / (scores.score_team_1 + scores.score_team_2)
-    scores["score_percentage_rolling"] = scores.score_percentage.rolling(3, center=True).mean()
-    score_ax.plot(scores.team_1_info / 32, scores.win_percentage,
+    score_percentage_mean = scores.groupby("team_1_info").mean()
+    score_percentage_std = scores.groupby("team_1_info").std()
+    score_percentage_rolling = score_percentage_mean.score_percentage.rolling(3, center=True).mean()
+
+    score_ax.fill_between(win_percentage_mean.index / 32,
+        win_percentage_mean.win_percentage - win_percentage_std.win_percentage,
+        win_percentage_mean.win_percentage + win_percentage_std.win_percentage,
+        alpha=0.1, color="g")
+    score_ax.plot(win_percentage_mean.index / 32, win_percentage_mean.win_percentage,
         ".-", c="g", markersize=10, linewidth=1, label="Team 1 win %")
-    score_ax.plot(scores.team_1_info / 32, scores.win_percentage_rolling,
+    score_ax.plot(win_percentage_mean.index / 32, win_percentage_rolling,
         "-", c="g", alpha=0.5, linewidth=3, label="Rolling win %")
-    score_ax.plot(scores.team_1_info / 32, scores.score_percentage,
+
+    score_ax.fill_between(score_percentage_mean.index / 32,
+        score_percentage_mean.score_percentage - score_percentage_std.score_percentage,
+        score_percentage_mean.score_percentage + score_percentage_std.score_percentage,
+        alpha=0.1, color="b")
+    score_ax.plot(score_percentage_mean.index / 32, score_percentage_mean.score_percentage,
         ".-", c="b", markersize=10, linewidth=1, label="Team 1 score %")
-    score_ax.plot(scores.team_1_info / 32, scores.score_percentage_rolling,
+    score_ax.plot(score_percentage_mean.index / 32, score_percentage_rolling,
         "-", c="b", alpha=0.5, linewidth=3, label="Rolling score %")
 
   if loss is not None:

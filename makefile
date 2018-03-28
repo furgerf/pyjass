@@ -41,7 +41,7 @@ ifdef PID
 	$(info Waiting for process $(PID)...)
 	@$(MAKE) --no-print-directory wait
 endif
-	mkdir -p $(THIS_EVAL_DIR)
+	@mkdir -p $(THIS_EVAL_DIR)
 	$(UNBUF) $(NICE) $(BIN)/python src/run.py --eid=$(EID) --model=$(MOD) --regressor=$(REG) $(ARGS) 2>&1 \
 		| tee $(EVAL_LOG); [ $${PIPESTATUS[0]} -eq 0 ]
 	@for reg in $(REGRESSORS); do \
@@ -90,9 +90,15 @@ endif
 ifndef REG
 	$(error Must specify model name for symlink)
 endif
+ifdef PID
+	$(info Waiting for process $(PID)...)
+	@$(MAKE) --no-print-directory wait
+endif
 	@pushd $(MODELS_DIR)/$(MOD) > /dev/null; \
 	for reg in $(THIS_EVAL_DIR)/final-*.pkl; do \
-		ln -s ../../$(THIS_EVAL_DIR)/$$(basename $$reg) $(REG) && echo "Created symlink: $$(ls -l $(REG) | cut -d' ' -f 9-)" || true; \
+		ln -s ../../$(THIS_EVAL_DIR)/$$(basename $$reg) $(REG) && echo "Created symlink: $$(ls -l $(REG) | cut -d' ' -f 9-)" || \
+			{ echo "FAILURE" && popd > /dev/null && exit 1; }; \
+		test -f $(REG) || { echo "Created broken symlink!" && exit 1; }; \
 	done; \
 	popd > /dev/null
 
