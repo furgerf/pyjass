@@ -31,10 +31,10 @@ class Game:
     self.pool = pool
     self.log = log
     self.players = (
-        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p1", Config.TEAM_1_BEST, self.log),
-        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p2", Config.TEAM_2_BEST, self.log),
-        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p3", Config.TEAM_1_BEST, self.log),
-        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p4", Config.TEAM_2_BEST, self.log)
+        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p1", 1, Config.TEAM_1_BEST, self.log),
+        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p2", 2, Config.TEAM_2_BEST, self.log),
+        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p3", 3, Config.TEAM_1_BEST, self.log),
+        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p4", 4, Config.TEAM_2_BEST, self.log)
         )
 
     self._wins_team_1 = 0
@@ -122,7 +122,7 @@ class Game:
       else:
         ParallelGame.inject_log(self.log)
         self.log.debug("Starting sequential batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
-        results = [game.play_hands(Config.BATCH_SIZE, played_hands + i * Config.BATCH_SIZE)
+        results = [game.play_hands(played_hands + i * Config.BATCH_SIZE)
             for i, game in enumerate(parallel_games)]
 
       self.log.debug("Processing results of batch")
@@ -210,12 +210,7 @@ class Game:
     self._score_fh.write(header)
 
   def _write_training_data_header(self):
-    header = "36 rows for cards with their known state from the view of a player " + \
-        "(0 unknown, {} played by player, {} in play, {} in hand, {} selected to play; " + \
-        "score of round from the view of the player: round factor {}, hand factor {}\n"
-    self._training_data_fh.write(header.format(Config.ENCODING.card_code_players, Config.ENCODING.card_code_in_play,
-      Config.ENCODING.card_code_in_hand, Config.ENCODING.card_code_selected,
-      Config.ENCODING.round_score_factor, Config.ENCODING.hand_score_factor))
+    self._training_data_fh.write(Config.ENCODING.training_data_header)
 
   def _write_training_data(self, training_data):
     self.log.info("Writing {} training samples to {}".format(

@@ -169,7 +169,8 @@ def check_config(log):
     if not Config.STORE_TRAINING_DATA_FILE_NAME:
       log.error("Need a training file name when storing data")
       return False
-    if os.path.exists(Config.STORE_TRAINING_DATA_FILE_NAME) and os.stat(Config.STORE_TRAINING_DATA_FILE_NAME).st_size > 0:
+    if os.path.exists(Config.STORE_TRAINING_DATA_FILE_NAME) and \
+        os.stat(Config.STORE_TRAINING_DATA_FILE_NAME).st_size > 0:
       log.error("Training data file exists already")
       return False
 
@@ -226,34 +227,39 @@ def check_config(log):
 
 def get_encodings():
   # NOTE: Retired
-  encoding_1 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 0)
+  encoding_1 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 0, False)
 
-  # NOTE: Retired - 10m hands - bad encoding for in hand/in play/selected
-  encoding_2 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 1)
+  # NOTE: Retired - bad encoding for in hand/in play/selected
+  encoding_2 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 1, False)
 
-  # NOTE: Retired - 10m hands - changed card encoding
-  encoding_3 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1)
+  # NOTE: Retired - changed card encoding
+  encoding_3 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, False)
 
-  # NOTE: Retired - 10m hands - should've had different cost but there was a bug...
-  encoding_4 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1)
+  # NOTE: Retired - should've had different cost but there was a bug...
+  encoding_4 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, False)
 
-  # NOTE: 1m hands - same encoding as 3 but data from simple
-  encoding_5 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1)
+  # NOTE: Retired - same encoding as 3 but data from simple
+  encoding_5 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, False)
 
-  # NOTE: Retired - 1m hands - same encoding as 4 but data from simple
-  encoding_6 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1)
+  # NOTE: Retired - same encoding as 4 but data from simple
+  encoding_6 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, False)
 
-  # NOTE: 1m hands -  changed card encoding
-  encoding_7 = Encoding([10, 20, 30, 40], 1000, 4000, 16000, 1, 1)
+  # NOTE: NOT EXPLORED -  changed card encoding
+  encoding_7 = Encoding([10, 20, 30, 40], 1000, 4000, 16000, 1, 1, False)
 
-  # NOTE: 3m hands - changed cost
-  encoding_8 = Encoding([1, 2, 3, 4], 10, 20, 30, 4, 1)
+  # NOTE: Retired- changed cost
+  encoding_8 = Encoding([1, 2, 3, 4], 10, 20, 30, 4, 1, False)
 
-  # NOTE: 3m hands - changed cost
-  encoding_9 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1)
+  # NOTE: Retired- changed cost
+  encoding_9 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1, False)
 
-  # NOTE: 3m hands - changed cost
-  encoding_10 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 2)
+  # NOTE: Retired- changed cost
+  encoding_10 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 2, False)
+
+  # NOTE: Currently explored - using relative player encoding
+  encoding_11 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 2, True)
+
+  # TODO: Encoding which distinguishes who played which in-play card; try factors 1, 4
 
   return {
       "01": encoding_1,
@@ -273,6 +279,7 @@ def get_encodings():
       "15": encoding_8,
       "16": encoding_9,
       "17": encoding_10,
+      "18": encoding_11,
       }
 
 def main():

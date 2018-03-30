@@ -7,13 +7,15 @@ from config import Config
 import numpy as np
 
 import utils
+from const import Const
 
 
 class Player(ABC):
 
-  def __init__(self, name, play_best_card, log):
+  def __init__(self, name, number, play_best_card, log):
     # DON'T store the log
     self._name = name
+    self._number = number
     self._play_best_card = play_best_card
     self._hand = None
     log.debug("Created player {}".format(self.name))
@@ -67,8 +69,14 @@ class Player(ABC):
   def get_checkpoint_data(self):
     pass
 
+  def convert_to_relative(self, index):
+    if index == 0 or index in Config.ENCODING.card_code_players:
+      return index
+    return Config.ENCODING[(index - self._number) % Const.PLAYER_COUNT]
+
   def _encode_cards(self, played_cards, known_cards):
-    cards = np.array(known_cards, copy=True)
+    cards = np.array([self.convert_to_relative(card) for card in known_cards]) if \
+        Config.ENCODING.relative_player_encoding else np.array(known_cards, copy=True)
     for pc in played_cards:
       assert cards[pc.card_index] == 0, "Cards in play must've previously been unknown"
       cards[pc.card_index] = Config.ENCODING.card_code_in_play

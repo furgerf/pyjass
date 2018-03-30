@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# pylint: disable=unused-import
+# pylint: disable=unused-import,too-many-statements
 import os
 import csv
 import matplotlib.pyplot as plt
@@ -111,7 +111,8 @@ def visualize_scores(eid, loss_max=1000):
         note = "T2:{}".format(utils.format_human(row.team_2_info))
 
       score_ax.annotate(note, color="purple",
-          xy=(row.team_1_info / 32, plt.ylim()[0] + 0.01 + 0.02*(i%4)), xytext=(row.team_1_info / 32, plt.ylim()[0] + 0.01 + 0.02*(i%4)))
+          xy=(row.team_1_info / 32, plt.ylim()[0] + 0.01 + 0.02*(i%4)),
+          xytext=(row.team_1_info / 32, plt.ylim()[0] + 0.01 + 0.02*(i%4)))
 
   if loss is not None:
     loss_ax.legend(loc="upper right")

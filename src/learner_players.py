@@ -15,11 +15,11 @@ from sklearn.neural_network import MLPRegressor
 
 
 class LearnerPlayer(Player):
-  def __init__(self, name, play_best_card, regressor, log):
+  def __init__(self, name, number, play_best_card, regressor, log):
     self.regressor = regressor
     self.last_training_done = time.time()
 
-    super(LearnerPlayer, self).__init__(name, play_best_card, log)
+    super(LearnerPlayer, self).__init__(name, number, play_best_card, log)
 
   @staticmethod
   def _get_regressor(regressor_constructor, log):
@@ -175,16 +175,16 @@ class LearnerPlayer(Player):
 class SgdPlayer(LearnerPlayer):
   _sgd_regressor = None
 
-  def __init__(self, name, play_best_card, log):
+  def __init__(self, name, number, play_best_card, log):
     if SgdPlayer._sgd_regressor is None:
       SgdPlayer._sgd_regressor = LearnerPlayer._get_regressor(SGDRegressor, log)
-    super(SgdPlayer, self).__init__(name, play_best_card, SgdPlayer._sgd_regressor, log)
+    super(SgdPlayer, self).__init__(name, number, play_best_card, SgdPlayer._sgd_regressor, log)
 
 
 class MlpPlayer(LearnerPlayer):
   _mlp_regressor = None
 
-  def __init__(self, name, play_best_card, log):
+  def __init__(self, name, number, play_best_card, log):
     if MlpPlayer._mlp_regressor is None:
       MlpPlayer._mlp_regressor = LearnerPlayer._get_regressor(MLPRegressor, log)
-    super(MlpPlayer, self).__init__(name, play_best_card, MlpPlayer._mlp_regressor, log)
+    super(MlpPlayer, self).__init__(name, number, play_best_card, MlpPlayer._mlp_regressor, log)
