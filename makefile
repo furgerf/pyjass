@@ -31,8 +31,7 @@ lint: LINT_FILES:=src/*.py
 combine-round-results: NAME=
 combine-round-results: THIS_EVAL_DIR := $(EVAL_DIR)/$(NAME)-combined
 
-.PHONY: run train eval store store-simple initial-training initial-training-simple \
-	link-model lc lint explore wait \
+.PHONY: run train eval store link-model lc lint explore wait \
 	pause resume kill remove-eval archive archive-unnamed venv freeze install uninstall
 
 run:
@@ -57,33 +56,20 @@ endif
 	done
 
 train:
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --online --hands=1e7 \
-		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
-
-eval:
-	@# NOTE: batch size = hands / logint / procs - doesn't keep any data
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --hands=5e5 \
-		--trainingint=5e5 --chkint=5e5 --logint=1e5 --batchsize=5e4 $(ARGS)' TARGET=$@
+	@# NOTE: batchsize/trainingint: maximum (regarding memory); chkres = batchsize; chkint/logint selected freely
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --online \
+		--hands=1e6 --batchsize=2.5e4 --chkres=2.5e4 --chkint=2e5 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
 
 store:
+	@# NOTE: batchsize/trainingint: maximum (regarding memory); checkpoints "disabled"; logint selected freely
 	mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --hands=2e6 --store-data \
-		--trainingint=1e5 --chkint=2e6 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --store-data \
+		--hands=1e6 --batchsize=2.5e4 --chkint=1e6 --trainingint=1e5 --logint=5e5 $(ARGS)' TARGET=$@
 
-store-simple:
-	mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --store-data --hands=1e6 \
-		--trainingint=1e5 --chkint=1e6 --logint=1e5 --batchsize=1e4 $(ARGS)' TARGET=$@
-
-initial-training:
-	mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --online --hands=8e6 \
-		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
-
-initial-training-simple:
-	mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \
-		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
+eval:
+	@# NOTE: batchsize = logint / procs - doesn't keep any data; checkpoints "disabled"; logint selected freely
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best \
+		--hands=5e5 --batchsize=5e4 --chkint=5e5 --logint=1e5 $(ARGS)' TARGET=$@
 
 combine-round-results:
 ifndef NAME
