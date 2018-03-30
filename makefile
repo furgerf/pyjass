@@ -18,6 +18,7 @@ REGRESSORS=SGDRegressor MLPRegressor
 ARGS=
 MOD=
 REG=
+PID=
 UUID=$(shell uuidgen)
 TARGET=run
 EID:=$(TARGET)-$(UUID)
@@ -27,7 +28,8 @@ EVAL_LOG:=$(THIS_EVAL_DIR)/evaluation_$(shell date '+%Y%m%d_%H%M%S').log
 lc: SCORES := $(THIS_EVAL_DIR)/scores.csv
 lc: CURVE_SCORES := $(THIS_EVAL_DIR)/curve_scores.csv
 lint: LINT_FILES:=src/*.py
-wait: PID=
+combine-round-results: NAME=
+combine-round-results: THIS_EVAL_DIR := $(EVAL_DIR)/$(NAME)-combined
 
 .PHONY: run train eval store store-simple initial-training initial-training-simple \
 	link-model lc lint explore wait \
@@ -83,6 +85,29 @@ initial-training-simple:
 	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --online --hands=9e6 \
 		--trainingint=1e5 --chkint=2e5 --logint=5e5 --batchsize=1e4 $(ARGS)' TARGET=$@
 
+combine-round-results:
+ifndef NAME
+	$(error Must specify name of the evaluation)
+endif
+	$(info Writing combined results to $(THIS_EVAL_DIR))
+	@mkdir -p $(THIS_EVAL_DIR)
+	@# loss
+	@[ -f $(THIS_EVAL_DIR)/loss.csv ] && rm $(THIS_EVAL_DIR)/loss.csv || true
+	@for eval in $(EVAL_DIR)/$(NAME)-round-*; do \
+		[ ! -f $(THIS_EVAL_DIR)/loss.csv ] && head -n 1 $$eval/loss.csv > $(THIS_EVAL_DIR)/loss.csv; \
+		[ -f $$eval/loss.csv ] \
+			&& tail -n +3 $$eval/loss.csv >> $(THIS_EVAL_DIR)/loss.csv && echo "Processing $$eval/loss.csv" \
+			|| echo "-> $$eval contains no loss file!"; \
+	done
+	@# scores
+	@[ -f $(THIS_EVAL_DIR)/scores.csv ] && rm $(THIS_EVAL_DIR)/scores.csv || true
+	@for eval in $(EVAL_DIR)/$(NAME)-round-*; do \
+		[ -f $$eval/scores.csv -a ! -f $(THIS_EVAL_DIR)/scores.csv ] && head -n 1 $$eval/scores.csv > $(THIS_EVAL_DIR)/scores.csv; \
+		[ -f $$eval/scores.csv ] \
+			&& tail -n +3 $$eval/scores.csv >> $(THIS_EVAL_DIR)/scores.csv && echo "Processing $$eval/scores.csv" \
+			|| echo "-> $$eval contains no scores file!"; \
+	done
+
 link-model:
 ifndef MOD
 	$(error Must specify model)
@@ -96,7 +121,7 @@ ifdef PID
 endif
 	@pushd $(MODELS_DIR)/$(MOD) > /dev/null; \
 	for reg in $(THIS_EVAL_DIR)/final-*.pkl; do \
-		ln -s ../../$(THIS_EVAL_DIR)/$$(basename $$reg) $(REG) && echo "Created symlink: $$(ls -l $(REG) | cut -d' ' -f 9-)" || \
+		ln -s$(FORCE) ../../$(THIS_EVAL_DIR)/$$(basename $$reg) $(REG) && echo "Created symlink: $$(ls -l $(REG) | cut -d' ' -f 9-)" || \
 			{ echo "FAILURE" && popd > /dev/null && exit 1; }; \
 		test -f $(REG) || { echo "Created broken symlink!" && exit 1; }; \
 	done; \

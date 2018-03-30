@@ -29,14 +29,14 @@ def visualize_scores(eid, loss_max=1000):
   curve_scores_file = "evaluations/{}/curve_scores.csv".format(eid)
   loss_file = "evaluations/{}/loss.csv".format(eid)
 
-  scores = pd.read_csv(curve_scores_file) if os.path.exists(curve_scores_file) else None
+  scores = pd.read_csv(scores_file) if os.path.exists(scores_file) else None
   loss = pd.read_csv(loss_file) if os.path.exists(loss_file) else None
 
   if scores is None:
-    print("Curve scores file '{}' not found".format(curve_scores_file))
-    scores = pd.read_csv(scores_file) if os.path.exists(scores_file) else None
+    print("Scores file '{}' not found".format(curve_scores_file))
+    scores = pd.read_csv(curve_scores_file) if os.path.exists(curve_scores_file) else None
     if scores is None:
-      print("Scores file *ALSO* '{}' not found".format(curve_scores_file))
+      print("Curve scores file '{}' *ALSO* not found".format(curve_scores_file))
   if loss is None:
     print("loss file '{}' not found".format(loss_file))
 
