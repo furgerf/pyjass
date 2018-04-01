@@ -42,6 +42,7 @@ ifdef PID
 	$(info Waiting for process $(PID)...)
 	@$(MAKE) --no-print-directory wait
 endif
+	@mkdir -p $(MODELS_DIR)/$(MOD)
 	@mkdir -p $(THIS_EVAL_DIR)
 	$(UNBUF) $(NICE) $(BIN)/python src/run.py --eid=$(EID) --model=$(MOD) --regressor=$(REG) $(ARGS) 2>&1 \
 		| tee $(EVAL_LOG); [ $${PIPESTATUS[0]} -eq 0 ]
@@ -57,14 +58,14 @@ endif
 
 train:
 	@# NOTE: batchsize/trainingint: maximum (regarding memory); chkres = batchsize; chkint/logint selected freely
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --online \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --online --store-scores \
 		--hands=1e6 --batchsize=2.5e4 --chkres=2.5e4 --chkint=2e5 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
 
 store:
 	@# NOTE: batchsize/trainingint: maximum (regarding memory); checkpoints "disabled"; logint selected freely
-	mkdir -p $(MODELS_DIR)/$(MOD)
+	@mkdir -p $(MODELS_DIR)/$(MOD)
 	@$(MAKE) --no-print-directory run ARGS='--seed --procs --store-data \
-		--hands=1e6 --batchsize=2.5e4 --chkint=1e6 --trainingint=1e5 --logint=5e5 $(ARGS)' TARGET=$@
+		--hands=1e6 --batchsize=2.5e4 --chkint=1e6 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
 
 eval:
 	@# NOTE: batchsize = logint / procs - doesn't keep any data; checkpoints "disabled"; logint selected freely

@@ -38,9 +38,8 @@ class Config:
   BATCH_COUNT = None
 
   @staticmethod
-  def set_batch_parameters():
-    Config.BATCH_COUNT = Config._batch_count()
-
-  @staticmethod
-  def _batch_count(): # pylint: disable=invalid-name
-    return int(Config.TOTAL_HANDS / Config.BATCH_SIZE / Config.PARALLEL_PROCESSES)
+  def set_batch_count():
+    """
+    Assigns the number of batches to the correct number depending on the other config entries.
+    """
+    Config.BATCH_COUNT = int(Config.TOTAL_HANDS / Config.BATCH_SIZE / Config.PARALLEL_PROCESSES)

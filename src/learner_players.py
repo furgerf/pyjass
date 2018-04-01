@@ -9,24 +9,47 @@ import time
 import numpy as np
 import utils
 from config import Config
+from const import Const
 from player import Player
 from sklearn.linear_model import SGDRegressor
 from sklearn.neural_network import MLPRegressor
 
 
 class LearnerPlayer(Player):
+  """
+  Base class of ML-based players.
+  """
+
   def __init__(self, name, number, play_best_card, regressor, log):
+    """
+    Creates a new ML-based player.
+
+    :name: Name of the player, for display purposes only.
+    :number: Number of the player, to determine neighboring players.
+    :play_best_card: True if the player should always play the card he thinks is best, may be ignored.
+    :regressor: Model to use.
+    :log: Logger instance.
+    """
     self.regressor = regressor
     self.last_training_done = time.time()
-
     super(LearnerPlayer, self).__init__(name, number, play_best_card, log)
 
   @staticmethod
   def _get_regressor(regressor_constructor, log):
-    if Config.ONLINE_TRAINING:
-      if not os.path.exists(Config.LOSS_FILE):
-        with open(Config.LOSS_FILE, "w") as fh:
-          fh.write("samples,loss\n")
+    """
+    Retrieves the model. Either loads an existing or creates a new model.
+    Also does initial offline training so that the returned model is always valid and ready for inference.
+
+    :regressor_constructor: Constructor to instantiate a new model.
+    :log: Logger instance.
+
+    :returns: Model instance.
+    """
+    # TODO: Simplify
+    # ensure there's a loss file with the expected header
+    if Config.ONLINE_TRAINING and not os.path.exists(Config.LOSS_FILE):
+      with open(Config.LOSS_FILE, "w") as fh:
+        fh.write("samples,loss\n")
 
     pickle_file_name = "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME)
     if os.path.exists(pickle_file_name):
@@ -80,20 +103,25 @@ class LearnerPlayer(Player):
 
   @staticmethod
   def _train_regressor_from_file(regressor, log):
-    offset = 0
-    chunk_size = int(1.6e6)
+    """
+    Trains the provided regressor on offline data.
 
+    :regressor: Model instance.
+    :log: Logger instance.
+    """
+    # TODO: Simplify
+    offset = 0
     if Config.LOAD_TRAINING_DATA_FILE_NAME.endswith("csv"):
       iterator = iter(utils.process_csv_file(Config.LOAD_TRAINING_DATA_FILE_NAME))
       log.info("Skipping header '{}'".format(next(iterator)))
-      for chunk in utils.batch(iterator, chunk_size):
+      for chunk in utils.batch(iterator, Const.OFFLINE_CHUNK_SIZE):
         training_data = np.array(list(chunk), dtype=int)
         offset += len(training_data)
         log.debug("Loaded {} lines from {} ({} lines done)".format(
           utils.format_human(len(training_data)), Config.LOAD_TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
         LearnerPlayer._train_regressor(regressor, training_data, log)
     else:
-      for training_data in utils.process_binary_file(Config.LOAD_TRAINING_DATA_FILE_NAME, chunk_size):
+      for training_data in utils.process_binary_file(Config.LOAD_TRAINING_DATA_FILE_NAME, Const.OFFLINE_CHUNK_SIZE):
         offset += len(training_data)
         log.debug("Loaded {} samples from {} ({} samples done)".format(
           utils.format_human(len(training_data)), Config.LOAD_TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
@@ -101,7 +129,7 @@ class LearnerPlayer(Player):
 
   def _select_card(self, args, log):
     valid_cards, played_cards, known_cards = args
-    state = self._encode_cards(played_cards, known_cards)
+    state = self._encode_current_state(played_cards, known_cards)
     states = []
     scores = []
     for card in valid_cards:
@@ -140,6 +168,14 @@ class LearnerPlayer(Player):
 
   @staticmethod
   def _train_regressor(regressor, training_data, log, last_training_done=None):
+    """
+    Trains the provided model on the provided training data.
+
+    :regressor: Model to train.
+    :training_data: 2D-numpy-array of samples to train on.
+    :log: Logger instance.
+    :last_training_done: Optional. Time when the last training was done.
+    """
     training_start = time.time()
     regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
     regressor.training_samples += len(training_data)
@@ -174,6 +210,10 @@ class LearnerPlayer(Player):
 
 
 class SgdPlayer(LearnerPlayer):
+  """
+  ML-player using a Stochastic Gradient Descent model.
+  """
+
   _sgd_regressor = None
 
   def __init__(self, name, number, play_best_card, log):
@@ -183,6 +223,10 @@ class SgdPlayer(LearnerPlayer):
 
 
 class MlpPlayer(LearnerPlayer):
+  """
+  ML-player using a Multilayer Perceptron model.
+  """
+
   _mlp_regressor = None
 
   def __init__(self, name, number, play_best_card, log):

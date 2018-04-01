@@ -10,6 +10,11 @@ from player import Player
 
 
 class BaselinePlayer(Player):
+  """
+  Abstract base class for some baseline players.
+  Implements abstact methods that aren't relevant for baseline players.
+  """
+
   def train(self, training_data, log):
     pass
 
@@ -25,24 +30,44 @@ class BaselinePlayer(Player):
 
 
 class RandomCardPlayer(BaselinePlayer):
+  """
+  Player that selects cards randomly.
+  """
+
   def _select_card(self, args, log):
     valid_cards = args[0]
     return valid_cards[np.random.randint(len(valid_cards))]
 
 
 class HighestCardPlayer(BaselinePlayer):
+  """
+  Player that selects card with the highest value.
+  """
   def _select_card(self, args, log):
-    valid_cards = args[0]
-    return valid_cards[-1]
+    valid_cards = sorted(args[0], key=lambda c: c.value)
+    return valid_cards[0]
 
 
 class RulesPlayer(BaselinePlayer):
+  """
+  Abstract base class for rule-based players. Contains methods that are shared among rule-based players.
+  Note that most of these rules rely on playing obenabe!
+  """
+
   @abstractmethod
   def _select_card(self, args, log):
     pass
 
   @staticmethod
   def _select_best_card_of_first_suit(choices):
+    """
+    Selects the best card of the first suit.
+    Note that, counterintuitively, this appears to be better than selecting the "globally" best card.
+
+    :choices: List of cards that could be selected.
+
+    :returns: Selected card.
+    """
     best_card = choices[0]
     for card in choices:
       if best_card.is_beaten_by(card):
@@ -51,8 +76,20 @@ class RulesPlayer(BaselinePlayer):
 
 
 class SimpleRulesPlayer(RulesPlayer):
+  """
+  Player that selects cards based on a few simple rules.
+  Only the current round is considered, no memory of previous rounds.
+  """
+
   @staticmethod
   def _select_worst_card(choices):
+    """
+    Selects the card with the lowest value among the choices.
+
+    :choices: List of cards that could be selected.
+
+    :returns: Selected card.
+    """
     worst_card = choices[0]
     for card in choices:
       # compare value because that also works if the player can't match suit
@@ -126,16 +163,28 @@ class SimpleRulesPlayer(RulesPlayer):
 
 
 class BetterRulesPlayer(RulesPlayer):
-  HIGH_SCORE_LOW_VALUE_CARDS = [2, 4]
-
-  # NOTE: these rules rely on playing obenabe!
+  HIGH_SCORE_LOW_VALUE_CARDS = [2, 4] # 8 and 10
 
   @staticmethod
   def _get_counts_per_suit(cards):
+    """
+    Calculates the counts per suit among the provided cards.
+
+    :cards: The cards of which to count the suits.
+
+    :returns: List where each item is the number of cards of the corresponding suit.
+    """
     return [len(list(filter(lambda card: card.suit == suit, cards))) for suit in range(len(Card.SUITS))]
 
   @staticmethod
   def _select_high_scoring_or_useless_card(choices):
+    """
+    Selects a high-scoring card if possible or a "useless" card otherwise.
+
+    :choices: List of cards that could be selected.
+
+    :returns: Selected card.
+    """
     # get high-scoring cards; sort them by score descending
     high_scoring = list(sorted(filter(
       lambda card: card.value in BetterRulesPlayer.HIGH_SCORE_LOW_VALUE_CARDS, choices),
@@ -155,8 +204,16 @@ class BetterRulesPlayer(RulesPlayer):
 
   @staticmethod
   def _select_useless_card(choices):
-    # separating the low-scoring cards doesn't seem to help...
+    """
+    Selects a "useless" card.
+    Note that counterintuitively, it's better to select the card among all cards, rather than only
+    among the low-scoring cards.
 
+    :choices: List of cards that could be selected.
+
+    :returns: Selected card.
+    """
+    # separating the low-scoring cards doesn't seem to help...
     suit_counts = BetterRulesPlayer._get_counts_per_suit(choices)
     card_to_play = choices[0]
     for card in choices:

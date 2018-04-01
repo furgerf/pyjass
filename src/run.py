@@ -143,7 +143,7 @@ def apply_arguments(args):
   else:
     Config.LOGGING_INTERVAL = int(Config.TOTAL_HANDS / 20)
 
-  Config.set_batch_parameters()
+  Config.set_batch_count()
 
 def check_config(log):
   # pylint: disable=too-many-return-statements,too-many-branches
@@ -316,6 +316,7 @@ def main():
   open(evaluation_lock, "a").close() # touch eval lock
 
   try:
+    log.warning("Starting evaluation (PID: {})".format(os.getpid()))
     # fork as early as possible
     with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(log,)) as pool:
       game = Game(pool, log)
