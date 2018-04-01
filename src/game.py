@@ -5,17 +5,18 @@ import csv
 import os
 import struct
 import time
+from config import Config
 from datetime import datetime, timedelta
 
 import numpy as np
+from psutil import Process
+
 import utils
-from baseline_players import (HighestCardPlayer, RandomCardPlayer,
-                              SimpleRulesPlayer)
-from config import Config
+from baseline_players import (BetterRulesPlayer, HighestCardPlayer,
+                              RandomCardPlayer, SimpleRulesPlayer)
 from const import Const
 from learner_players import MlpPlayer, SgdPlayer
 from parallel_game import ParallelGame
-from psutil import Process
 
 
 class Game:
@@ -23,6 +24,7 @@ class Game:
       "random": RandomCardPlayer,
       "highest": HighestCardPlayer,
       "simple": SimpleRulesPlayer,
+      "better": BetterRulesPlayer,
       "sgd": SgdPlayer,
       "mlp": MlpPlayer
       }
@@ -165,8 +167,8 @@ class Game:
 
         elapsed_minutes = (time.time() - start_time) / 60
         estimated_hours, estimated_minutes = divmod(elapsed_minutes / percentage - elapsed_minutes, 60)
-        self.log.warning("Finished round {}/{} ({:.1f}%, ETA: {:%H:%M} ({}:{:02d})), hands: {}/{}, memory: {}={:.1f}M".format(
-          utils.format_human(batch_round), utils.format_human(Config.BATCH_COUNT), 100.0 * percentage,
+        self.log.warning("Finished round {}/{} ({:.1f}%, ETA: {:%H:%M} ({}:{:02d})), hands: {}/{}, memory: {}={:.1f}M"
+            .format(utils.format_human(batch_round), utils.format_human(Config.BATCH_COUNT), 100.0 * percentage,
           datetime.now() + timedelta(hours=estimated_hours, minutes=estimated_minutes),
           int(estimated_hours), int(estimated_minutes),
           utils.format_human(played_hands), utils.format_human(Config.TOTAL_HANDS),

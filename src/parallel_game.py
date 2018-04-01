@@ -20,7 +20,7 @@ class ParallelGame:
   def __init__(self, players):
     # NOTE: The players (their models) get updated because they still share the same reference
     self.players = players
-    self._cards = [Card(suit, value) for suit in range(Const.PLAYER_COUNT) for value in range(Const.CARDS_PER_PLAYER)]
+    self._cards = [Card(suit, value) for suit in range(len(Card.SUITS)) for value in range(len(Card.VALUES))]
     self.dealer = 0
     self.current_score_team_1 = 0
     self.current_score_team_2 = 0

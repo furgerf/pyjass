@@ -133,6 +133,7 @@ def apply_arguments(args):
     Config.CHECKPOINT_INTERVAL = int(args.chkint)
   else:
     Config.CHECKPOINT_INTERVAL = Config.TRAINING_INTERVAL if Config.ONLINE_TRAINING else Config.TOTAL_HANDS / 10
+  Config.CHECKPOINT_INTERVAL = min(Config.CHECKPOINT_INTERVAL, Config.TOTAL_HANDS)
   if args.chkresolution:
     Config.CHECKPOINT_RESOLUTION = int(args.chkresolution)
   else:
