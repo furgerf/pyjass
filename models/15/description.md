@@ -10,14 +10,19 @@ Using encoding 8 from binary data
 Doing another 3M online hands
 Trying to see if this really is it...
 
-3x100: 54.7%, loss: 2189.2 (training time: 8h) <= 
-4x100: 55.9%, loss: 2154.4 (training time: 9h45) <= 
-100,50,100,50: 53.3%, loss: 2196.6 (training time: 8h) <= 
+3x100: 54.7%, loss: 2189.2 (training time: 8h) <= improved significantly
+4x100: 55.9%, loss: 2154.4 (training time: 9h45) <= dito
+100,50,100,50: 53.3%, loss: 2196.6 (training time: 8h) <= dito
 
 # Round three
 Using another 3M online
 
-3x100: %, loss:  (training time: ) <= 
-running 4x100: %, loss:  (training time: ) <= 
-100,50,100,50: %, loss:  (training time: ) <= 
+3x100: 54.5%, loss: 2178.3 (training time: 9h45) <= looks like it's done
+4x100: 56.1%, loss: 2148.8 (training time: 11h) <= dito
+100,50,100,50: 59.0%, loss: 2213.1 (training time: 9h45) <= might actually still kinda improve...
+
+# Round four
+Using another 3M online
+
+100,50,100,50: 54.4%, loss: 2158.7 (training time: 9h45) <= the previous good result must've been down to luck
 

@@ -16,7 +16,7 @@ Using another 3M online
 # Round three
 Using another 3M online
 
-3x100: %, loss:  (training time: ) <= 
+3x100: 58.5%, loss: 997.3 (training time: 10h15) <= looks like it's done learning now
 4x100: 62.2%, loss: 986.4 (training time: 10h) <= looks like it's done learning now
 100,50,100,50: 60.4%, loss: 993.9 (training time: 10h) <= looks like it's done learning now
 
@@ -24,5 +24,11 @@ Using another 3M online
 Using another 3M online
 Just trying to see if it's really done...
 
-4x100: %, loss:  (training time: 7h45) <= 
+4x100: 62.7%, loss: 986.0 (training time: 7h45) <= really seems to be done
+
+# Complex model
+Trying layers 100 50 200 50 200 50 100 to see if something like that might help
+Doing the entire Training in one go; 3M offline + 9M online
+
+59.7%, loss: 1003.2 (training time: 59h) <= no use...
 
