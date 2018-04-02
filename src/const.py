@@ -36,4 +36,4 @@ class Const:
   """
   Size of a chunk of offline data to process.
   """
-  OFFLINE_CHUNK_SIZE = int(1.6e6)
+  OFFLINE_CHUNK_SIZE = int(3.2e6)

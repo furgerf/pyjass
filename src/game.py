@@ -232,7 +232,7 @@ class Game:
     wins_of_both_teams = self._wins_team_1 + self._wins_team_2
     message = "Overall result: {} ({}{}) vs {} ({}{}); wins: {} vs {}; " + \
         "(score diff {}, off mean: {:.2f}%, T1 win percentage: {:.2f}%)"
-    self.log.error(message.format(
+    utils.log_success_or_error(self.log, self._wins_team_1 > self._wins_team_2, message.format(
       utils.format_human(self._total_score_team_1), Config.TEAM_1_STRATEGY, " (best)" if Config.TEAM_1_BEST else "",
       utils.format_human(self._total_score_team_2), Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "",
       utils.format_human(self._wins_team_1), utils.format_human(self._wins_team_2),

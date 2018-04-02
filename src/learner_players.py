@@ -111,6 +111,7 @@ class LearnerPlayer(Player):
     """
     # TODO: Simplify
     offset = 0
+    training_start = time.time()
     if Config.LOAD_TRAINING_DATA_FILE_NAME.endswith("csv"):
       iterator = iter(utils.process_csv_file(Config.LOAD_TRAINING_DATA_FILE_NAME))
       log.info("Skipping header '{}'".format(next(iterator)))
@@ -126,6 +127,8 @@ class LearnerPlayer(Player):
         log.debug("Loaded {} samples from {} ({} samples done)".format(
           utils.format_human(len(training_data)), Config.LOAD_TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
         LearnerPlayer._train_regressor(regressor, training_data, log)
+    training_hours, training_minutes = divmod((time.time() - training_start)/60, 60)
+    log.warning("Finished offline training in {}h{}m".format(int(training_hours), int(training_minutes)))
 
   def _select_card(self, args, log):
     valid_cards, played_cards, known_cards = args
@@ -188,9 +191,10 @@ class LearnerPlayer(Player):
     if last_training_done:
       last_mins, last_secs = divmod(time.time() - last_training_done, 60)
       since_last = " ({}m{}s since last)".format(int(last_mins), int(last_secs))
-    log.info("Trained {} on {} new samples (now has {}) in {}m{}s{}; loss {:.1f}".format(
+    log.info("Trained {} on {} new samples (now has {} - {} hands) in {}m{}s{}; loss {:.1f}".format(
       regressor.__class__.__name__, utils.format_human(len(training_data)),
       utils.format_human(regressor.training_samples),
+      utils.format_human(regressor.training_samples/Const.DECISIONS_PER_HAND),
       int(training_mins), int(training_secs), since_last, regressor.loss_))
 
   def checkpoint(self, current_iteration, total_iterations, log):

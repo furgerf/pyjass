@@ -175,7 +175,7 @@ def check_config(log):
       log.error("Training data file exists already")
       return False
 
-  if Config.TOTAL_HANDS % Config.CHECKPOINT_INTERVAL != 0:
+  if Config.TOTAL_HANDS and Config.TOTAL_HANDS % Config.CHECKPOINT_INTERVAL != 0:
     log.error("Checkpoint interval {} must divide total hands {}".format(
       utils.format_human(Config.CHECKPOINT_INTERVAL), utils.format_human(Config.TOTAL_HANDS)))
     return False
