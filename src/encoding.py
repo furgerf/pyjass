@@ -7,6 +7,9 @@ class Encoding:
   # pylint: disable=too-many-arguments
   def __init__(self, card_code_players, card_code_in_hand, card_code_in_play, card_code_selected,
       round_score_factor, hand_score_factor, relative_player_encoding):
+    if set([0, card_code_in_hand, card_code_in_play, card_code_selected]).intersection(card_code_players):
+      raise ValueError("Can't use same number for multiple states")
+
     self._card_code_players = card_code_players
     self._card_code_in_hand = card_code_in_hand
     self._card_code_in_play = card_code_in_play

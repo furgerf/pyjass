@@ -257,8 +257,11 @@ def get_encodings():
   # NOTE: Retired- changed cost
   encoding_10 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 2, False)
 
+  # NOTE: Retired - tried relative player encoding but src had a bug...
+  encoding_11 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 2, False)
+
   # NOTE: Currently explored - using relative player encoding
-  encoding_11 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 2, True)
+  encoding_12 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 2, True)
 
   # TODO: Encoding which distinguishes who played which in-play card; try factors 1, 4
 
@@ -281,6 +284,7 @@ def get_encodings():
       "16": encoding_9,
       "17": encoding_10,
       "18": encoding_11,
+      "19": encoding_12,
       }
 
 def main():

@@ -132,10 +132,12 @@ class Player(ABC):
 
     :returns: Relative player number.
     """
-    if player_number == 0 or player_number in Config.ENCODING.card_code_players:
+    if player_number not in Config.ENCODING.card_code_players:
       # the number isn't actually a player number, return it unchanged
       return player_number
-    return Config.ENCODING[(player_number - self._number) % Const.PLAYER_COUNT]
+    own_index = Config.ENCODING.card_code_players.index(self._number)
+    player_index = Config.ENCODING.card_code_players.index(player_number)
+    return Config.ENCODING.card_code_players[(player_index - own_index) % Const.PLAYER_COUNT]
 
   def _encode_current_state(self, played_cards, known_cards):
     """
