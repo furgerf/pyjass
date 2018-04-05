@@ -267,6 +267,9 @@ def get_encodings():
   # NOTE: Retired - using relative player encoding
   encoding_12 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2, True)
 
+  # NOTE: Currently explored - using better baseline
+  encoding_13 = Encoding("better", [1, 2, 3, 4], 10, 20, 30, 1, 2, True)
+
   # TODO: Encoding which distinguishes who played which in-play card; try factors 1, 4
 
   return {
@@ -289,6 +292,7 @@ def get_encodings():
       "17": encoding_10,
       "18": encoding_11,
       "19": encoding_12,
+      "20": encoding_13,
       }
 
 def main():
