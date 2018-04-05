@@ -58,18 +58,18 @@ endif
 
 train:
 	@# NOTE: batchsize/trainingint: maximum (regarding memory); chkres = batchsize; chkint/logint selected freely
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --online --store-scores \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --team2=baseline --online --store-scores \
 		--hands=2e6 --batchsize=2.5e4 --chkres=2.5e4 --chkint=2e5 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
 
 store:
 	@# NOTE: batchsize/trainingint: maximum (regarding memory); checkpoints "disabled"; logint selected freely
 	@mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --store-data \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team2=baseline --store-data \
 		--hands=2e6 --batchsize=2.5e4 --chkint=1e6 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
 
 eval:
 	@# NOTE: batchsize = logint / procs - doesn't keep any data; checkpoints "disabled"; logint selected freely
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --team2=baseline \
 		--hands=5e5 --batchsize=5e4 --chkint=5e5 --logint=1e5 $(ARGS)' TARGET=$@
 
 combine-round-results:

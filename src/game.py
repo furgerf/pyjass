@@ -25,6 +25,7 @@ class Game:
       "highest": HighestCardPlayer,
       "simple": SimpleRulesPlayer,
       "better": BetterRulesPlayer,
+      "baseline": None,
       "sgd": SgdPlayer,
       "mlp": MlpPlayer
       }
@@ -32,6 +33,8 @@ class Game:
   def __init__(self, pool, log):
     self.pool = pool
     self.log = log
+
+    Game.PLAYER_TYPES["baseline"] = Game.PLAYER_TYPES[Config.ENCODING.baseline]
     self.players = (
         Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p1", Config.ENCODING.card_code_players[0], Config.TEAM_1_BEST, self.log),
         Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p2", Config.ENCODING.card_code_players[1], Config.TEAM_2_BEST, self.log),
@@ -83,11 +86,13 @@ class Game:
       training_description = "(training online) "
     else:
       training_description = ""
-    self.log.error("Starting game of {} hands: {}{} vs {}{} {}({} processes, {} batch size, {} rounds)"
+    self.log.error("Starting game of {} hands: {}{} vs {}{} {}({} processes, {} batch size, {} rounds{})"
         .format(utils.format_human(Config.TOTAL_HANDS),
       Config.TEAM_1_STRATEGY, " (best)" if Config.TEAM_1_BEST else "",
       Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "", training_description,
-      Config.PARALLEL_PROCESSES, utils.format_human(Config.BATCH_SIZE), utils.format_human(Config.BATCH_COUNT)))
+      Config.PARALLEL_PROCESSES, utils.format_human(Config.BATCH_SIZE), utils.format_human(Config.BATCH_COUNT),
+      ", baseline: {}".format(Config.ENCODING.baseline) if Config.TEAM_1_STRATEGY == "baseline" or \
+          Config.TEAM_2_STRATEGY == "baseline" else ""))
 
 
   def play(self):
@@ -230,11 +235,13 @@ class Game:
     # all hands are played
     score_of_both_teams = self._total_score_team_1 + self._total_score_team_2
     wins_of_both_teams = self._wins_team_1 + self._wins_team_2
-    message = "Overall result: {} ({}{}) vs {} ({}{}); wins: {} vs {}; " + \
+    message = "Overall result: {} ({}{}) vs {} ({}{}){}; wins: {} vs {}; " + \
         "(score diff {}, off mean: {:.2f}%, T1 win percentage: {:.2f}%)"
     utils.log_success_or_error(self.log, self._wins_team_1 > self._wins_team_2, message.format(
       utils.format_human(self._total_score_team_1), Config.TEAM_1_STRATEGY, " (best)" if Config.TEAM_1_BEST else "",
       utils.format_human(self._total_score_team_2), Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "",
+      ", baseline: {}".format(Config.ENCODING.baseline) if Config.TEAM_1_STRATEGY == "baseline" or \
+          Config.TEAM_2_STRATEGY == "baseline" else "",
       utils.format_human(self._wins_team_1), utils.format_human(self._wins_team_2),
       utils.format_human(int((self._total_score_team_1*2-score_of_both_teams)/2)),
       100.0*(self._total_score_team_1*2-score_of_both_teams)/2/score_of_both_teams,

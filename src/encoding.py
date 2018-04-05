@@ -5,11 +5,12 @@
 class Encoding:
 
   # pylint: disable=too-many-arguments
-  def __init__(self, card_code_players, card_code_in_hand, card_code_in_play, card_code_selected,
+  def __init__(self, baseline, card_code_players, card_code_in_hand, card_code_in_play, card_code_selected,
       round_score_factor, hand_score_factor, relative_player_encoding):
     if set([0, card_code_in_hand, card_code_in_play, card_code_selected]).intersection(card_code_players):
       raise ValueError("Can't use same number for multiple states")
 
+    self._baseline = baseline
     self._card_code_players = card_code_players
     self._card_code_in_hand = card_code_in_hand
     self._card_code_in_play = card_code_in_play
@@ -17,6 +18,11 @@ class Encoding:
     self._round_score_factor = round_score_factor
     self._hand_score_factor = hand_score_factor
     self._relative_player_encoding = relative_player_encoding
+
+
+  @property
+  def baseline(self):
+    return self._baseline
 
 
   @property
@@ -54,10 +60,10 @@ class Encoding:
   def training_data_header(self):
     header = "36 rows for cards with their known state from the view of a player " + \
         "(0 unknown, {} played by {} player, {} in play, {} in hand, {} selected to play; " + \
-        "score of round from the view of the player: round factor {}, hand factor {}\n"
+        "score of round from the view of the player: round factor {}, hand factor {}, baseline {}\n"
     return header.format(self.card_code_players, "relative" if self.relative_player_encoding else "absolute",
         self.card_code_in_play, self.card_code_in_hand, self.card_code_selected,
-        self.round_score_factor, self.hand_score_factor)
+        self.round_score_factor, self.hand_score_factor, self.baseline)
 
   def __str__(self):
     return str(self.__dict__)

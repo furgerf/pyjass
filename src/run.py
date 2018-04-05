@@ -232,40 +232,40 @@ def check_config(log):
 
 def get_encodings():
   # NOTE: Retired
-  encoding_1 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 0, False)
+  encoding_1 = Encoding("random", [1, 2, 3, 4], 6, 5, 7, 1, 0, False)
 
   # NOTE: Retired - bad encoding for in hand/in play/selected
-  encoding_2 = Encoding([1, 2, 3, 4], 6, 5, 7, 1, 1, False)
+  encoding_2 = Encoding("random", [1, 2, 3, 4], 6, 5, 7, 1, 1, False)
 
   # NOTE: Retired - changed card encoding
-  encoding_3 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, False)
+  encoding_3 = Encoding("random", [1, 2, 3, 4], 10, 20, 30, 1, 1, False)
 
   # NOTE: Retired - should've had different cost but there was a bug...
-  encoding_4 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, False)
+  encoding_4 = Encoding("random", [1, 2, 3, 4], 10, 20, 30, 1, 1, False)
 
   # NOTE: Retired - same encoding as 3 but data from simple
-  encoding_5 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, False)
+  encoding_5 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 1, False)
 
   # NOTE: Retired - same encoding as 4 but data from simple
-  encoding_6 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 1, False)
+  encoding_6 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 1, False)
 
   # NOTE: NOT EXPLORED -  changed card encoding
-  encoding_7 = Encoding([10, 20, 30, 40], 1000, 4000, 16000, 1, 1, False)
+  encoding_7 = Encoding("simple", [10, 20, 30, 40], 1000, 4000, 16000, 1, 1, False)
 
   # NOTE: Retired- changed cost
-  encoding_8 = Encoding([1, 2, 3, 4], 10, 20, 30, 4, 1, False)
+  encoding_8 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 4, 1, False)
 
   # NOTE: Retired- changed cost
-  encoding_9 = Encoding([1, 2, 3, 4], 10, 20, 30, 2, 1, False)
+  encoding_9 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 2, 1, False)
 
   # NOTE: Retired- changed cost
-  encoding_10 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 2, False)
+  encoding_10 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2, False)
 
   # NOTE: Retired - tried relative player encoding but src had a bug...
-  encoding_11 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 2, False)
+  encoding_11 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2, False)
 
-  # NOTE: Currently explored - using relative player encoding
-  encoding_12 = Encoding([1, 2, 3, 4], 10, 20, 30, 1, 2, True)
+  # NOTE: Retired - using relative player encoding
+  encoding_12 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2, True)
 
   # TODO: Encoding which distinguishes who played which in-play card; try factors 1, 4
 
@@ -324,7 +324,7 @@ def main():
   open(evaluation_lock, "a").close() # touch eval lock
 
   try:
-    log.warning("Starting evaluation '{}' (PID: {})".format(arsg.eid, os.getpid()))
+    log.warning("Starting evaluation '{}' (PID: {})".format(args.eid, os.getpid()))
     # fork as early as possible
     with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(log,)) as pool:
       game = Game(pool, log)
