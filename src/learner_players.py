@@ -57,8 +57,8 @@ class LearnerPlayer(Player):
         regressor = pickle.load(fh)
         real_path = os.path.realpath(pickle_file_name)[len(os.getcwd())+1:]
         path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
-        log.error("Loaded model from {}{} (trained on {} samples)".format(pickle_file_name,
-          path_difference, utils.format_human(regressor.training_samples)))
+        log.info("Loaded model from {}{} (trained on {} samples, loss {:.1f})".format(pickle_file_name,
+          path_difference, utils.format_human(regressor.training_samples), regressor.loss_))
         assert regressor.__class__.__name__ == regressor_constructor.__name__, \
             "Loaded model is a different type than desired, aborting"
 
@@ -69,7 +69,8 @@ class LearnerPlayer(Player):
 
         if Config.ONLINE_TRAINING and Config.LOAD_TRAINING_DATA_FILE_NAME and \
             os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME):
-          log.info("Training loaded model on stored data {}: {}".format(Config.LOAD_TRAINING_DATA_FILE_NAME, regressor))
+          log.warning("Training loaded model on stored data: {}".format(Config.LOAD_TRAINING_DATA_FILE_NAME))
+          log.info("Model details: {}".format(regressor))
           LearnerPlayer._train_regressor_from_file(regressor, log)
 
           trained_pickle_file_name = "{}/{}-trained-offline".format(Config.EVALUATION_DIRECTORY, Config.REGRESSOR_NAME)
@@ -93,7 +94,7 @@ class LearnerPlayer(Player):
     regressor = regressor_constructor(**regressor_args)
     regressor.training_samples = 0
 
-    log.info("Training new model on stored data {}: {}".format(Config.LOAD_TRAINING_DATA_FILE_NAME, regressor))
+    log.warning("Training new model on stored data {}: {}".format(Config.LOAD_TRAINING_DATA_FILE_NAME, regressor))
     LearnerPlayer._train_regressor_from_file(regressor, log)
     log.warning("Writing newly-trained model to {}".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:

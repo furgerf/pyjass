@@ -129,6 +129,7 @@ def apply_arguments(args):
     Config.TRAINING_INTERVAL = int(args.trainingint)
   else:
     Config.TRAINING_INTERVAL = min(int(Config.TOTAL_HANDS / 10), int(1e5))
+  Config.TRAINING_INTERVAL = min(Config.TRAINING_INTERVAL, Config.TOTAL_HANDS)
   if args.chkint:
     Config.CHECKPOINT_INTERVAL = int(args.chkint)
   else:
@@ -175,7 +176,9 @@ def check_config(log):
       log.error("Training data file exists already")
       return False
 
-  if Config.TOTAL_HANDS and Config.TOTAL_HANDS % Config.CHECKPOINT_INTERVAL != 0:
+  actually_plays_hands = Config.TOTAL_HANDS > 0
+
+  if actually_plays_hands and Config.TOTAL_HANDS % Config.CHECKPOINT_INTERVAL != 0:
     log.error("Checkpoint interval {} must divide total hands {}".format(
       utils.format_human(Config.CHECKPOINT_INTERVAL), utils.format_human(Config.TOTAL_HANDS)))
     return False
@@ -190,7 +193,8 @@ def check_config(log):
       utils.format_human(Config.BATCH_SIZE), Config.PARALLEL_PROCESSES, utils.format_human(Config.CHECKPOINT_INTERVAL)))
     return False
 
-  if (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and Config.TOTAL_HANDS % Config.TRAINING_INTERVAL != 0:
+  if (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and actually_plays_hands and \
+      Config.TOTAL_HANDS % Config.TRAINING_INTERVAL != 0:
     log.error("Training interval {} must divide total hands {}".format(
       utils.format_human(Config.TRAINING_INTERVAL), utils.format_human(Config.TOTAL_HANDS)))
     return False
@@ -206,7 +210,7 @@ def check_config(log):
       utils.format_human(Config.CHECKPOINT_INTERVAL), utils.format_human(Config.TRAINING_INTERVAL)))
     return False
 
-  if Config.STORE_SCORES and (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and \
+  if Config.STORE_SCORES and (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING) and actually_plays_hands and \
       (Config.TRAINING_INTERVAL%Config.CHECKPOINT_INTERVAL) * (Config.CHECKPOINT_INTERVAL%Config.TRAINING_INTERVAL):
     log.error("Training interval {} must be a multiple of checkpoint interval {} or vice versa".format(
       utils.format_human(Config.TRAINING_INTERVAL), utils.format_human(Config.CHECKPOINT_INTERVAL)))
@@ -320,7 +324,7 @@ def main():
   open(evaluation_lock, "a").close() # touch eval lock
 
   try:
-    log.warning("Starting evaluation (PID: {})".format(os.getpid()))
+    log.warning("Starting evaluation '{}' (PID: {})".format(arsg.eid, os.getpid()))
     # fork as early as possible
     with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(log,)) as pool:
       game = Game(pool, log)
