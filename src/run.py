@@ -176,6 +176,10 @@ def check_config(log):
       log.error("Training data file exists already")
       return False
 
+  if Config.LOAD_TRAINING_DATA_FILE_NAME and not os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME):
+    log.error("Training data file to load doesn't exist!")
+    return False
+
   actually_plays_hands = Config.TOTAL_HANDS > 0
 
   if actually_plays_hands and Config.TOTAL_HANDS % Config.CHECKPOINT_INTERVAL != 0:
@@ -295,6 +299,8 @@ def get_encodings():
       "20": encoding_13,
       }
 
+  # TODO: ETA on offline training
+
 def main():
   start_time = time.time()
   args = parse_arguments()
@@ -313,7 +319,7 @@ def main():
 
   if not check_config(log):
     log.error("Aborting evaluation because config is invalid")
-    return
+    sys.exit(1)
 
   if args.test:
     log.warning("Config looks ok - aborting run")

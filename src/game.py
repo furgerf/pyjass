@@ -237,12 +237,16 @@ class Game:
     wins_of_both_teams = self._wins_team_1 + self._wins_team_2
     message = "Overall result: {} ({}{}) vs {} ({}{}){}; wins: {} vs {}; " + \
         "(score diff {}, off mean: {:.2f}%, T1 win percentage: {:.2f}%)"
-    utils.log_success_or_error(self.log, self._wins_team_1 > self._wins_team_2, message.format(
+    win_percentage = 100.0*self._wins_team_1/wins_of_both_teams if wins_of_both_teams > 0 else 0
+    formatted_message = message.format(
       utils.format_human(self._total_score_team_1), Config.TEAM_1_STRATEGY, " (best)" if Config.TEAM_1_BEST else "",
       utils.format_human(self._total_score_team_2), Config.TEAM_2_STRATEGY, " (best)" if Config.TEAM_2_BEST else "",
       ", baseline: {}".format(Config.ENCODING.baseline) if Config.TEAM_1_STRATEGY == "baseline" or \
           Config.TEAM_2_STRATEGY == "baseline" else "",
       utils.format_human(self._wins_team_1), utils.format_human(self._wins_team_2),
       utils.format_human(int((self._total_score_team_1*2-score_of_both_teams)/2)),
-      100.0*(self._total_score_team_1*2-score_of_both_teams)/2/score_of_both_teams,
-      100.0*self._wins_team_1/wins_of_both_teams if wins_of_both_teams > 0 else 0))
+      100.0*(self._total_score_team_1*2-score_of_both_teams)/2/score_of_both_teams, win_percentage)
+    if win_percentage < 70 and win_percentage > 50:
+      self.log.warning(formatted_message)
+    else:
+      utils.log_success_or_error(self.log, self._wins_team_1 > self._wins_team_2, formatted_message)

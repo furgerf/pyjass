@@ -31,7 +31,8 @@ lint: LINT_FILES:=src/*.py
 combine-round-results: NAME=
 combine-round-results: THIS_EVAL_DIR := $(EVAL_DIR)/$(NAME)-combined
 
-.PHONY: run train eval store link-model lc lint explore wait \
+.PHONY: run train eval store link-model online-round offline-round lc lint explore wait \
+	20-round \
 	pause resume kill remove-eval archive archive-unnamed venv freeze install uninstall
 
 run:
@@ -64,13 +65,71 @@ train:
 store:
 	@# NOTE: batchsize/trainingint: maximum (regarding memory); checkpoints "disabled"; logint selected freely
 	@mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team2=baseline --store-data \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=baseline --team2=baseline --store-data \
 		--hands=2e6 --batchsize=2.5e4 --chkint=1e6 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
 
 eval:
 	@# NOTE: batchsize = logint / procs - doesn't keep any data; checkpoints "disabled"; logint selected freely
 	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --team2=baseline \
 		--hands=5e5 --batchsize=5e4 --chkint=5e5 --logint=1e5 $(ARGS)' TARGET=$@
+
+online-round:
+ifndef MOD
+	$(error Must specify model)
+endif
+ifndef ENC
+	$(error Must specify encoding)
+endif
+ifndef NAME
+	$(error Must specify regressor name)
+endif
+ifndef OTHER_NAME
+	$(error Must specify name of other regressor)
+endif
+ifndef ROUND
+	$(error Must specify round number)
+endif
+ifdef PID
+	$(info Waiting for process $(PID)...)
+	@$(MAKE) --no-print-directory wait
+endif
+	$(MAKE) --no-print-directory train EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+		ARGS='--load-training-file=$(ENC)-2m-$(OTHER_NAME)-round-$(shell echo $(ROUND)-1 | bc).bin --store-data \
+		--store-training-file=$(ENC)-2m-$(NAME)-round-$(ROUND).bin' TARGET=$@
+	$(MAKE) --no-print-directory link-model EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+
+offline-round:
+ifndef MOD
+	$(error Must specify model)
+endif
+ifndef ENC
+	$(error Must specify encoding)
+endif
+ifndef NAME
+	$(error Must specify regressor name)
+endif
+ifndef ROUND
+	$(error Must specify round number)
+endif
+ifdef PID
+	$(info Waiting for process $(PID)...)
+	@$(MAKE) --no-print-directory wait
+endif
+	$(MAKE) --no-print-directory train EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+		ARGS='--load-training-file=$(ENC)-4m-combined-round-$(ROUND).bin --hands=0' TARGET=$@
+	$(MAKE) --no-print-directory link-model EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+
+# TODO: elseif with else $(error "Unknown name")
+20-round:
+ifeq ($(NAME), 3x100)
+	@$(MAKE) --no-print-directory online-round MOD=20 ENC=13 NAME=3x100 OTHER_NAME=4x100 TARGET=$@
+endif
+ifeq ($(NAME), 4x100)
+	@$(MAKE) --no-print-directory online-round MOD=20 ENC=13 NAME=4x100 OTHER_NAME=3x100 TARGET=$@
+endif
+ifeq ($(NAME), 5x100)
+	@$(MAKE) --no-print-directory offline-round MOD=20 ENC=13 NAME=5x100 TARGET=$@
+endif
 
 combine-round-results:
 ifndef NAME
@@ -107,7 +166,12 @@ ifdef PID
 	@$(MAKE) --no-print-directory wait
 endif
 	@pushd $(MODELS_DIR)/$(MOD) > /dev/null; \
-	for reg in $(THIS_EVAL_DIR)/final-*.pkl; do \
+	if [ $$(ls -l ../../$(THIS_EVAL_DIR)/*.pkl | wc -l) -eq 1 ]; then \
+		LINK_TARGETS=$$(ls ../../$(THIS_EVAL_DIR)/*.pkl); \
+	else \
+		LINK_TARGETS=$$(ls ../../$(THIS_EVAL_DIR)/final-*.pkl); \
+	fi; \
+	for reg in $$LINK_TARGETS; do \
 		ln -s$(FORCE) ../../$(THIS_EVAL_DIR)/$$(basename $$reg) $(REG) && echo "Created symlink: $$(ls -l $(REG) | cut -d' ' -f 9-)" || \
 			{ echo "FAILURE" && popd > /dev/null && exit 1; }; \
 		test -f $(REG) || { echo "Created broken symlink!" && exit 1; }; \
@@ -159,7 +223,7 @@ ifndef PID
 	$(error Must specify pid)
 endif
 	@while [ -d /proc/$$PID ]; do \
-		sleep 30; \
+		sleep 60; \
 	done
 
 pause:
