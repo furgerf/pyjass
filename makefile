@@ -32,7 +32,7 @@ combine-round-results: NAME=
 combine-round-results: THIS_EVAL_DIR := $(EVAL_DIR)/$(NAME)-combined
 
 .PHONY: run train eval store link-model online-round offline-round lc lint explore wait \
-	20-round \
+	20-round 21-round \
 	pause resume kill remove-eval archive archive-unnamed venv freeze install uninstall
 
 run:
@@ -65,7 +65,7 @@ train:
 store:
 	@# NOTE: batchsize/trainingint: maximum (regarding memory); checkpoints "disabled"; logint selected freely
 	@mkdir -p $(MODELS_DIR)/$(MOD)
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=baseline --team2=baseline --store-data \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs=4 --team1=baseline --team2=baseline --store-data \
 		--hands=2e6 --batchsize=2.5e4 --chkint=1e6 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
 
 eval:
@@ -129,6 +129,18 @@ ifeq ($(NAME), 4x100)
 endif
 ifeq ($(NAME), 5x100)
 	@$(MAKE) --no-print-directory offline-round MOD=20 ENC=13 NAME=5x100 TARGET=$@
+endif
+
+# TODO: elseif with else $(error "Unknown name")
+21-round:
+ifeq ($(NAME), 4x100)
+	@$(MAKE) --no-print-directory online-round MOD=21 ENC=14 NAME=4x100 OTHER_NAME=5x100 TARGET=$@
+endif
+ifeq ($(NAME), 5x100)
+	@$(MAKE) --no-print-directory online-round MOD=21 ENC=14 NAME=5x100 OTHER_NAME=4x100 TARGET=$@
+endif
+ifeq ($(NAME), 6x100)
+	@$(MAKE) --no-print-directory offline-round MOD=21 ENC=14 NAME=6x100 TARGET=$@
 endif
 
 # TODO: use better locale

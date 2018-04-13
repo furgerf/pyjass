@@ -151,9 +151,10 @@ class Player(ABC):
     """
     cards = np.array([self.convert_to_relative(card) for card in known_cards]) if \
         Config.ENCODING.relative_player_encoding else np.array(known_cards, copy=True)
-    for pc in played_cards:
+    for i, pc in enumerate(played_cards):
       assert cards[pc.card_index] == 0, "Cards in play must've previously been unknown"
-      cards[pc.card_index] = Config.ENCODING.card_code_in_play
+      cards[pc.card_index] = Config.ENCODING.card_code_in_play[len(played_cards) - i - 1] if \
+          Config.ENCODING.relative_in_play_encoding else Config.ENCODING.card_code_in_play
     for hc in self.hand:
       assert cards[hc.card_index] == 0, "Cards in the player's hand must be unknown"
       cards[hc.card_index] = Config.ENCODING.card_code_in_hand

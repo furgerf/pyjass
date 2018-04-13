@@ -6,9 +6,15 @@ class Encoding:
 
   # pylint: disable=too-many-arguments
   def __init__(self, baseline, card_code_players, card_code_in_hand, card_code_in_play, card_code_selected,
-      round_score_factor, hand_score_factor, relative_player_encoding):
-    if set([0, card_code_in_hand, card_code_in_play, card_code_selected]).intersection(card_code_players):
-      raise ValueError("Can't use same number for multiple states")
+      round_score_factor, hand_score_factor,
+      relative_player_encoding=False, relative_in_play_encoding=False):
+
+    # don't assign same code multiple times
+    assert not set(card_code_in_play if isinstance(card_code_in_play, list) else [card_code_in_play] + \
+        [0, card_code_in_hand, card_code_selected]).intersection(card_code_players)
+    # ensure that we get a list or an int
+    assert relative_in_play_encoding == isinstance(card_code_in_play, list)
+    assert relative_in_play_encoding != isinstance(card_code_in_play, int)
 
     self._baseline = baseline
     self._card_code_players = card_code_players
@@ -18,6 +24,7 @@ class Encoding:
     self._round_score_factor = round_score_factor
     self._hand_score_factor = hand_score_factor
     self._relative_player_encoding = relative_player_encoding
+    self._relative_in_play_encoding = relative_in_play_encoding
 
 
   @property
@@ -53,7 +60,15 @@ class Encoding:
 
   @property
   def relative_player_encoding(self):
+    # a relative player encoding means that the first entry in card_code_players corresponds to the
+    # next player (right of the current player), second entry is the team member, etc.
     return self._relative_player_encoding
+
+  @property
+  def relative_in_play_encoding(self):
+    # a relative in-play encoding means that the first entry in card_code_in_play corresponds to the
+    # previous player (left of the current player), second entry is the team member, etc.
+    return self._relative_in_play_encoding
 
 
   @property

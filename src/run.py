@@ -236,37 +236,37 @@ def check_config(log):
 
 def get_encodings():
   # NOTE: Retired
-  encoding_1 = Encoding("random", [1, 2, 3, 4], 6, 5, 7, 1, 0, False)
+  encoding_1 = Encoding("random", [1, 2, 3, 4], 6, 5, 7, 1, 0)
 
   # NOTE: Retired - bad encoding for in hand/in play/selected
-  encoding_2 = Encoding("random", [1, 2, 3, 4], 6, 5, 7, 1, 1, False)
+  encoding_2 = Encoding("random", [1, 2, 3, 4], 6, 5, 7, 1, 1)
 
   # NOTE: Retired - changed card encoding
-  encoding_3 = Encoding("random", [1, 2, 3, 4], 10, 20, 30, 1, 1, False)
+  encoding_3 = Encoding("random", [1, 2, 3, 4], 10, 20, 30, 1, 1)
 
   # NOTE: Retired - should've had different cost but there was a bug...
-  encoding_4 = Encoding("random", [1, 2, 3, 4], 10, 20, 30, 1, 1, False)
+  encoding_4 = Encoding("random", [1, 2, 3, 4], 10, 20, 30, 1, 1)
 
   # NOTE: Retired - same encoding as 3 but data from simple
-  encoding_5 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 1, False)
+  encoding_5 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 1)
 
   # NOTE: Retired - same encoding as 4 but data from simple
-  encoding_6 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 1, False)
+  encoding_6 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 1)
 
   # NOTE: NOT EXPLORED -  changed card encoding
-  encoding_7 = Encoding("simple", [10, 20, 30, 40], 1000, 4000, 16000, 1, 1, False)
+  encoding_7 = Encoding("simple", [10, 20, 30, 40], 1000, 4000, 16000, 1, 1)
 
   # NOTE: Retired- changed cost
-  encoding_8 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 4, 1, False)
+  encoding_8 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 4, 1)
 
   # NOTE: Retired- changed cost
-  encoding_9 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 2, 1, False)
+  encoding_9 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 2, 1)
 
   # NOTE: Retired- changed cost
-  encoding_10 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2, False)
+  encoding_10 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2)
 
   # NOTE: Retired - tried relative player encoding but src had a bug...
-  encoding_11 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2, False)
+  encoding_11 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2)
 
   # NOTE: Retired - using relative player encoding
   encoding_12 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2, True)
@@ -274,7 +274,8 @@ def get_encodings():
   # NOTE: Currently explored - using better baseline
   encoding_13 = Encoding("better", [1, 2, 3, 4], 10, 20, 30, 1, 2, True)
 
-  # TODO: Encoding which distinguishes who played which in-play card; try factors 1, 4
+  # NOTE: Currently explored - using relative in-play encoding
+  encoding_14 = Encoding("better", [1, 2, 3, 4], 10, [44, 33, 22], 100, 1, 2, True, True)
 
   return {
       "01": encoding_1,
@@ -297,6 +298,7 @@ def get_encodings():
       "18": encoding_11,
       "19": encoding_12,
       "20": encoding_13,
+      "21": encoding_14,
       }
 
   # TODO: ETA on offline training
