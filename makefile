@@ -93,10 +93,10 @@ ifdef PID
 	$(info Waiting for process $(PID)...)
 	@$(MAKE) --no-print-directory wait
 endif
-	$(MAKE) --no-print-directory train EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+	$(MAKE) --no-print-directory train PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
 		ARGS='--load-training-file=$(ENC)-2m-$(OTHER_NAME)-round-$(shell echo $(ROUND)-1 | bc).bin --store-data \
 		--store-training-file=$(ENC)-2m-$(NAME)-round-$(ROUND).bin' TARGET=$@
-	$(MAKE) --no-print-directory link-model EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+	$(MAKE) --no-print-directory link-model PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 
 offline-round:
 ifndef MOD
@@ -115,9 +115,9 @@ ifdef PID
 	$(info Waiting for process $(PID)...)
 	@$(MAKE) --no-print-directory wait
 endif
-	$(MAKE) --no-print-directory train EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+	$(MAKE) --no-print-directory train PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
 		ARGS='--load-training-file=$(ENC)-4m-combined-round-$(ROUND).bin --hands=0' TARGET=$@
-	$(MAKE) --no-print-directory link-model EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+	$(MAKE) --no-print-directory link-model PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 
 # TODO: elseif with else $(error "Unknown name")
 20-round:
@@ -131,6 +131,7 @@ ifeq ($(NAME), 5x100)
 	@$(MAKE) --no-print-directory offline-round MOD=20 ENC=13 NAME=5x100 TARGET=$@
 endif
 
+# TODO: use better locale
 combine-round-results:
 ifndef NAME
 	$(error Must specify name of the evaluation)
