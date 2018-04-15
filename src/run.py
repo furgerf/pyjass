@@ -46,6 +46,8 @@ def parse_arguments():
       help="Name of the folder in the models/ directory, determines the encoding to use")
   parser.add_argument("--regressor-name",
       help="Name of the regressor file in the model directory to use instead of the default, for all learners")
+  parser.add_argument("--other-regressor-name",
+      help="Name of the regressor file in the model directory to use instead of the default, for 'other' learners")
   parser.add_argument("--eid", required=True, help="ID of the evaluation")
 
   # game settings
@@ -101,6 +103,8 @@ def apply_arguments(args):
     Config.ENCODING = get_encodings().get(args.model)
   if args.regressor_name:
     Config.REGRESSOR_NAME = args.regressor_name
+  if args.other_regressor_name:
+    Config.OTHER_REGRESSOR_NAME = args.other_regressor_name
   if args.load_training_file:
     Config.LOAD_TRAINING_DATA_FILE_NAME = "data/{}".format(args.load_training_file)
   if args.store_training_file:
@@ -148,7 +152,8 @@ def apply_arguments(args):
 
 def check_config(log):
   # pylint: disable=too-many-return-statements,too-many-branches
-  model_based_strategies = ["sgd", "mlp"]
+  model_based_strategies = ["sgd", "mlp", "mlp-other"]
+  other_models = ["mlp-other"]
   uses_model = Config.TEAM_1_STRATEGY in model_based_strategies or \
       Config.TEAM_2_STRATEGY in model_based_strategies
 
@@ -165,6 +170,11 @@ def check_config(log):
       return False
   elif Config.ONLINE_TRAINING:
     log.error("Cannot train online when not using models")
+    return False
+
+  if (Config.TEAM_1_STRATEGY in other_models or Config.TEAM_2_STRATEGY in other_models) and \
+      not Config.OTHER_REGRESSOR_NAME:
+    log.error("No other regressor name provided")
     return False
 
   if Config.STORE_TRAINING_DATA:

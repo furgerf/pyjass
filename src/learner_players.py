@@ -35,13 +35,14 @@ class LearnerPlayer(Player):
     super(LearnerPlayer, self).__init__(name, number, play_best_card, log)
 
   @staticmethod
-  def _get_regressor(regressor_constructor, log):
+  def _get_regressor(regressor_constructor, log, regressor_name=None):
     """
     Retrieves the model. Either loads an existing or creates a new model.
     Also does initial offline training so that the returned model is always valid and ready for inference.
 
     :regressor_constructor: Constructor to instantiate a new model.
     :log: Logger instance.
+    :regressor_name: Optional: Name of the model to load.
 
     :returns: Model instance.
     """
@@ -51,7 +52,7 @@ class LearnerPlayer(Player):
       with open(Config.LOSS_FILE, "w") as fh:
         fh.write("samples,loss\n")
 
-    pickle_file_name = "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME)
+    pickle_file_name = "{}/{}".format(Config.MODEL_DIRECTORY, regressor_name or Config.REGRESSOR_NAME)
     if os.path.exists(pickle_file_name):
       with open(pickle_file_name, "rb") as fh:
         regressor = pickle.load(fh)
@@ -240,3 +241,18 @@ class MlpPlayer(LearnerPlayer):
     if MlpPlayer._mlp_regressor is None:
       MlpPlayer._mlp_regressor = LearnerPlayer._get_regressor(MLPRegressor, log)
     super(MlpPlayer, self).__init__(name, number, play_best_card, MlpPlayer._mlp_regressor, log)
+
+
+class OtherMlpPlayer(LearnerPlayer):
+  """
+  Another ML-player using a Multilayer Perceptron model.
+  """
+
+  _mlp_regressor = None
+
+  def __init__(self, name, number, play_best_card, log):
+    if OtherMlpPlayer._mlp_regressor is None:
+      log.fatal("WARNING: If the other model is trained on an incompatible encoding, it probably won't work!")
+      OtherMlpPlayer._mlp_regressor = LearnerPlayer._get_regressor(MLPRegressor, log,
+          regressor_name=Config.OTHER_REGRESSOR_NAME)
+    super(OtherMlpPlayer, self).__init__(name, number, play_best_card, OtherMlpPlayer._mlp_regressor, log)

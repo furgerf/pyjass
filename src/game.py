@@ -15,7 +15,7 @@ import utils
 from baseline_players import (BetterRulesPlayer, HighestCardPlayer,
                               RandomCardPlayer, SimpleRulesPlayer)
 from const import Const
-from learner_players import MlpPlayer, SgdPlayer
+from learner_players import MlpPlayer, OtherMlpPlayer, SgdPlayer
 from parallel_game import ParallelGame
 
 
@@ -27,7 +27,8 @@ class Game:
       "better": BetterRulesPlayer,
       "baseline": None,
       "sgd": SgdPlayer,
-      "mlp": MlpPlayer
+      "mlp": MlpPlayer,
+      "mlp-other": OtherMlpPlayer
       }
 
   def __init__(self, pool, log):
