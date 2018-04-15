@@ -21,7 +21,7 @@ def get_logger(name):
   def success(self, message, *args, **kws):
     # Yes, logger takes its '*args' as 'args'.
     if self.isEnabledFor(debug_levelv_num):
-      self._log(debug_levelv_num, message, args, **kws)
+      self._log(debug_levelv_num, message, args, **kws) # pylint: disable=protected-access
   logging.Logger.success = success
 
   # set up logger

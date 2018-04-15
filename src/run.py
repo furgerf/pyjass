@@ -311,7 +311,6 @@ def get_encodings():
       "21": encoding_14,
       }
 
-  # TODO: ETA on offline training
 
 def main():
   start_time = time.time()

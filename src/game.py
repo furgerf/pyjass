@@ -37,10 +37,14 @@ class Game:
 
     Game.PLAYER_TYPES["baseline"] = Game.PLAYER_TYPES[Config.ENCODING.baseline]
     self.players = (
-        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p1", Config.ENCODING.card_code_players[0], Config.TEAM_1_BEST, self.log),
-        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p2", Config.ENCODING.card_code_players[1], Config.TEAM_2_BEST, self.log),
-        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY]("p3", Config.ENCODING.card_code_players[2], Config.TEAM_1_BEST, self.log),
-        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p4", Config.ENCODING.card_code_players[3], Config.TEAM_2_BEST, self.log)
+        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY](
+          "p1", Config.ENCODING.card_code_players[0], Config.TEAM_1_BEST, self.log),
+        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY](
+          "p2", Config.ENCODING.card_code_players[1], Config.TEAM_2_BEST, self.log),
+        Game.PLAYER_TYPES[Config.TEAM_1_STRATEGY](
+          "p3", Config.ENCODING.card_code_players[2], Config.TEAM_1_BEST, self.log),
+        Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY](
+          "p4", Config.ENCODING.card_code_players[3], Config.TEAM_2_BEST, self.log)
         )
 
     self._wins_team_1 = 0

@@ -5,10 +5,12 @@ import math
 import os
 import pickle
 import time
+from config import Config
+from datetime import datetime, timedelta
 
 import numpy as np
+
 import utils
-from config import Config
 from const import Const
 from player import Player
 from sklearn.linear_model import SGDRegressor
@@ -126,11 +128,22 @@ class LearnerPlayer(Player):
           utils.format_human(len(training_data)), Config.LOAD_TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
         LearnerPlayer._train_regressor(regressor, training_data, log)
     else:
+      total_samples = os.stat(Config.LOAD_TRAINING_DATA_FILE_NAME).st_size / Const.BYTES_PER_SAMPLE
       for training_data in utils.process_binary_file(Config.LOAD_TRAINING_DATA_FILE_NAME, Const.OFFLINE_CHUNK_SIZE):
         offset += len(training_data)
         log.debug("Loaded {} samples from {} ({} samples done)".format(
           utils.format_human(len(training_data)), Config.LOAD_TRAINING_DATA_FILE_NAME, utils.format_human(offset)))
         LearnerPlayer._train_regressor(regressor, training_data, log)
+        if offset % (Const.OFFLINE_CHUNK_SIZE * 5) == 0:
+          percentage = offset / total_samples
+          elapsed_minutes = (time.time() - training_start) / 60
+          estimated_hours, estimated_minutes = divmod(elapsed_minutes / percentage - elapsed_minutes, 60)
+          log.warning("Processed {}/{} ({:.1f}%) samples from '{}', ETA: {:%H:%M} ({}:{:02d})".format(
+            utils.format_human(offset), utils.format_human(total_samples), 100.0*percentage,
+            Config.LOAD_TRAINING_DATA_FILE_NAME,
+            datetime.now() + timedelta(hours=estimated_hours, minutes=estimated_minutes),
+            int(estimated_hours), int(estimated_minutes)
+            ))
     training_hours, training_minutes = divmod((time.time() - training_start)/60, 60)
     log.warning("Finished offline training in {}h{}m".format(int(training_hours), int(training_minutes)))
 
