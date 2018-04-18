@@ -7,21 +7,18 @@
 - Use seed for reproducibility
 
 # Discoveries
-- Encodings 1-4 are retired (useless attempts)
 - SGD doesn't work
-- Training doesn't work as well when playing the best card
-- Training interval has an impact on learning performance - really, or is this
-  due to the comparison of bad models?
 - 1 hidden layer is insufficient, 2 also doesn't seem to be optimal
-- Training time: maybe 1 -> x layers = +4h; +100 neurons -> +4h
 - Small layers are useless (when all layers are the same width)
-- Loss increases for online training because that's without playing the best card
+- Model 19: 3x100 and 5x100 are significantly worse than 4x100 (~5%)
+  - 3x100 probably because it's underfitting
+  - 5x100 possibly because it's training offline or because it's training on "foreign" data
+- Comparing baselines: the differences are small, but:
+  - The models seem to be slightly better against "their" baseline
+  - In direct comparison, 3x100 is about the same, 4x100 against simple is better, 5x100 against better is better
+- Training against better baseline (model 20) has roughly the same results as model 20, but about 10% lower win%
 
 # To try
 - Cost? Encoding? Model parameters? Models?
-- How much data is needed/useful for MLP?
-- Do initial training on data from model vs simple
-- Encodings 3, 4 -> ?
-- "relative" player encoding -> does that reduce data need 4-fold?
 - "uneven" layer architectures
 
