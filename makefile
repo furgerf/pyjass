@@ -115,32 +115,36 @@ ifdef PID
 	$(info Waiting for process $(PID)...)
 	@$(MAKE) --no-print-directory wait
 endif
-	$(MAKE) --no-print-directory train PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
-		ARGS='--load-training-file=$(ENC)-4m-combined-round-$(ROUND).bin --hands=0' TARGET=$@
+	$(MAKE) --no-print-directory eval PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+		ARGS='--load-training-file=$(ENC)-4m-combined-round-$(ROUND).bin' TARGET=$@
 	$(MAKE) --no-print-directory link-model PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 
-# TODO: elseif with else $(error "Unknown name")
 20-round:
 ifeq ($(NAME), 3x100)
-	@$(MAKE) --no-print-directory online-round MOD=20 ENC=13 NAME=3x100 OTHER_NAME=4x100 TARGET=$@
-endif
-ifeq ($(NAME), 4x100)
-	@$(MAKE) --no-print-directory online-round MOD=20 ENC=13 NAME=4x100 OTHER_NAME=3x100 TARGET=$@
-endif
-ifeq ($(NAME), 5x100)
-	@$(MAKE) --no-print-directory offline-round MOD=20 ENC=13 NAME=5x100 TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=20 ENC=13 OTHER_NAME=4x100 TARGET=$@
+else ifeq ($(NAME), 4x100)
+	@$(MAKE) --no-print-directory online-round MOD=20 ENC=13 OTHER_NAME=3x100 TARGET=$@
+else ifeq ($(NAME), 5x100)
+	@$(MAKE) --no-print-directory offline-round MOD=20 ENC=13 TARGET=$@
+else
+	$(error Unknown name: $(NAME))
 endif
 
-# TODO: elseif with else $(error "Unknown name")
 21-round:
 ifeq ($(NAME), 4x100)
-	@$(MAKE) --no-print-directory online-round MOD=21 ENC=14 NAME=4x100 OTHER_NAME=5x100 TARGET=$@
-endif
-ifeq ($(NAME), 5x100)
-	@$(MAKE) --no-print-directory online-round MOD=21 ENC=14 NAME=5x100 OTHER_NAME=4x100 TARGET=$@
-endif
-ifeq ($(NAME), 6x100)
-	@$(MAKE) --no-print-directory offline-round MOD=21 ENC=14 NAME=6x100 TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=21 ENC=14 OTHER_NAME=5x100 TARGET=$@
+else ifeq ($(NAME), 5x100)
+	@$(MAKE) --no-print-directory online-round MOD=21 ENC=14 OTHER_NAME=4x100 TARGET=$@
+else ifeq ($(NAME), 6x100)
+	@$(MAKE) --no-print-directory offline-round MOD=21 ENC=14 TARGET=$@
+else ifeq ($(NAME), 5x100-offline)
+	@$(MAKE) --no-print-directory offline-round MOD=21 ENC=14 TARGET=$@
+else ifeq ($(NAME), 6x100-online-only)
+	$(MAKE) --no-print-directory train MOD=21 EID=21-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+		ARGS='--hands=4e6' TARGET=$@
+	$(MAKE) --no-print-directory link-model PID= MOD=21 EID=21-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+else
+	$(error Unknown name: $(NAME))
 endif
 
 # TODO: use better locale

@@ -71,8 +71,7 @@ class LearnerPlayer(Player):
           with open(Config.LOSS_FILE, "a") as fh:
             fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
 
-        if Config.ONLINE_TRAINING and Config.LOAD_TRAINING_DATA_FILE_NAME and \
-            os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME):
+        if Config.LOAD_TRAINING_DATA_FILE_NAME and os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME):
           log.warning("Training loaded model on stored data: {}".format(Config.LOAD_TRAINING_DATA_FILE_NAME))
           log.info("Model details: {}".format(regressor))
           LearnerPlayer._train_regressor_from_file(regressor, log)
@@ -85,8 +84,6 @@ class LearnerPlayer(Player):
         else:
           log.info("Model details: {}".format(regressor))
         return regressor
-
-    assert Config.ONLINE_TRAINING, "Must do online training when starting with a model from scratch"
 
     assert Config.LOAD_TRAINING_DATA_FILE_NAME and os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME), \
         "Found neither regressor '{}' nor training data file '{}'".format(
