@@ -281,11 +281,14 @@ def get_encodings():
   # NOTE: Retired - using relative player encoding
   encoding_12 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2, True)
 
-  # NOTE: Currently explored - using better baseline
+  # NOTE: Retired - using better baseline
   encoding_13 = Encoding("better", [1, 2, 3, 4], 10, 20, 30, 1, 2, True)
 
   # NOTE: Currently explored - using relative in-play encoding
   encoding_14 = Encoding("better", [1, 2, 3, 4], 10, [44, 33, 22], 100, 1, 2, True, True)
+
+  # NOTE: Currently explored - highlighting team-mate
+  encoding_15 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 2, True, True)
 
   return {
       "01": encoding_1,
@@ -309,6 +312,7 @@ def get_encodings():
       "19": encoding_12,
       "20": encoding_13,
       "21": encoding_14,
+      "22": encoding_15,
       }
 
 

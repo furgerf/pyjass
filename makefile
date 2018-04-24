@@ -147,6 +147,24 @@ else
 	$(error Unknown name: $(NAME))
 endif
 
+# TODO: decide which models to try
+22-round:
+ifeq ($(NAME), 6x100)
+	@$(MAKE) --no-print-directory online-round MOD=22 ENC=15 OTHER_NAME=7x100 TARGET=$@
+else ifeq ($(NAME), 7x100)
+	@$(MAKE) --no-print-directory online-round MOD=22 ENC=15 OTHER_NAME=6x100 TARGET=$@
+else ifeq ($(NAME), 6x100)
+	@$(MAKE) --no-print-directory offline-round MOD=22 ENC=15 TARGET=$@
+else ifeq ($(NAME), 5x100-offline)
+	@$(MAKE) --no-print-directory offline-round MOD=22 ENC=15 TARGET=$@
+else ifeq ($(NAME), 6x100-online-only)
+	$(MAKE) --no-print-directory train MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+		ARGS='--hands=4e6' TARGET=$@
+	$(MAKE) --no-print-directory link-model PID= MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+else
+	$(error Unknown name: $(NAME))
+endif
+
 # TODO: use better locale
 combine-round-results:
 ifndef NAME
