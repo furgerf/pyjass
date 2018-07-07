@@ -37,7 +37,9 @@ def parse_arguments():
 
   # files
   parser.add_argument("--store-data", action="store_true",
-      help="True if trainings data should be stored")
+      help="True if training data should be stored")
+  parser.add_argument("--no-store-data", action="store_true",
+      help="True if no training data should be stored, overrides --store-data")
   parser.add_argument("--load-training-file",
       help="Name of the training data file to train on")
   parser.add_argument("--store-training-file",
@@ -92,7 +94,7 @@ def apply_arguments(args):
     np.random.seed(Config.SEED)
   Config.PARALLEL_PROCESSES = args.procs
 
-  if args.store_data:
+  if args.store_data and not args.no_store_data:
     Config.STORE_TRAINING_DATA = True
   if args.store_scores:
     Config.STORE_SCORES = True
@@ -184,6 +186,10 @@ def check_config(log):
     if os.path.exists(Config.STORE_TRAINING_DATA_FILE_NAME) and \
         os.stat(Config.STORE_TRAINING_DATA_FILE_NAME).st_size > 0:
       log.error("Training data file exists already")
+      return False
+  else:
+    if Config.STORE_TRAINING_DATA_FILE_NAME:
+      log.error("Specified a training data file without storing data")
       return False
 
   if Config.LOAD_TRAINING_DATA_FILE_NAME and not os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME):
@@ -293,6 +299,9 @@ def get_encodings():
   # NOTE: Currently explored - changed cost back to how it was earlier
   encoding_16 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 2, 1, True, True)
 
+  # NOTE: Currently explored - changed cost back to how it was earlier
+  encoding_17 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4, True, True)
+
   return {
       "01": encoding_1,
       "02": encoding_1,
@@ -317,6 +326,7 @@ def get_encodings():
       "21": encoding_14,
       "22": encoding_15,
       "23": encoding_16,
+      "24": encoding_17,
       }
 
 

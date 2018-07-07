@@ -32,7 +32,7 @@ combine-round-results: NAME=
 combine-round-results: THIS_EVAL_DIR := $(EVAL_DIR)/$(NAME)-combined
 
 .PHONY: run train eval store link-model online-round offline-round lc lint explore wait \
-	20-round 21-round \
+	20-round 21-round 22-round 23-round \
 	pause resume kill remove-eval archive archive-unnamed venv freeze install uninstall
 
 run:
@@ -66,7 +66,7 @@ store:
 	@# NOTE: batchsize/trainingint: maximum (regarding memory); checkpoints "disabled"; logint selected freely
 	@mkdir -p $(MODELS_DIR)/$(MOD)
 	@$(MAKE) --no-print-directory run ARGS='--seed --procs=4 --team1=baseline --team2=baseline --store-data \
-		--hands=2e6 --batchsize=2.5e4 --chkint=1e6 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
+		--hands=4e6 --batchsize=2.5e4 --chkint=1e6 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
 
 eval:
 	@# NOTE: batchsize = logint / procs - doesn't keep any data; checkpoints "disabled"; logint selected freely
@@ -94,8 +94,8 @@ ifdef PID
 	@$(MAKE) --no-print-directory wait
 endif
 	$(MAKE) --no-print-directory train PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
-		ARGS='--load-training-file=$(ENC)-2m-$(OTHER_NAME)-round-$(shell echo $(ROUND)-1 | bc).bin --store-data \
-		--store-training-file=$(ENC)-2m-$(NAME)-round-$(ROUND).bin' TARGET=$@
+		ARGS='--load-training-file=$(ENC)-4m-$(OTHER_NAME)-round-$(shell echo $(ROUND)-1 | bc).bin --store-data \
+		--store-training-file=$(ENC)-4m-$(NAME)-round-$(ROUND).bin $(ARGS)' TARGET=$@
 	$(MAKE) --no-print-directory link-model PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 
 offline-round:
@@ -116,7 +116,7 @@ ifdef PID
 	@$(MAKE) --no-print-directory wait
 endif
 	$(MAKE) --no-print-directory eval PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
-		ARGS='--load-training-file=$(ENC)-4m-combined-round-$(ROUND).bin' TARGET=$@
+		ARGS='--load-training-file=$(ENC)-4m-combined-round-$(ROUND).bin $(ARGS)' TARGET=$@
 	$(MAKE) --no-print-directory link-model PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 
 20-round:
@@ -142,25 +142,62 @@ else ifeq ($(NAME), 5x100-offline)
 else ifeq ($(NAME), 6x100-online-only)
 	$(MAKE) --no-print-directory train MOD=21 EID=21-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
 		ARGS='--hands=4e6' TARGET=$@
-	$(MAKE) --no-print-directory link-model PID= MOD=21 EID=21-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
 
-# TODO: decide which models to try
 22-round:
 ifeq ($(NAME), 6x100)
 	@$(MAKE) --no-print-directory online-round MOD=22 ENC=15 OTHER_NAME=7x100 TARGET=$@
 else ifeq ($(NAME), 7x100)
 	@$(MAKE) --no-print-directory online-round MOD=22 ENC=15 OTHER_NAME=6x100 TARGET=$@
-else ifeq ($(NAME), 6x100)
-	@$(MAKE) --no-print-directory offline-round MOD=22 ENC=15 TARGET=$@
-else ifeq ($(NAME), 5x100-offline)
-	@$(MAKE) --no-print-directory offline-round MOD=22 ENC=15 TARGET=$@
-else ifeq ($(NAME), 6x100-online-only)
+else ifeq ($(NAME), 6x100-own-data)
+	@$(MAKE) --no-print-directory online-round MOD=22 ENC=15 OTHER_NAME=6x100 \
+		ARGS='--no-store-data --store-training-file= --load-training-file=15-2m-6x100-round-$(ROUND).bin' TARGET=$@
+else ifeq ($(NAME), 4x200)
 	$(MAKE) --no-print-directory train MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
 		ARGS='--hands=4e6' TARGET=$@
 	$(MAKE) --no-print-directory link-model PID= MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+else ifeq ($(NAME), 300-200-300)
+	$(MAKE) --no-print-directory train MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+		ARGS='--hands=4e6' TARGET=$@
+	$(MAKE) --no-print-directory link-model PID= MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+else
+	$(error Unknown name: $(NAME))
+endif
+
+23-round:
+ifeq ($(NAME), 6x100)
+	@$(MAKE) --no-print-directory online-round MOD=23 ENC=16 OTHER_NAME=7x100 \
+		ARGS='--hands=4e6' TARGET=$@
+else ifeq ($(NAME), 7x100)
+	@$(MAKE) --no-print-directory online-round MOD=23 ENC=16 OTHER_NAME=6x100 \
+		ARGS='--hands=4e6' TARGET=$@
+else ifeq ($(NAME), 4x200)
+	$(MAKE) --no-print-directory train MOD=23 EID=23-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+		ARGS='--hands=8e6' TARGET=$@
+	$(MAKE) --no-print-directory link-model PID= MOD=23 EID=23-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+else
+	$(error Unknown name: $(NAME))
+endif
+
+24-round:
+ifeq ($(NAME), 6x100)
+	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=7x100 \
+		ARGS='--hands=4e6' TARGET=$@
+else ifeq ($(NAME), 7x100)
+	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=6x100 \
+		ARGS='--hands=4e6' TARGET=$@
+else ifeq ($(NAME), 8x100)
+	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=9x100 \
+		ARGS='--hands=4e6' TARGET=$@
+else ifeq ($(NAME), 9x100)
+	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=8x100 \
+		ARGS='--hands=4e6' TARGET=$@
+else ifeq ($(NAME), 4x200)
+	$(MAKE) --no-print-directory train MOD=24 EID=24-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+		ARGS='--hands=8e6' TARGET=$@
+	$(MAKE) --no-print-directory link-model PID= MOD=24 EID=24-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
