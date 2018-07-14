@@ -27,11 +27,11 @@ EVAL_LOG:=$(THIS_EVAL_DIR)/evaluation_$(shell date '+%Y%m%d_%H%M%S').log
 
 lc: SCORES := $(THIS_EVAL_DIR)/scores.csv
 lc: CURVE_SCORES := $(THIS_EVAL_DIR)/curve_scores.csv
-lint: LINT_FILES:=src/*.py
+lint: LINT_FILES:=src/*.py test/*.py
 combine-round-results: NAME=
 combine-round-results: THIS_EVAL_DIR := $(EVAL_DIR)/$(NAME)-combined
 
-.PHONY: run train eval store link-model online-round offline-round lc lint explore wait \
+.PHONY: run train eval store link-model online-round offline-round lc lint test explore wait \
 	20-round 21-round 22-round 23-round \
 	pause resume kill remove-eval archive archive-unnamed venv freeze install uninstall
 
@@ -285,10 +285,14 @@ endif
 	done)
 
 lint:
-	@$(BIN)/pylint $(LINT_FILES) --ignore=venv/ -f colorized -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
+	@PYTHONPATH="$$PYTHONPATH:src/" $(BIN)/pylint $(LINT_FILES) --ignore=venv/ -f colorized -r n \
+		--msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
 
 explore:
 	$(BIN)/ipython --no-banner --no-confirm-exit -i src/explore.py
+
+test:
+	@PYTHONPATH="$$PYTHONPATH:src/" $(BIN)/python -m unittest discover test/ --locals --failfast
 
 wait:
 ifndef PID
