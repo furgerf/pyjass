@@ -37,3 +37,9 @@ class Const:
   Size of a chunk of offline data to process.
   """
   OFFLINE_CHUNK_SIZE = int(3.2e6)
+
+  """
+  All card codes must be in this range to be valid.
+  """
+  MIN_CARD_CODE = 0
+  MAX_CARD_CODE = 255

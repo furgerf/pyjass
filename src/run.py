@@ -270,7 +270,7 @@ def get_encodings():
   encoding_6 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 1)
 
   # NOTE: NOT EXPLORED -  changed card encoding
-  encoding_7 = Encoding("simple", [10, 20, 30, 40], 1000, 4000, 16000, 1, 1)
+  # encoding_7 = Encoding("simple", [10, 20, 30, 40], 1000, 4000, 16000, 1, 1)
 
   # NOTE: Retired- changed cost
   encoding_8 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 4, 1)
@@ -293,14 +293,17 @@ def get_encodings():
   # NOTE: Retired - using relative in-play encoding
   encoding_14 = Encoding("better", [1, 2, 3, 4], 10, [44, 33, 22], 100, 1, 2, True, True)
 
-  # NOTE: Currently explored - highlighting team-mate
+  # NOTE: Retired - highlighting team-mate
   encoding_15 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 2, True, True)
 
-  # NOTE: Currently explored - changed cost back to how it was earlier
+  # NOTE: Retired - changed cost back to how it was earlier
   encoding_16 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 2, 1, True, True)
 
-  # NOTE: Currently explored - changed cost back to how it was earlier
+  # NOTE: Currently explored - increasing weight on hand score
   encoding_17 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4, True, True)
+
+  # NOTE: Currently explored - sorting the states
+  encoding_18 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4, True, True, True)
 
   return {
       "01": encoding_1,
@@ -312,7 +315,7 @@ def get_encodings():
       "07": encoding_4,
       "08": encoding_5,
       "09": encoding_6,
-      "10": encoding_7,
+      # "10": encoding_7,
       "11": encoding_8,
       "12": encoding_5,
       "13": encoding_5,
@@ -327,6 +330,7 @@ def get_encodings():
       "22": encoding_15,
       "23": encoding_16,
       "24": encoding_17,
+      "25": encoding_18,
       }
 
 

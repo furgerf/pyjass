@@ -81,6 +81,11 @@ class Player(ABC):
         "Card to be played must be in the player's hand."
     decision_state[selected_card.card_index] = Config.ENCODING.card_code_selected
 
+    # if requested, sort the decision state
+    # afterwards, the encoding of the current state mustn't be modified, all that's missing is cost
+    if Config.ENCODING.sort_states:
+      decision_state = Player._sort_decision_state(decision_state)
+
     return selected_card, decision_state
 
   @abstractmethod
@@ -159,3 +164,22 @@ class Player(ABC):
       assert cards[hc.card_index] == 0, "Cards in the player's hand must be unknown"
       cards[hc.card_index] = Config.ENCODING.card_code_in_hand
     return cards
+
+  @staticmethod
+  def _sort_decision_state(decision_state):
+    """
+    Re-arranges the decision state by sorting the suits in a way that the suit itself is irrelevant.
+
+    :decision_state: A list representing the decision state to sort.
+
+    :returns: The list of the sorted decision state.
+    """
+    assert len(decision_state) == Const.CARDS_PER_PLAYER * Const.PLAYER_COUNT
+
+    # split the decision state into separate lists per suit
+    # each set of cards (for a given suit) is interpreted as a byte array
+    cards_per_suit = [bytes(decision_state[Const.CARDS_PER_PLAYER*i:Const.CARDS_PER_PLAYER*(i+1)]) \
+        for i in range(Const.PLAYER_COUNT)]
+
+    # return the sorted byte arrays, flattened back to a 1D-list
+    return [item for sublist in sorted(cards_per_suit) for item in sublist]

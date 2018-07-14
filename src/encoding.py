@@ -1,17 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from const import Const
+
 
 class Encoding:
 
   # pylint: disable=too-many-arguments
   def __init__(self, baseline, card_code_players, card_code_in_hand, card_code_in_play, card_code_selected,
       round_score_factor, hand_score_factor,
-      relative_player_encoding=False, relative_in_play_encoding=False):
+      relative_player_encoding=False, relative_in_play_encoding=False, sort_states=False):
 
     # don't assign same code multiple times
     assert not set(card_code_in_play if isinstance(card_code_in_play, list) else [card_code_in_play] + \
         [0, card_code_in_hand, card_code_selected]).intersection(card_code_players)
+    # get valid numbers
+    all_codes = card_code_players + [card_code_in_hand] + [card_code_selected] + \
+        (card_code_in_play if isinstance(card_code_in_play, list) else [card_code_in_play])
+    assert min(all_codes) >= Const.MIN_CARD_CODE and max(all_codes) <= Const.MAX_CARD_CODE
     # ensure that we get a list or an int
     assert relative_in_play_encoding == isinstance(card_code_in_play, list)
     assert relative_in_play_encoding != isinstance(card_code_in_play, int)
@@ -25,6 +31,7 @@ class Encoding:
     self._hand_score_factor = hand_score_factor
     self._relative_player_encoding = relative_player_encoding
     self._relative_in_play_encoding = relative_in_play_encoding
+    self._sort_states = sort_states
 
 
   @property
@@ -69,6 +76,12 @@ class Encoding:
     # a relative in-play encoding means that the first entry in card_code_in_play corresponds to the
     # previous player (left of the current player), second entry is the team member, etc.
     return self._relative_in_play_encoding
+
+  @property
+  def sort_states(self):
+    # sorting the states means that the order of the suits can be determined so that every
+    # unique state represents 6 actual states (with different ordering of the suits)
+    return self._sort_states
 
 
   @property
