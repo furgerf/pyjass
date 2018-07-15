@@ -1,27 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from game_type import GameType
+
+
 class Card:
 
   SUITS = "♠♥♦♣"
   VALUES = "6789TJQKA"
 
-  ICONS = "🂦🂶🃆🃖" + \
-          "🂧🂷🃇🃗" + \
-          "🂨🂸🃈🃘" + \
-          "🂩🂹🃉🃙" + \
-          "🂪🂺🃊🃚" + \
-          "🂫🂻🃋🃛" + \
-          "🂭🂽🃍🃝" + \
-          "🂮🂾🃎🃞" + \
-          "🂡🂱🃁🃑 "
-
   def __init__(self, suit, value):
     self._suit = suit
     self._value = value
-    self._score = -12345
-    # self._icon = Card.ICONS[4*value+suit]
     self._icon = Card.VALUES[value] + Card.SUITS[suit]
+    self.game_type = None
+    self._score = None
 
   @property
   def suit(self):
@@ -54,13 +47,14 @@ class Card:
   def __str__(self):
     return self._icon
 
-  def set_score(self, trump):
+  def set_game_type(self, game_type):
     """
-    Sets the score of the card depending on the game type (trump).
+    Remembers the game type and sets the score of the card depending on the game type (trump).
 
-    :trump: Game type, currently only supports 'obenabe'.
+    :game_type: Type of the game which determines the score of a card.
     """
-    if trump == "obenabe":
+    self.game_type = game_type
+    if game_type == GameType.OBENABE:
       scores = {
           0: 0,
           1: 0,
@@ -72,17 +66,32 @@ class Card:
           7: 4,
           8: 11
           }
+    elif game_type == GameType.UNNENUFE:
+      scores = {
+          0: 11,
+          1: 0,
+          2: 8,
+          3: 0,
+          4: 10,
+          5: 2,
+          6: 3,
+          7: 4,
+          8: 0
+          }
     else:
-      raise ValueError("Unknown trump: '{}'".format(trump))
+      raise ValueError("Unknown game type: '{}'".format(game_type))
     self._score = scores[self._value]
 
   def is_beaten_by(self, other_card):
     """
     Determines if the current card is beaten by the other card.
-    NOTE: This would depend on the game type!
 
     :other_card: Other card to compare against.
 
     :returns: True if the other card beats the current card instance.
     """
-    return self.suit == other_card.suit and self.value < other_card.value
+    if self.game_type == GameType.OBENABE:
+      return self.suit == other_card.suit and self.value < other_card.value
+    if self.game_type == GameType.UNNENUFE:
+      return self.suit == other_card.suit and self.value > other_card.value
+    raise ValueError("Unknown game type: '{}'".format(game_type))

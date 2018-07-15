@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import numpy as np
-import utils
 from config import Config
+
+import numpy as np
+
+import utils
 from const import Const
 from round import Round
 
@@ -28,10 +30,12 @@ class Hand:
     :dealer: (int) Index of the player that plays the first card.
     """
 
-    # choose trump and set up cards accordingly
-    trump = "obenabe"
-    self.log.debug("Playing hand with trump: {}".format(trump))
-    [c.set_score(trump) for c in self.cards] # pylint: disable=expression-not-assigned
+    # choose game type and set up cards accordingly
+    game_type = self._players[dealer].select_game_type()
+    self.log.debug("{} ({}) selected game type: {}".format(self._players[dealer].name,
+      self._players[dealer].__class__.__name__, game_type.name))
+    for card in self.cards:
+      card.set_game_type(game_type)
 
     _score_team_1 = 0
     _score_team_2 = 0
@@ -41,7 +45,7 @@ class Hand:
 
     for i in range(Const.CARDS_PER_PLAYER):
       self.log.debug("---------- Round {} ----------".format(i+1))
-      current_round = Round(self._players, self._known_cards, self.log,)
+      current_round = Round(self._players, self._known_cards, game_type, self.log,)
       dealer, score, played_cards, states = current_round.play(dealer)
 
       # update known cards - mark the cards that were played during this round

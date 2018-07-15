@@ -49,6 +49,7 @@ class ParallelGame:
     LOG.debug("[{}]: Starting to play {} hands...".format(self._id, utils.format_human(Config.BATCH_SIZE)))
     for i in range(int(Config.BATCH_SIZE)):
       # set up and play new hand
+      # NOTE: we're always playing witht he same cards and expect that the game type and scores get overwritten
       hand = Hand(self.players, self._cards, LOG)
       (score_team_1, score_team_2), winner = hand.play(self.dealer,
           self.current_score_team_1, self.current_score_team_2)

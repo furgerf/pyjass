@@ -8,6 +8,7 @@ import numpy as np
 
 import utils
 from const import Const
+from game_type import GameType
 
 
 class Player(ABC):
@@ -50,17 +51,19 @@ class Player(ABC):
     # sort hand cards, NOTE: might be omitted for performance
     self._hand = sorted(hand, key=lambda c: str(c.suit) + str(c.value))
 
-  def select_card_to_play(self, played_cards, known_cards, log):
+  def select_card_to_play(self, played_cards, known_cards, game_type, log):
     """
     Have the player select a valid hand card to play.
 
     :played_cards: The cards that are currently in play.
     :known_cards: Array of all cards encoding the publicly known state.
+    :game_type: The current game type.
     :log: Logger instance.
 
     :returns: The selected card to play and the associated decision state.
     """
     # get all cards that would be valid to play
+    # NOTE: this also depends on game type!
     if played_cards:
       # try to match suit
       valid_cards = list(filter(lambda c: played_cards[0].suit == c.suit, self.hand))
@@ -71,7 +74,7 @@ class Player(ABC):
       valid_cards = self.hand
 
     # actually select a card
-    selected_card = self._select_card((valid_cards, played_cards, known_cards), log)
+    selected_card = self._select_card((valid_cards, played_cards, known_cards, game_type), log)
     log.debug("{} selects card {} to play (valid: {})".format(
       self.name, selected_card, utils.format_cards(valid_cards)))
 
@@ -88,13 +91,17 @@ class Player(ABC):
 
     return selected_card, decision_state
 
+  def select_game_type(self):
+    assert len(self.hand) == Const.CARDS_PER_PLAYER
+    return GameType.OBENABE
+
   @abstractmethod
   def _select_card(self, args, log):
     """
     Actual implementation of the decision making.
 
-    :args: Tuple containing a list of all valid cards, a list of all cards that are in play, and
-      the publicly known state.
+    :args: Tuple containing a list of all valid cards, a list of all cards that are in play, the
+      publicly known state, and the game type.
 
     :returns: The selected card instance.
     """
