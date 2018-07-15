@@ -12,7 +12,7 @@ class Round:
     self._players = players
     self._known_cards = known_cards
     self.p1, self.p2, self.p3, self.p4 = players # pylint: disable=invalid-name
-    self.game_type = game_type
+    self._game_type = game_type
     self.log = log
 
   def play(self, dealer):
@@ -35,7 +35,7 @@ class Round:
     for i in range(Const.PLAYER_COUNT):
       current_player = self._players[(dealer+i) % Const.PLAYER_COUNT]
       played_card, player_state = current_player.select_card_to_play(played_cards, self._known_cards,
-          self.game_type, self.log)
+          self._game_type, self.log)
       current_player.hand.remove(played_card)
 
       played_cards.append(played_card)

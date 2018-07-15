@@ -13,7 +13,7 @@ class Card:
     self._suit = suit
     self._value = value
     self._icon = Card.VALUES[value] + Card.SUITS[suit]
-    self.game_type = None
+    self._game_type = None
     self._score = None
 
   @property
@@ -53,8 +53,8 @@ class Card:
 
     :game_type: Type of the game which determines the score of a card.
     """
-    self.game_type = game_type
-    if game_type == GameType.OBENABE:
+    self._game_type = game_type
+    if self._game_type == GameType.OBENABE:
       scores = {
           0: 0,
           1: 0,
@@ -66,7 +66,7 @@ class Card:
           7: 4,
           8: 11
           }
-    elif game_type == GameType.UNNENUFE:
+    elif self._game_type == GameType.UNNENUFE:
       scores = {
           0: 11,
           1: 0,
@@ -79,7 +79,7 @@ class Card:
           8: 0
           }
     else:
-      raise ValueError("Unknown game type: '{}'".format(game_type))
+      raise ValueError("Unknown game type: '{}'".format(self._game_type))
     self._score = scores[self._value]
 
   def is_beaten_by(self, other_card):
@@ -90,8 +90,20 @@ class Card:
 
     :returns: True if the other card beats the current card instance.
     """
-    if self.game_type == GameType.OBENABE:
-      return self.suit == other_card.suit and self.value < other_card.value
-    if self.game_type == GameType.UNNENUFE:
-      return self.suit == other_card.suit and self.value > other_card.value
-    raise ValueError("Unknown game type: '{}'".format(game_type))
+    if self._game_type in [GameType.OBENABE, GameType.UNNENUFE]:
+      return self.suit == other_card.suit and self.has_worse_value_than(other_card)
+    raise ValueError("Unknown game type: '{}'".format(self._game_type))
+
+  def has_worse_value_than(self, other_card):
+    """
+    Determines if the current card has a worse value than the other card.
+
+    :other_card: Other card to compare against.
+
+    :returns: True if the other card has a better value than the current card instance.
+    """
+    if self._game_type == GameType.OBENABE:
+      return self.value < other_card.value
+    if self._game_type == GameType.UNNENUFE:
+      return self.value > other_card.value
+    raise ValueError("Unknown game type: '{}'".format(self._game_type))

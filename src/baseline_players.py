@@ -6,6 +6,7 @@ from abc import abstractmethod
 import numpy as np
 
 from card import Card
+from game_type import GameType
 from player import Player
 
 
@@ -44,7 +45,8 @@ class HighestCardPlayer(BaselinePlayer):
   Player that selects card with the highest value.
   """
   def _select_card(self, args, log):
-    valid_cards = sorted(args[0], key=lambda c: c.value)
+    game_type = args[3]
+    valid_cards = sorted(args[0], key=lambda c: c.value, reverse=(game_type != GameType.UNNENUFE))
     return valid_cards[0]
 
 
@@ -93,13 +95,13 @@ class SimpleRulesPlayer(RulesPlayer):
     worst_card = choices[0]
     for card in choices:
       # compare value because that also works if the player can't match suit
-      if card.value < worst_card.value:
+      if card.has_worse_value_than(worst_card):
         worst_card = card
     return worst_card
 
   # pylint: disable=too-many-return-statements
   def _select_card(self, args, log):
-    valid_cards, played_cards, _ = args
+    valid_cards, played_cards, _, _ = args
 
     if len(played_cards) == 0: # pylint: disable=len-as-condition
       # first player: choose best card
@@ -174,14 +176,16 @@ class BetterRulesPlayer(RulesPlayer):
 
     :returns: List where each item is the number of cards of the corresponding suit.
     """
+    # pylint: disable=cell-var-from-loop
     return [len(list(filter(lambda card: card.suit == suit, cards))) for suit in range(len(Card.SUITS))]
 
   @staticmethod
-  def _select_high_scoring_or_useless_card(choices):
+  def _select_high_scoring_or_useless_card(choices, game_type):
     """
     Selects a high-scoring card if possible or a "useless" card otherwise.
 
     :choices: List of cards that could be selected.
+    :game_type: Type of the game.
 
     :returns: Selected card.
     """
@@ -192,7 +196,7 @@ class BetterRulesPlayer(RulesPlayer):
 
     # we have no high-scoring cards, return worst card
     if not high_scoring:
-      return BetterRulesPlayer._select_useless_card(choices)
+      return BetterRulesPlayer._select_useless_card(choices, game_type)
 
     # we do have high-scoring cards, return the card with max score with number of cards per suit as tiebreaker
     suit_counts = BetterRulesPlayer._get_counts_per_suit(choices)
@@ -203,13 +207,14 @@ class BetterRulesPlayer(RulesPlayer):
     return card_to_play
 
   @staticmethod
-  def _select_useless_card(choices):
+  def _select_useless_card(choices, game_type):
     """
     Selects a "useless" card.
     Note that counterintuitively, it's better to select the card among all cards, rather than only
     among the low-scoring cards.
 
     :choices: List of cards that could be selected.
+    :game_type: Type of the game.
 
     :returns: Selected card.
     """
@@ -218,7 +223,7 @@ class BetterRulesPlayer(RulesPlayer):
     card_to_play = choices[0]
     for card in choices:
       suit_count_diff = suit_counts[card.suit] - suit_counts[card_to_play.suit]
-      value_diff = card.value - card_to_play.value
+      value_diff = (card.value - card_to_play.value) * (-1 if game_type == GameType.UNNENUFE else 1)
       score_diff = card.score - card_to_play.score
 
       # this weighting seems to be work best...
@@ -228,7 +233,7 @@ class BetterRulesPlayer(RulesPlayer):
 
   # pylint: disable=too-many-return-statements
   def _select_card(self, args, log):
-    valid_cards, played_cards, _ = args
+    valid_cards, played_cards, _, game_type = args
 
     if len(played_cards) == 0: # pylint: disable=len-as-condition
       # first player: choose best card
@@ -240,11 +245,11 @@ class BetterRulesPlayer(RulesPlayer):
       beating_cards = list(filter(played_cards[0].is_beaten_by, valid_cards))
       if beating_cards:
         # first player can be beat: play worst beating card
-        best_card = BetterRulesPlayer._select_useless_card(beating_cards)
+        best_card = BetterRulesPlayer._select_useless_card(beating_cards, game_type)
         log.debug("Second player can beat first card, selecting worst beating: {}".format(best_card))
         return best_card
       # first player can't be beat: play worst card
-      worst_card = BetterRulesPlayer._select_useless_card(valid_cards)
+      worst_card = BetterRulesPlayer._select_useless_card(valid_cards, game_type)
       log.debug("Second player can't beat first one or match suit, selecting lowest value: {}"
           .format(worst_card))
       return worst_card
@@ -253,7 +258,7 @@ class BetterRulesPlayer(RulesPlayer):
       # third player: check if the round currently belongs to the team
       if played_cards[1].is_beaten_by(played_cards[0]):
         # the round is the first player's: play the highest-score or worst card
-        worst_card = BetterRulesPlayer._select_high_scoring_or_useless_card(valid_cards)
+        worst_card = BetterRulesPlayer._select_high_scoring_or_useless_card(valid_cards, game_type)
         log.debug("Third player plays card with high score or lowest value because round belongs to team: {}"
             .format(worst_card))
         return worst_card
@@ -261,11 +266,11 @@ class BetterRulesPlayer(RulesPlayer):
       beating_cards = list(filter(played_cards[1].is_beaten_by, valid_cards))
       if beating_cards:
         # first player can be beat: play worst beating card
-        best_card = BetterRulesPlayer._select_high_scoring_or_useless_card(beating_cards) # NOTE: try both
+        best_card = BetterRulesPlayer._select_high_scoring_or_useless_card(beating_cards, game_type) # NOTE: try both
         log.debug("Third player can beat second card, selecting worst beating: {}".format(best_card))
         return best_card
       # first player can't be beat: play worst card
-      worst_card = BetterRulesPlayer._select_useless_card(valid_cards)
+      worst_card = BetterRulesPlayer._select_useless_card(valid_cards, game_type)
       log.debug("Third player can't beat second one or match suit, selecting lowest value: {}"
           .format(worst_card))
       return worst_card
@@ -273,7 +278,7 @@ class BetterRulesPlayer(RulesPlayer):
     # fourth player: check if the round currently belongs to the team
     if played_cards[0].is_beaten_by(played_cards[1]) and played_cards[2].is_beaten_by(played_cards[1]):
       # the round is the second player's: play the highest-score or worst card
-      worst_card = BetterRulesPlayer._select_high_scoring_or_useless_card(valid_cards)
+      worst_card = BetterRulesPlayer._select_high_scoring_or_useless_card(valid_cards, game_type)
       log.debug("Fourth player plays card with high score or lowest value because round belongs to team: {}"
           .format(worst_card))
       return worst_card
@@ -282,10 +287,10 @@ class BetterRulesPlayer(RulesPlayer):
       played_cards[0].is_beaten_by(my_card) and played_cards[2].is_beaten_by(my_card), valid_cards))
     if beating_cards:
       # the round can be won, play WORST beating card (but prefer high-scoring cards)
-      worst_card = BetterRulesPlayer._select_high_scoring_or_useless_card(beating_cards)
+      worst_card = BetterRulesPlayer._select_high_scoring_or_useless_card(beating_cards, game_type)
       log.debug("Fourth player can win round, selecting high score or worst: {}".format(worst_card))
       return worst_card
     # the round can't be won: play worst card
-    worst_card = BetterRulesPlayer._select_useless_card(valid_cards)
+    worst_card = BetterRulesPlayer._select_useless_card(valid_cards, game_type)
     log.debug("Fourth player can't win round, selecting lowest value: {}".format(worst_card))
     return worst_card
