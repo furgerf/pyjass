@@ -12,11 +12,12 @@ import numpy as np
 from psutil import Process
 
 import utils
-from baseline_players import (BetterRulesPlayer, HighestCardPlayer,
-                              RandomCardPlayer, SimpleRulesPlayer)
+from baseline_players import HighestCardPlayer, RandomCardPlayer
+from better_rules_player import BetterRulesPlayer
 from const import Const
 from learner_players import MlpPlayer, OtherMlpPlayer, SgdPlayer
 from parallel_game import ParallelGame
+from simple_rules_player import SimpleRulesPlayer
 
 
 class Game:
