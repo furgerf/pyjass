@@ -177,9 +177,8 @@ class Player(ABC):
     assert len(decision_state) == Const.CARDS_PER_PLAYER * Const.PLAYER_COUNT
 
     # split the decision state into separate lists per suit
-    # each set of cards (for a given suit) is interpreted as a byte array
-    cards_per_suit = [bytes(decision_state[Const.CARDS_PER_PLAYER*i:Const.CARDS_PER_PLAYER*(i+1)]) \
+    cards_per_suit = [decision_state[Const.CARDS_PER_PLAYER*i:Const.CARDS_PER_PLAYER*(i+1)] \
         for i in range(Const.PLAYER_COUNT)]
 
-    # return the sorted byte arrays, flattened back to a 1D-list
-    return [item for sublist in sorted(cards_per_suit) for item in sublist]
+    # sort the suits as byte arrays and return the flattened result
+    return np.array([item for sublist in sorted(cards_per_suit, key=bytearray) for item in sublist])

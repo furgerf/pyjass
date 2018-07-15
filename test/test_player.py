@@ -15,7 +15,8 @@ class PlayerTest(TestCase):
 
   def verify_card_permutations(self, all_cards, order):
     for equivalent_order in permutations(all_cards):
-      self.assertEqual(Player._sort_decision_state([item for sublist in equivalent_order for item in sublist]), order)
+      self.assertTrue(np.array_equal(Player._sort_decision_state(
+        [item for sublist in equivalent_order for item in sublist]), order))
 
   def test_sort_decision_state(self):
     a = [1] * Const.CARDS_PER_PLAYER
