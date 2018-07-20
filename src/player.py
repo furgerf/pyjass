@@ -109,7 +109,8 @@ class Player(ABC):
     :returns: The selected game type.
     """
     assert len(self.hand) == Const.CARDS_PER_PLAYER
-    # TODO: only ask for choice if not forcing one
+    if Config.FORCE_GAME_TYPE:
+      return Config.FORCE_GAME_TYPE
     return self._select_game_type()
 
   @abstractmethod

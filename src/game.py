@@ -101,6 +101,8 @@ class Game:
       Config.PARALLEL_PROCESSES, utils.format_human(Config.BATCH_SIZE), utils.format_human(Config.BATCH_COUNT),
       ", baseline: {}".format(Config.ENCODING.baseline) if Config.TEAM_1_STRATEGY == "baseline" or \
           Config.TEAM_2_STRATEGY == "baseline" else ""))
+    if Config.FORCE_GAME_TYPE:
+      self.log.warning("Forcing game type: {}".format(Config.FORCE_GAME_TYPE))
 
 
   def play(self):

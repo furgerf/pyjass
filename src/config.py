@@ -16,6 +16,7 @@ class Config:
   TEAM_1_MODEL_ARGS = None
   TEAM_2_STRATEGY = None
   TEAM_2_BEST = False
+  FORCE_GAME_TYPE = None
 
   # intervals
   TOTAL_HANDS = None

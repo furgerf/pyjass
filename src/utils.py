@@ -86,6 +86,12 @@ def format_human(number):
     scaled_number = int(scaled_number)
   return "{}{}".format(scaled_number, pre)
 
+def get_enum_by_name(enum, name):
+  for en in enum:
+    if en.name.lower() == name:
+      return en
+  return None
+
 class StoreDictKeyPair(argparse.Action):
   def __call__(self, parser, namespace, values, option_string=None):
     my_dict = {}

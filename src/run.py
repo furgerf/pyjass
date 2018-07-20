@@ -15,6 +15,7 @@ import numpy as np
 import utils
 from encoding import Encoding
 from game import Game
+from game_type import GameType
 from parallel_game import ParallelGame
 
 
@@ -65,6 +66,8 @@ def parse_arguments():
       help="Strategy for team 2")
   parser.add_argument("--team2-best", action="store_true",
       help="True if team 2 should always choose the best card")
+  parser.add_argument("--force-game-type", choices=[game_type.name.lower() for game_type in GameType],
+      help="Force playing of a specific game type")
 
   # intervals
   default_hands = 1e4
@@ -124,6 +127,8 @@ def apply_arguments(args):
     Config.TEAM_2_STRATEGY = args.team2
   if args.team2_best:
     Config.TEAM_2_BEST = args.team2_best
+  if args.force_game_type:
+    Config.FORCE_GAME_TYPE = utils.get_enum_by_name(GameType, args.force_game_type)
 
   if args.hands is not None:
     Config.TOTAL_HANDS = int(args.hands)
