@@ -8,7 +8,6 @@ import numpy as np
 
 import utils
 from const import Const
-from game_type import GameType
 
 
 class Player(ABC):
@@ -91,10 +90,6 @@ class Player(ABC):
 
     return selected_card, decision_state
 
-  def select_game_type(self):
-    assert len(self.hand) == Const.CARDS_PER_PLAYER
-    return GameType.OBENABE
-
   @abstractmethod
   def _select_card(self, args, log):
     """
@@ -104,6 +99,25 @@ class Player(ABC):
       publicly known state, and the game type.
 
     :returns: The selected card instance.
+    """
+    pass
+
+  def select_game_type(self):
+    """
+    Have the player select the game type.
+
+    :returns: The selected game type.
+    """
+    assert len(self.hand) == Const.CARDS_PER_PLAYER
+    # TODO: only ask for choice if not forcing one
+    return self._select_game_type()
+
+  @abstractmethod
+  def _select_game_type(self):
+    """
+    Actual implementation of the decision making
+
+    :returns: The selected game type.
     """
     pass
 

@@ -11,6 +11,7 @@ import numpy as np
 import utils
 from card import Card
 from const import Const
+from game_type import GameType
 from hand import Hand
 
 LOG = None
@@ -45,14 +46,16 @@ class ParallelGame:
     checkpoint_score_team_2 = 0
     checkpoint_wins_team_1 = 0
     checkpoint_wins_team_2 = 0
+    selected_game_types = np.zeros((Const.PLAYER_COUNT, len(GameType)), dtype=int)
 
     LOG.debug("[{}]: Starting to play {} hands...".format(self._id, utils.format_human(Config.BATCH_SIZE)))
     for i in range(int(Config.BATCH_SIZE)):
       # set up and play new hand
       # NOTE: we're always playing witht he same cards and expect that the game type and scores get overwritten
       hand = Hand(self.players, self._cards, LOG)
-      (score_team_1, score_team_2), winner = hand.play(self.dealer,
+      (score_team_1, score_team_2), winner, game_type = hand.play(self.dealer,
           self.current_score_team_1, self.current_score_team_2)
+      selected_game_types[self.dealer, game_type.value] += 1
 
       # the next hand is started by the next player
       self.dealer = (self.dealer + 1) % Const.PLAYER_COUNT
@@ -98,7 +101,7 @@ class ParallelGame:
     # for row in training_data:
     #   assert row.sum() > 0
     return (batch_score_team_1, batch_score_team_2), (batch_wins_team_1, batch_wins_team_2), \
-        training_data, checkpoint_data
+        training_data, checkpoint_data, selected_game_types
 
   @staticmethod
   def set_seed_and_get_pid(worker_id):

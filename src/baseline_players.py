@@ -25,19 +25,29 @@ class BaselinePlayer(Player):
   def _select_card(self, args, log):
     pass
 
+  @abstractmethod
+  def _select_game_type(self):
+    pass
+
   def get_checkpoint_data(self):
     return None
 
+  @staticmethod
+  def _select_random_game_type():
+    game_types = list(GameType)
+    return game_types[np.random.randint(len(game_types))]
 
 class RandomCardPlayer(BaselinePlayer):
   """
-  Player that selects cards randomly.
+  Player that makes random decisions.
   """
 
   def _select_card(self, args, log):
     valid_cards = args[0]
     return valid_cards[np.random.randint(len(valid_cards))]
 
+  def _select_game_type(self):
+    return BaselinePlayer._select_random_game_type()
 
 class HighestCardPlayer(BaselinePlayer):
   """
@@ -47,6 +57,9 @@ class HighestCardPlayer(BaselinePlayer):
     game_type = args[3]
     valid_cards = sorted(args[0], key=lambda c: c.value, reverse=(game_type != GameType.UNNENUFE))
     return valid_cards[0]
+
+  def _select_game_type(self):
+    return BaselinePlayer._select_random_game_type()
 
 
 class RulesPlayer(BaselinePlayer):

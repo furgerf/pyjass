@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from baseline_players import RulesPlayer
+from card import Card
+from game_type import GameType
 
 
 class SimpleRulesPlayer(RulesPlayer):
@@ -89,3 +91,9 @@ class SimpleRulesPlayer(RulesPlayer):
     worst_card = SimpleRulesPlayer._select_worst_card(valid_cards)
     log.debug("Fourth player can't win round, selecting lowest value: {}".format(worst_card))
     return worst_card
+
+  def _select_game_type(self):
+    #  decide between obenabe and unnenufe by checking whether there are more cards above or below 10 in the hand
+    high_card_count = len(list(filter(lambda card: card.value > int(len(Card.VALUES)/2), self.hand)))
+    low_card_count = len(list(filter(lambda card: card.value < int(len(Card.VALUES)/2), self.hand)))
+    return GameType.OBENABE if high_card_count >= low_card_count else GameType.UNNENUFE

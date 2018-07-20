@@ -28,6 +28,8 @@ class Hand:
     """Plays the hand by playing 9 rounds.
 
     :dealer: (int) Index of the player that plays the first card.
+
+    :returns: A tuple with the teams' scores, the index of the winning team, and the game type.
     """
 
     # choose game type and set up cards accordingly
@@ -94,7 +96,7 @@ class Hand:
       self._training_data.extend(training_data_team_1)
       self._training_data.extend(training_data_team_2)
 
-    return (_score_team_1, _score_team_2), winner
+    return (_score_team_1, _score_team_2), winner, game_type
 
   @staticmethod
   def _update_current_training_data(training_data_team_1, training_data_team_2, states, score, dealer):

@@ -228,6 +228,9 @@ class LearnerPlayer(Player):
   def get_checkpoint_data(self):
     return self.regressor.training_samples
 
+  def _select_game_type(self):
+    raise NotImplementedError()
+
 
 class SgdPlayer(LearnerPlayer):
   """

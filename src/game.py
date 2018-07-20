@@ -15,6 +15,7 @@ import utils
 from baseline_players import HighestCardPlayer, RandomCardPlayer
 from better_rules_player import BetterRulesPlayer
 from const import Const
+from game_type import GameType
 from learner_players import MlpPlayer, OtherMlpPlayer, SgdPlayer
 from parallel_game import ParallelGame
 from simple_rules_player import SimpleRulesPlayer
@@ -54,6 +55,7 @@ class Game:
     self._total_score_team_2 = 0
     self._current_score_team_1 = 0
     self._current_score_team_2 = 0
+    self._selected_game_types = np.zeros((Const.PLAYER_COUNT, len(GameType)), dtype=int)
 
     if Config.STORE_SCORES:
       self._checkpoint_data = list()
@@ -102,6 +104,7 @@ class Game:
 
 
   def play(self):
+    # pylint: disable=too-many-statements
     self.initialize()
 
     start_time = time.time()
@@ -143,6 +146,8 @@ class Game:
       self._total_score_team_2 += sum(map(lambda result: result[0][1], results))
       self._wins_team_1 += sum(map(lambda result: result[1][0], results))
       self._wins_team_2 += sum(map(lambda result: result[1][1], results))
+      for result in results:
+        self._selected_game_types += result[4]
 
       played_hands += Config.BATCH_SIZE * Config.PARALLEL_PROCESSES
       batch_round += 1
@@ -256,3 +261,7 @@ class Game:
       self.log.warning(formatted_message)
     else:
       utils.log_success_or_error(self.log, self._wins_team_1 > self._wins_team_2, formatted_message)
+    selected_percentages = self._selected_game_types / self._selected_game_types.sum(axis=1, keepdims=True)
+    self.log.info("Selected game types per player: {} {}, {} {}; {} {}, {} {}".format(
+      self.players[0].name, selected_percentages[0], self.players[2].name, selected_percentages[2],
+      self.players[1].name, selected_percentages[1], self.players[3].name, selected_percentages[3]))

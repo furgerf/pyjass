@@ -136,3 +136,6 @@ class BetterRulesPlayer(RulesPlayer):
     worst_card = BetterRulesPlayer._select_useless_card(valid_cards, game_type)
     log.debug("Fourth player can't win round, selecting lowest value: {}".format(worst_card))
     return worst_card
+
+  def _select_game_type(self):
+    raise NotImplementedError()
