@@ -75,12 +75,7 @@ class Game:
       if os.path.exists(Config.STORE_TRAINING_DATA_FILE_NAME):
         raise ValueError("Not overwriting training data!")
 
-      if Config.STORE_TRAINING_DATA_FILE_NAME.endswith("csv"):
-        self._training_data_fh = open(Config.STORE_TRAINING_DATA_FILE_NAME, "w")
-        self._write_training_data_header()
-        self._training_data_writer = csv.writer(self._training_data_fh, lineterminator="\n")
-      else:
-        self._training_data_fh = open(Config.STORE_TRAINING_DATA_FILE_NAME, "wb")
+      self._training_data_fh = open(Config.STORE_TRAINING_DATA_FILE_NAME, "wb")
 
     if Config.STORE_TRAINING_DATA and Config.ONLINE_TRAINING:
       training_description = "(training online AND storing data) "
@@ -91,10 +86,11 @@ class Game:
     else:
       training_description = ""
     self.log.error("Starting game of {} hands: {} vs {} {}({} processes, {} batch size, {} rounds{})"
-        .format(utils.format_human(Config.TOTAL_HANDS), Config.TEAM_1_STRATEGY, Config.TEAM_2_STRATEGY, training_description,
-      Config.PARALLEL_PROCESSES, utils.format_human(Config.BATCH_SIZE), utils.format_human(Config.BATCH_COUNT),
-      ", baseline: {}".format(Config.ENCODING.baseline) if Config.TEAM_1_STRATEGY == "baseline" or \
-          Config.TEAM_2_STRATEGY == "baseline" else ""))
+        .format(utils.format_human(Config.TOTAL_HANDS), Config.TEAM_1_STRATEGY, Config.TEAM_2_STRATEGY,
+          training_description, Config.PARALLEL_PROCESSES,
+          utils.format_human(Config.BATCH_SIZE), utils.format_human(Config.BATCH_COUNT),
+          ", baseline: {}".format(Config.ENCODING.baseline) if Config.TEAM_1_STRATEGY == "baseline" or \
+              Config.TEAM_2_STRATEGY == "baseline" else ""))
     if Config.FORCE_GAME_TYPE:
       self.log.warning("Forcing game type: {}".format(Config.FORCE_GAME_TYPE))
 
@@ -223,16 +219,9 @@ class Game:
     header = "hand,wins_team_1,score_team_1,wins_team_2,score_team_2,team_1_info,team_2_info\n"
     self._score_fh.write(header)
 
-  def _write_training_data_header(self):
-    self._training_data_fh.write(Config.ENCODING.training_data_header)
-
   def _write_training_data(self, training_data):
     self.log.info("Writing {} training samples to {}".format(
       utils.format_human(len(training_data)), self._training_data_fh.name))
-
-    if Config.STORE_TRAINING_DATA_FILE_NAME.endswith("csv"):
-      self._training_data_writer.writerows(training_data)
-      return
 
     # write each sample separately - not optimal for disk but avoids copying memory
     for sample in training_data:

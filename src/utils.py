@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import csv
 import logging
 import math
 import struct
-from itertools import chain, islice
 
 import numpy as np
 
@@ -60,17 +58,6 @@ def process_binary_file(file_name, batch_size):
           for i in range(int(read_bytes / Const.BYTES_PER_SAMPLE))])
       yield data
       chunk = fh.read(Const.BYTES_PER_SAMPLE * batch_size)
-
-def process_csv_file(file_name):
-  with open(file_name, "r") as fh:
-    for row in csv.reader(fh):
-      yield row
-
-def batch(iterator, batch_size):
-  while True:
-    batched_iterator = islice(iterator, batch_size)
-    # pylint: disable=stop-iteration-return
-    yield chain([next(batched_iterator)], batched_iterator)
 
 def format_cards(cards):
   return " ".join(str(c) for c in cards)
