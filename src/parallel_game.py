@@ -13,6 +13,7 @@ from card import Card
 from const import Const
 from game_type import GameType
 from hand import Hand
+from score import Score
 
 LOG = None
 
@@ -21,8 +22,11 @@ class ParallelGame:
   def __init__(self, players):
     # NOTE: The players (their models) get updated because they still share the same reference
     self.players = players
+
     self._cards = [Card(suit, value) for suit in range(len(Card.SUITS)) for value in range(len(Card.VALUES))]
     self.dealer = 0
+
+    # the "current score" is the score of the current, ongoing game
     self.current_score_team_1 = 0
     self.current_score_team_2 = 0
 
@@ -38,14 +42,8 @@ class ParallelGame:
       training_data = None
     last_to_index = 0
     checkpoint_data = list()
-    batch_score_team_1 = 0
-    batch_score_team_2 = 0
-    batch_wins_team_1 = 0
-    batch_wins_team_2 = 0
-    checkpoint_score_team_1 = 0
-    checkpoint_score_team_2 = 0
-    checkpoint_wins_team_1 = 0
-    checkpoint_wins_team_2 = 0
+    batch_score = Score()
+    checkpoint_score = Score()
     selected_game_types = np.zeros((Const.PLAYER_COUNT, len(GameType)), dtype=int)
 
     LOG.debug("[{}]: Starting to play {} hands...".format(self._id, utils.format_human(Config.BATCH_SIZE)))
@@ -61,17 +59,11 @@ class ParallelGame:
       self.dealer = (self.dealer + 1) % Const.PLAYER_COUNT
 
       # update scores and win counts
-      batch_score_team_1 += score_team_1
-      batch_score_team_2 += score_team_2
-      checkpoint_score_team_1 += score_team_1
-      checkpoint_score_team_2 += score_team_2
+      batch_score.add_scores(score_team_1, score_team_2)
+      checkpoint_score.add_scores(score_team_1, score_team_2)
       if winner:
-        if winner == 1:
-          batch_wins_team_1 += 1
-          checkpoint_wins_team_1 += 1
-        if winner == 2:
-          batch_wins_team_2 += 1
-          checkpoint_wins_team_2 += 1
+        batch_score.add_win(winner == 1)
+        checkpoint_score.add_win(winner == 1)
         self.current_score_team_1 = 0
         self.current_score_team_2 = 0
       else:
@@ -80,14 +72,10 @@ class ParallelGame:
 
       # update stats for current checkpoint
       if Config.STORE_SCORES and (i+1) % Config.CHECKPOINT_RESOLUTION == 0:
-        checkpoint_data.append([i+1+already_played_hands, checkpoint_wins_team_1, checkpoint_score_team_1,
-          checkpoint_wins_team_2, checkpoint_score_team_2,
+        checkpoint_data.append([i+1+already_played_hands, *checkpoint_score.score_data,
           self.players[0].get_checkpoint_data(), self.players[1].get_checkpoint_data()
           ])
-        checkpoint_score_team_1 = 0
-        checkpoint_score_team_2 = 0
-        checkpoint_wins_team_1 = 0
-        checkpoint_wins_team_2 = 0
+        checkpoint_score.clear()
 
       if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
         from_index = i * Const.DECISIONS_PER_HAND
@@ -98,10 +86,7 @@ class ParallelGame:
 
     LOG.debug("[{}]: ... finished playing {} hands".format(self._id, utils.format_human(Config.BATCH_SIZE)))
 
-    # for row in training_data:
-    #   assert row.sum() > 0
-    return (batch_score_team_1, batch_score_team_2), (batch_wins_team_1, batch_wins_team_2), \
-        training_data, checkpoint_data, selected_game_types
+    return batch_score, training_data, checkpoint_data, selected_game_types
 
   @staticmethod
   def set_seed_and_get_pid(worker_id):

@@ -18,6 +18,7 @@ from const import Const
 from game_type import GameType
 from learner_players import MlpPlayer, OtherMlpPlayer, SgdPlayer
 from parallel_game import ParallelGame
+from score import Score
 from simple_rules_player import SimpleRulesPlayer
 
 
@@ -45,20 +46,11 @@ class Game:
         Game.PLAYER_TYPES[Config.TEAM_2_STRATEGY]("p4", Config.ENCODING.card_code_players[3], self.log)
         )
 
-    self._wins_team_1 = 0
-    self._wins_team_2 = 0
-    self._total_score_team_1 = 0
-    self._total_score_team_2 = 0
-    self._current_score_team_1 = 0
-    self._current_score_team_2 = 0
+    self._overall_score = Score()
     self._selected_game_types = np.zeros((Const.PLAYER_COUNT, len(GameType)), dtype=int)
 
     if Config.STORE_SCORES:
       self._checkpoint_data = list()
-      self._checkpoint_wins_team_1 = 0
-      self._checkpoint_wins_team_2 = 0
-      self._checkpoint_score_team_1 = 0
-      self._checkpoint_score_team_2 = 0
 
     self._score_fh = None
     self._score_writer = None
@@ -134,12 +126,9 @@ class Game:
             for i, game in enumerate(parallel_games)]
 
       self.log.debug("Processing results of batch")
-      self._total_score_team_1 += sum(map(lambda result: result[0][0], results))
-      self._total_score_team_2 += sum(map(lambda result: result[0][1], results))
-      self._wins_team_1 += sum(map(lambda result: result[1][0], results))
-      self._wins_team_2 += sum(map(lambda result: result[1][1], results))
       for result in results:
-        self._selected_game_types += result[4]
+        self._overall_score.add_other_score(result[0])
+        self._selected_game_types += result[3]
 
       played_hands += Config.BATCH_SIZE * Config.PARALLEL_PROCESSES
       batch_round += 1
@@ -153,16 +142,14 @@ class Game:
           to_index = (start_index+i+1) * training_samples_per_batch
           assert from_index == last_to_index
           last_to_index = to_index % len(training_data)
-          training_data[from_index:to_index] = result[2]
+          training_data[from_index:to_index] = result[1]
         if played_hands % Config.TRAINING_INTERVAL == 0:
-          # for row in training_data:
-          #   assert row.sum() > 0
           self._handle_training_data(training_data)
 
       # checkpoint
       if Config.STORE_SCORES:
         for result in results:
-          self._checkpoint_data.extend(result[3])
+          self._checkpoint_data.extend(result[2])
       if played_hands % Config.CHECKPOINT_INTERVAL == 0:
         self._create_checkpoint(played_hands, Config.TOTAL_HANDS)
         if Config.STORE_SCORES:
@@ -228,24 +215,28 @@ class Game:
       self._training_data_fh.write(struct.pack("=" + ("{}h".format(Const.CARDS_PER_HAND * "B")), *sample))
 
   def _print_results(self):
-    # all hands are played
-    score_of_both_teams = self._total_score_team_1 + self._total_score_team_2
-    wins_of_both_teams = self._wins_team_1 + self._wins_team_2
+    # set up result message
+    score_of_both_teams = self._overall_score.total_score_team_1 + self._overall_score.total_score_team_2
     message = "Overall result: {} ({}) vs {} ({}){}; wins: {} vs {}; " + \
         "(score diff {}, off mean: {:.2f}%, T1 win percentage: {:.2f}%)"
-    win_percentage = 100.0*self._wins_team_1/wins_of_both_teams if wins_of_both_teams > 0 else 0
     formatted_message = message.format(
-      utils.format_human(self._total_score_team_1), Config.TEAM_1_STRATEGY,
-      utils.format_human(self._total_score_team_2), Config.TEAM_2_STRATEGY,
+      utils.format_human(self._overall_score.total_score_team_1), Config.TEAM_1_STRATEGY,
+      utils.format_human(self._overall_score.total_score_team_2), Config.TEAM_2_STRATEGY,
       ", baseline: {}".format(Config.ENCODING.baseline) if Config.TEAM_1_STRATEGY == "baseline" or \
           Config.TEAM_2_STRATEGY == "baseline" else "",
-      utils.format_human(self._wins_team_1), utils.format_human(self._wins_team_2),
-      utils.format_human(int((self._total_score_team_1*2-score_of_both_teams)/2)),
-      100.0*(self._total_score_team_1*2-score_of_both_teams)/2/score_of_both_teams, win_percentage)
-    if win_percentage < 70 and win_percentage > 50:
+      utils.format_human(self._overall_score.wins_team_1), utils.format_human(self._overall_score.wins_team_2),
+      utils.format_human(int((self._overall_score.total_score_team_1*2-score_of_both_teams)/2)),
+      100.0*(self._overall_score.total_score_team_1*2-score_of_both_teams)/2/score_of_both_teams,
+      self._overall_score.team_1_win_percentage)
+
+    # actually log result message
+    if self._overall_score.team_1_win_percentage < 70 and self._overall_score.team_1_win_percentage > 50:
       self.log.warning(formatted_message)
     else:
-      utils.log_success_or_error(self.log, self._wins_team_1 > self._wins_team_2, formatted_message)
+      utils.log_success_or_error(self.log, self._overall_score.wins_team_1 > self._overall_score.wins_team_2,
+          formatted_message)
+
+    # game type selections
     selected_percentages = self._selected_game_types / self._selected_game_types.sum(axis=1, keepdims=True)
     self.log.info("Selected game types per player: {} {}, {} {}; {} {}, {} {}".format(
       self.players[0].name, selected_percentages[0], self.players[2].name, selected_percentages[2],
