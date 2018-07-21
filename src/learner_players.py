@@ -145,7 +145,8 @@ class LearnerPlayer(Player):
     log.warning("Finished offline training in {}h{}m".format(int(training_hours), int(training_minutes)))
 
   def _select_card(self, args, log):
-    valid_cards, played_cards, known_cards = args
+    valid_cards, played_cards, known_cards, game_type = args
+    # TODO: implement usage of game-type specific model
     state = self._encode_current_state(played_cards, known_cards)
     states = []
     scores = []

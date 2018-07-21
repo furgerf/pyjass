@@ -77,6 +77,8 @@ class RulesPlayer(BaselinePlayer):
     """
     Selects the best card of the first suit.
     Note that, counterintuitively, this appears to be better than selecting the "globally" best card.
+    Maybe that's because then, the best cards are always played first, and the opponents aren't forced
+    to play and lose high-score cards.
 
     :choices: List of cards that could be selected.
 

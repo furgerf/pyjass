@@ -3,6 +3,7 @@
 
 from baseline_players import RulesPlayer
 from card import Card
+from const import Const
 from game_type import GameType
 
 
@@ -138,4 +139,9 @@ class BetterRulesPlayer(RulesPlayer):
     return worst_card
 
   def _select_game_type(self):
-    raise NotImplementedError()
+    # decide between obenabe and unnenufe by checking whether there are better high-value or low-value cards
+    high_card_score = sum(map(lambda card: (card.value - int(len(Card.VALUES)/2))**2,
+      filter(lambda card: card.value > int(len(Card.VALUES)/2), self.hand)))
+    low_card_score = sum(map(lambda card: (Const.CARDS_PER_PLAYER - card.value - int(len(Card.VALUES)/2) - 1)**2,
+      filter(lambda card: card.value < int(len(Card.VALUES)/2), self.hand)))
+    return GameType.OBENABE if high_card_score >= low_card_score else GameType.UNNENUFE
