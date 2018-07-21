@@ -19,7 +19,7 @@ from sklearn.neural_network import MLPRegressor
 
 class LearnerPlayer(Player):
   """
-  Base class of ML-based players.
+  Base class of ML-based players. Currently, any ML player is only for a specific game type.
   """
 
   def __init__(self, name, number, regressor, log):
@@ -47,6 +47,9 @@ class LearnerPlayer(Player):
 
     :returns: Model instance.
     """
+
+    assert Config.FORCE_GAME_TYPE, "learner players are currently for specific game types only"
+
     # TODO: Simplify
     # ensure there's a loss file with the expected header
     if Config.ONLINE_TRAINING and not os.path.exists(Config.LOSS_FILE):
@@ -57,13 +60,19 @@ class LearnerPlayer(Player):
     if os.path.exists(pickle_file_name):
       with open(pickle_file_name, "rb") as fh:
         regressor = pickle.load(fh)
+        if not hasattr(regressor, "game_type"):
+          # previously, the regressors didn't know/care about their game type
+          regressor.game_type = Config.FORCE_GAME_TYPE
+
         real_path = os.path.realpath(pickle_file_name)[len(os.getcwd())+1:]
         path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
-        log.info("Loaded model from {}{} (trained on {} samples - {} hands, loss {:.1f})".format(pickle_file_name,
-          path_difference, utils.format_human(regressor.training_samples),
+        log.info("Loaded model from {}{} for {} (trained on {} samples - {} hands, loss {:.1f})".format(
+          pickle_file_name, path_difference, regressor.game_type, utils.format_human(regressor.training_samples),
           utils.format_human(regressor.training_samples/32), regressor.loss_))
+
         assert regressor.__class__.__name__ == regressor_constructor.__name__, \
-            "Loaded model is a different type than desired, aborting"
+            "Loaded model is a different instance type than desired, aborting"
+        assert regressor.game_type == Config.FORCE_GAME_TYPE, "Loaded model is for a different game type, aborting"
 
         if Config.ONLINE_TRAINING:
           # this is a bit of a crutch to avoid writing the loss when creating the LC...
@@ -92,10 +101,14 @@ class LearnerPlayer(Player):
     if regressor_args:
       log.warning("Applying custom arguments: '{}'".format(regressor_args))
     regressor_args["warm_start"] = True
+
+    # instantiate new regressor and add custom fields
     regressor = regressor_constructor(**regressor_args)
     regressor.training_samples = 0
+    regressor.game_type = Config.FORCE_GAME_TYPE
 
-    log.warning("Training new model on stored data {}: {}".format(Config.LOAD_TRAINING_DATA_FILE_NAME, regressor))
+    log.warning("Training new model for {} on stored data {}: {}".format(
+      regressor.game_type, Config.LOAD_TRAINING_DATA_FILE_NAME, regressor))
     LearnerPlayer._train_regressor_from_file(regressor, log)
     log.warning("Writing newly-trained model to {}".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:
@@ -134,11 +147,10 @@ class LearnerPlayer(Player):
     log.warning("Finished offline training in {}h{}m".format(int(training_hours), int(training_minutes)))
 
   def _select_card(self, args, log):
-    valid_cards, played_cards, known_cards, game_type = args
+    valid_cards, played_cards, known_cards, _ = args
     states = []
     scores = []
 
-    # TODO: implement usage of game-type specific model
     state = self._encode_current_state(played_cards, known_cards)
     for card in valid_cards:
       my_state = np.array(state, copy=True)
