@@ -3,6 +3,7 @@
 
 import logging
 import os
+import subprocess
 import sys
 import time
 import traceback
@@ -18,6 +19,7 @@ from game import Game
 from game_type import GameType
 from parallel_game import ParallelGame
 
+__version__ = "0.1"
 
 def parse_arguments():
   parser = ArgumentParser()
@@ -346,6 +348,15 @@ def main():
           Config.__dict__))}))
   if args.loglevel:
     log.setLevel(args.loglevel.upper())
+
+  with open(os.devnull, "w") as dev_null:
+    staged = subprocess.call(["git", "diff", "--staged", "--exit-code", "--name-only", "src"], stdout=dev_null)
+    dirty = subprocess.call(["git", "diff", "--exit-code", "--name-only", "src"], stdout=dev_null)
+    log_method = log.error if staged or dirty else log.success
+    log_method("Running pyjass version {} ({}: {}{}{})".format(__version__,
+      subprocess.check_output(["git", "rev-list", "--count", "HEAD"]).strip().decode("utf-8"),
+      subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode("utf-8"),
+      " STAGED" if staged else "", " DIRTY" if dirty else ""))
 
   if not check_config(log):
     log.error("Aborting evaluation because config is invalid")
