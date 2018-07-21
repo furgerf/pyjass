@@ -58,14 +58,10 @@ def parse_arguments():
       help="True if any learning model should be trained while playing")
   parser.add_argument("--team1", choices=Game.PLAYER_TYPES.keys(), default="simple",
       help="Strategy for team 1")
-  parser.add_argument("--team1-best", action="store_true",
-      help="True if team 1 should always choose the best card")
   parser.add_argument("--team1-args", action=utils.StoreDictKeyPair, metavar="KEY1=VAL1;KEY2=VAL2;...",
       help="Arguments for the model constructor for team 1")
   parser.add_argument("--team2", choices=Game.PLAYER_TYPES.keys(), default="simple",
       help="Strategy for team 2")
-  parser.add_argument("--team2-best", action="store_true",
-      help="True if team 2 should always choose the best card")
   parser.add_argument("--force-game-type", choices=[game_type.name.lower() for game_type in GameType],
       help="Force playing of a specific game type")
 
@@ -119,14 +115,10 @@ def apply_arguments(args):
 
   if args.team1:
     Config.TEAM_1_STRATEGY = args.team1
-  if args.team1_best:
-    Config.TEAM_1_BEST = args.team1_best
   if args.team1_args:
     Config.TEAM_1_MODEL_ARGS = args.team1_args
   if args.team2:
     Config.TEAM_2_STRATEGY = args.team2
-  if args.team2_best:
-    Config.TEAM_2_BEST = args.team2_best
   if args.force_game_type:
     Config.FORCE_GAME_TYPE = utils.get_enum_by_name(GameType, args.force_game_type)
 

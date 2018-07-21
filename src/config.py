@@ -12,10 +12,8 @@ class Config:
 
   # game configuration
   TEAM_1_STRATEGY = None
-  TEAM_1_BEST = False
   TEAM_1_MODEL_ARGS = None
   TEAM_2_STRATEGY = None
-  TEAM_2_BEST = False
   FORCE_GAME_TYPE = None
 
   # intervals

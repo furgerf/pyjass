@@ -22,19 +22,18 @@ class LearnerPlayer(Player):
   Base class of ML-based players.
   """
 
-  def __init__(self, name, number, play_best_card, regressor, log):
+  def __init__(self, name, number, regressor, log):
     """
     Creates a new ML-based player.
 
     :name: Name of the player, for display purposes only.
     :number: Number of the player, to determine neighboring players.
-    :play_best_card: True if the player should always play the card he thinks is best, may be ignored.
     :regressor: Model to use.
     :log: Logger instance.
     """
     self.regressor = regressor
     self.last_training_done = time.time()
-    super(LearnerPlayer, self).__init__(name, number, play_best_card, log)
+    super(LearnerPlayer, self).__init__(name, number, log)
 
   @staticmethod
   def _get_regressor(regressor_constructor, log, regressor_name=None):
@@ -146,10 +145,11 @@ class LearnerPlayer(Player):
 
   def _select_card(self, args, log):
     valid_cards, played_cards, known_cards, game_type = args
-    # TODO: implement usage of game-type specific model
-    state = self._encode_current_state(played_cards, known_cards)
     states = []
     scores = []
+
+    # TODO: implement usage of game-type specific model
+    state = self._encode_current_state(played_cards, known_cards)
     for card in valid_cards:
       my_state = np.array(state, copy=True)
       my_state[card.card_index] = Config.ENCODING.card_code_selected
@@ -161,23 +161,7 @@ class LearnerPlayer(Player):
       log.debug("Selecting the only valid card {}".format(valid_cards[0]))
       return valid_cards[0]
     scores = self.regressor.predict(states)
-    if self._play_best_card:
-      card = valid_cards[np.argmax(scores)]
-    else:
-      if np.min(scores) < 0:
-        adjusted_scores = scores - np.min(scores)
-        score_sum = np.sum(adjusted_scores)
-        if score_sum == 0:
-          score_sum += 1
-        probabilities = adjusted_scores / score_sum
-        log.debug("Using adjusted scores {} instead of normal scores {} with probabilities {}"
-            .format(adjusted_scores, scores, probabilities))
-      else:
-        score_sum = np.sum(scores)
-        if score_sum == 0:
-          score_sum += 1
-        probabilities = scores / score_sum
-      card = valid_cards[np.random.choice(len(probabilities), p=probabilities)]
+    card = valid_cards[np.argmax(scores)]
     log.debug("Playing cards {} has predicted scores of {}, selecting {}"
         .format(utils.format_cards(valid_cards), scores, card))
     return card
@@ -240,10 +224,10 @@ class SgdPlayer(LearnerPlayer):
 
   _sgd_regressor = None
 
-  def __init__(self, name, number, play_best_card, log):
+  def __init__(self, name, number, log):
     if SgdPlayer._sgd_regressor is None:
       SgdPlayer._sgd_regressor = LearnerPlayer._get_regressor(SGDRegressor, log)
-    super(SgdPlayer, self).__init__(name, number, play_best_card, SgdPlayer._sgd_regressor, log)
+    super(SgdPlayer, self).__init__(name, number, SgdPlayer._sgd_regressor, log)
 
 
 class MlpPlayer(LearnerPlayer):
@@ -253,10 +237,10 @@ class MlpPlayer(LearnerPlayer):
 
   _mlp_regressor = None
 
-  def __init__(self, name, number, play_best_card, log):
+  def __init__(self, name, number, log):
     if MlpPlayer._mlp_regressor is None:
       MlpPlayer._mlp_regressor = LearnerPlayer._get_regressor(MLPRegressor, log)
-    super(MlpPlayer, self).__init__(name, number, play_best_card, MlpPlayer._mlp_regressor, log)
+    super(MlpPlayer, self).__init__(name, number, MlpPlayer._mlp_regressor, log)
 
 
 class OtherMlpPlayer(LearnerPlayer):
@@ -266,9 +250,9 @@ class OtherMlpPlayer(LearnerPlayer):
 
   _mlp_regressor = None
 
-  def __init__(self, name, number, play_best_card, log):
+  def __init__(self, name, number, log):
     if OtherMlpPlayer._mlp_regressor is None:
       log.fatal("WARNING: If the other model is trained on an incompatible encoding, it probably won't work!")
       OtherMlpPlayer._mlp_regressor = LearnerPlayer._get_regressor(MLPRegressor, log,
           regressor_name=Config.OTHER_REGRESSOR_NAME)
-    super(OtherMlpPlayer, self).__init__(name, number, play_best_card, OtherMlpPlayer._mlp_regressor, log)
+    super(OtherMlpPlayer, self).__init__(name, number, OtherMlpPlayer._mlp_regressor, log)

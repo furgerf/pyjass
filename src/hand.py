@@ -47,7 +47,7 @@ class Hand:
 
     for i in range(Const.CARDS_PER_PLAYER):
       self.log.debug("---------- Round {} ----------".format(i+1))
-      current_round = Round(self._players, self._known_cards, game_type, self.log,)
+      current_round = Round(self._players, self._known_cards, game_type, self.log)
       dealer, score, played_cards, states = current_round.play(dealer)
 
       # update known cards - mark the cards that were played during this round

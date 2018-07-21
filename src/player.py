@@ -15,19 +15,17 @@ class Player(ABC):
   Abstract base class of a player providing the interface for the game.
   """
 
-  def __init__(self, name, number, play_best_card, log):
+  def __init__(self, name, number, log):
     """
     Creates a new player.
 
     :name: Name of the player, for display purposes only.
     :number: Number of the player, to determine neighboring players.
-    :play_best_card: True if the player should always play the card he thinks is best, may be ignored.
     :log: Logger instance.
     """
     # DON'T store the log or the player can't be serialized
     self._name = name
     self._number = number
-    self._play_best_card = play_best_card
     self._hand = None
     log.debug("Created player {}".format(self.name))
 

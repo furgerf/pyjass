@@ -59,7 +59,7 @@ endif
 
 train:
 	@# NOTE: batchsize/trainingint: maximum (regarding memory); chkres = batchsize; chkint/logint selected freely
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --team2=baseline --online --store-scores \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team2=baseline --online --store-scores \
 		--hands=2e6 --batchsize=2.5e4 --chkres=2.5e4 --chkint=2e5 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
 
 store:
@@ -70,7 +70,7 @@ store:
 
 eval:
 	@# NOTE: batchsize = logint / procs - doesn't keep any data; checkpoints "disabled"; logint selected freely
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team1-best --team2=baseline \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team2=baseline \
 		--hands=5e5 --batchsize=5e4 --chkint=5e5 --logint=1e5 $(ARGS)' TARGET=$@
 
 online-round:
@@ -271,7 +271,7 @@ endif
 		# about the seed: always play the "same" game but do a different one than what was trained \
 		$(UNBUF) $(NICE) $(BIN)/python src/run.py --eid=$(EID) --model=$(MOD) --seed2 --procs --store-scores \
 			--hands=1e5 --chkint=1e5 --logint=1e5 --chkres=5e4 --batchsize=5e4 \
-			--team1=mlp --team1-best --regressor=$$reg_path $(ARGS) 2>&1 \
+			--team1=mlp --regressor=$$reg_path $(ARGS) 2>&1 \
 			| tee $(THIS_EVAL_DIR)/curve_$$(basename $$reg).log; [ $${PIPESTATUS[0]} -eq 0 ]; \
 		# fail if we don't have exactly 3 lines in the scores file (header + 2 batch results) \
 		[[ $$(wc -l < $(SCORES)) != 3 ]] && echo "Unexpected number of lines in score file!" && exit 1; \
