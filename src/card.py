@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from config import Config
+
+from const import Const
 from game_type import GameType
 
 
@@ -42,7 +45,9 @@ class Card:
     """
     Index of the card within an array of all cards.
     """
-    return 4*self.value + self.suit
+    if Config.ENCODING.card_index_by_suit:
+      return self.value + self.suit * Const.CARDS_PER_SUIT
+    return Const.SUIT_COUNT * self.value + self.suit
 
   def __str__(self):
     return self._icon

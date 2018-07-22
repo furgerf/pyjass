@@ -7,11 +7,13 @@ class Const:
   Number of cards per player; this corresponds to the number of cards per suit.
   """
   CARDS_PER_PLAYER = 9
+  CARDS_PER_SUIT = CARDS_PER_PLAYER
 
   """
-  Number of players; this corresponds to the number of players.
+  Number of players; this corresponds to the number of suits.
   """
   PLAYER_COUNT = 4
+  SUIT_COUNT = PLAYER_COUNT
 
   """
   Number of cards that are played during one hand.

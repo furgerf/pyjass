@@ -284,25 +284,38 @@ def get_encodings():
   encoding_11 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2)
 
   # NOTE: Retired - using relative player encoding
-  encoding_12 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2, True)
+  encoding_12 = Encoding("simple", [1, 2, 3, 4], 10, 20, 30, 1, 2,
+      relative_player_encoding=True)
 
   # NOTE: Retired - using better baseline
-  encoding_13 = Encoding("better", [1, 2, 3, 4], 10, 20, 30, 1, 2, True)
+  encoding_13 = Encoding("better", [1, 2, 3, 4], 10, 20, 30, 1, 2,
+      relative_player_encoding=True)
 
   # NOTE: Retired - using relative in-play encoding
-  encoding_14 = Encoding("better", [1, 2, 3, 4], 10, [44, 33, 22], 100, 1, 2, True, True)
+  encoding_14 = Encoding("better", [1, 2, 3, 4], 10, [44, 33, 22], 100, 1, 2,
+      relative_player_encoding=True, relative_in_play_encoding=True)
 
   # NOTE: Retired - highlighting team-mate
-  encoding_15 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 2, True, True)
+  encoding_15 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 2,
+      relative_player_encoding=True, relative_in_play_encoding=True)
 
   # NOTE: Retired - changed cost back to how it was earlier
-  encoding_16 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 2, 1, True, True)
+  encoding_16 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 2, 1,
+      relative_player_encoding=True, relative_in_play_encoding=True)
 
   # NOTE: Currently explored - increasing weight on hand score
-  encoding_17 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4, True, True)
+  encoding_17 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4,
+      relative_player_encoding=True, relative_in_play_encoding=True)
 
-  # NOTE: Currently explored - sorting the states
-  encoding_18 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4, True, True, True)
+  # NOTE: Currently explored - re-ordering the cards
+  encoding_18 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4,
+      relative_player_encoding=True, relative_in_play_encoding=True,
+      card_index_by_suit=True)
+
+  # NOTE: Currently explored - re-ordering the cards sorting the states
+  encoding_19 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4,
+      relative_player_encoding=True, relative_in_play_encoding=True,
+      card_index_by_suit=True, sort_states=True)
 
   return {
       "01": encoding_1,
@@ -330,10 +343,16 @@ def get_encodings():
       "23": encoding_16,
       "24": encoding_17,
       "25": encoding_18,
+      "26": encoding_19,
       }
 
 
 def main():
+  # TODO:
+  # - trump
+  # - schieben
+  # - better baseline rules - must be better than starting with the best card of the first(!) suit
+
   start_time = time.time()
   args = parse_arguments()
   apply_arguments(args)
