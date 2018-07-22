@@ -60,7 +60,7 @@ endif
 train:
 	@# NOTE: batchsize/trainingint: maximum (regarding memory); chkres = batchsize; chkint/logint selected freely
 	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team2=baseline --online --store-scores \
-		--hands=2e6 --batchsize=2.5e4 --chkres=2.5e4 --chkint=2e5 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
+		--hands=4e6 --batchsize=2.5e4 --chkres=2.5e4 --chkint=2e5 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
 
 store:
 	@# NOTE: batchsize/trainingint: maximum (regarding memory); checkpoints "disabled"; logint selected freely
@@ -93,9 +93,13 @@ ifdef PID
 	$(info Waiting for process $(PID)...)
 	@$(MAKE) --no-print-directory wait
 endif
-	$(MAKE) --no-print-directory train PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
-		ARGS='--load-training-file=$(ENC)-4m-$(OTHER_NAME)-round-$(shell echo $(ROUND)-1 | bc).bin --store-data \
-		--store-training-file=$(ENC)-4m-$(NAME)-round-$(ROUND).bin $(ARGS)' TARGET=$@
+	@# NOTE: this relies that the default hands for train is 4M and that it isn't overwritten
+	@# TODO: move hands to a variable
+	$(MAKE) --no-print-directory train PID= EID=$(MOD)-$(NAME)-round-$(ROUND) \
+		REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+		ARGS='--load-training-file=$(ENC)-4m-$(OTHER_NAME)-round-$(shell echo $(ROUND)-1 | bc).bin \
+		--store-data --store-training-file=$(ENC)-4m-$(NAME)-round-$(ROUND).bin \
+		--store-game-type-file=$(ENC)-4m-$(NAME)-round-$(ROUND)-game-type-decisions.bin $(ARGS)' TARGET=$@
 	$(MAKE) --no-print-directory link-model PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 
 offline-round:
@@ -121,9 +125,9 @@ endif
 
 20-round:
 ifeq ($(NAME), 3x100)
-	@$(MAKE) --no-print-directory online-round MOD=20 ENC=13 OTHER_NAME=4x100 TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=20 ENC=13 OTHER_NAME=4x100 ARGS='--hands=2e6' TARGET=$@
 else ifeq ($(NAME), 4x100)
-	@$(MAKE) --no-print-directory online-round MOD=20 ENC=13 OTHER_NAME=3x100 TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=20 ENC=13 OTHER_NAME=3x100 ARGS='--hands=2e6' TARGET=$@
 else ifeq ($(NAME), 5x100)
 	@$(MAKE) --no-print-directory offline-round MOD=20 ENC=13 TARGET=$@
 else
@@ -132,35 +136,32 @@ endif
 
 21-round:
 ifeq ($(NAME), 4x100)
-	@$(MAKE) --no-print-directory online-round MOD=21 ENC=14 OTHER_NAME=5x100 TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=21 ENC=14 OTHER_NAME=5x100 ARGS='--hands=2e6' TARGET=$@
 else ifeq ($(NAME), 5x100)
-	@$(MAKE) --no-print-directory online-round MOD=21 ENC=14 OTHER_NAME=4x100 TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=21 ENC=14 OTHER_NAME=4x100 ARGS='--hands=2e6' TARGET=$@
 else ifeq ($(NAME), 6x100)
 	@$(MAKE) --no-print-directory offline-round MOD=21 ENC=14 TARGET=$@
 else ifeq ($(NAME), 5x100-offline)
 	@$(MAKE) --no-print-directory offline-round MOD=21 ENC=14 TARGET=$@
 else ifeq ($(NAME), 6x100-online-only)
-	$(MAKE) --no-print-directory train MOD=21 EID=21-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
-		ARGS='--hands=4e6' TARGET=$@
+	$(MAKE) --no-print-directory train MOD=21 EID=21-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
 
 22-round:
 ifeq ($(NAME), 6x100)
-	@$(MAKE) --no-print-directory online-round MOD=22 ENC=15 OTHER_NAME=7x100 TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=22 ENC=15 OTHER_NAME=7x100 ARGS='--hands=2e6' TARGET=$@
 else ifeq ($(NAME), 7x100)
-	@$(MAKE) --no-print-directory online-round MOD=22 ENC=15 OTHER_NAME=6x100 TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=22 ENC=15 OTHER_NAME=6x100 ARGS='--hands=2e6' TARGET=$@
 else ifeq ($(NAME), 6x100-own-data)
 	@$(MAKE) --no-print-directory online-round MOD=22 ENC=15 OTHER_NAME=6x100 \
-		ARGS='--no-store-data --store-training-file= --load-training-file=15-2m-6x100-round-$(ROUND).bin' TARGET=$@
+		ARGS='--no-store-data --store-training-file= --load-training-file=15-2m-6x100-round-$(ROUND).bin --hands=2e6' TARGET=$@
 else ifeq ($(NAME), 4x200)
-	$(MAKE) --no-print-directory train MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
-		ARGS='--hands=4e6' TARGET=$@
+	$(MAKE) --no-print-directory train MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl TARGET=$@
 	$(MAKE) --no-print-directory link-model PID= MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 else ifeq ($(NAME), 300-200-300)
-	$(MAKE) --no-print-directory train MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
-		ARGS='--hands=4e6' TARGET=$@
+	$(MAKE) --no-print-directory train MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl TARGET=$@
 	$(MAKE) --no-print-directory link-model PID= MOD=22 EID=22-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 else
 	$(error Unknown name: $(NAME))
@@ -168,11 +169,9 @@ endif
 
 23-round:
 ifeq ($(NAME), 6x100)
-	@$(MAKE) --no-print-directory online-round MOD=23 ENC=16 OTHER_NAME=7x100 \
-		ARGS='--hands=4e6' TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=23 ENC=16 OTHER_NAME=7x100 TARGET=$@
 else ifeq ($(NAME), 7x100)
-	@$(MAKE) --no-print-directory online-round MOD=23 ENC=16 OTHER_NAME=6x100 \
-		ARGS='--hands=4e6' TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=23 ENC=16 OTHER_NAME=6x100 TARGET=$@
 else ifeq ($(NAME), 4x200)
 	$(MAKE) --no-print-directory train MOD=23 EID=23-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
 		ARGS='--hands=8e6' TARGET=$@
@@ -184,16 +183,16 @@ endif
 24-round:
 ifeq ($(NAME), 6x100)
 	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=7x100 \
-		ARGS='--hands=4e6 --force-game-type=obenabe' TARGET=$@
+		ARGS='--force-game-type=obenabe' TARGET=$@
 else ifeq ($(NAME), 7x100)
 	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=6x100 \
-		ARGS='--hands=4e6 --force-game-type=obenabe' TARGET=$@
+		ARGS='--force-game-type=obenabe' TARGET=$@
 else ifeq ($(NAME), 8x100)
 	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=9x100 \
-		ARGS='--hands=4e6 --force-game-type=obenabe' TARGET=$@
+		ARGS='--force-game-type=obenabe' TARGET=$@
 else ifeq ($(NAME), 9x100)
 	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=8x100 \
-		ARGS='--hands=4e6 --force-game-type=obenabe' TARGET=$@
+		ARGS='--force-game-type=obenabe' TARGET=$@
 else ifeq ($(NAME), 4x200)
 	$(MAKE) --no-print-directory train MOD=24 EID=24-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
 		ARGS='--hands=8e6 --force-game-type=obenabe' TARGET=$@
