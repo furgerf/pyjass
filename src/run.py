@@ -19,7 +19,7 @@ from game import Game
 from game_type import GameType
 from parallel_game import ParallelGame
 
-__version__ = "0.1"
+__version__ = "0.2"
 
 def parse_arguments():
   parser = ArgumentParser()
@@ -66,7 +66,7 @@ def parse_arguments():
       help="Arguments for the model constructor for team 1")
   parser.add_argument("--team2", choices=Game.PLAYER_TYPES.keys(), default="simple",
       help="Strategy for team 2")
-  parser.add_argument("--force-game-type", choices=[game_type.name.lower() for game_type in GameType],
+  parser.add_argument("--force-game-type", choices=[""] + [game_type.name.lower() for game_type in GameType],
       help="Force playing of a specific game type")
 
   # intervals
@@ -111,11 +111,14 @@ def apply_arguments(args):
   if args.other_regressor_name:
     Config.OTHER_REGRESSOR_NAME = args.other_regressor_name
   if args.load_training_file:
-    Config.LOAD_TRAINING_DATA_FILE_NAME = "data/{}".format(args.load_training_file)
+    Config.LOAD_TRAINING_DATA_FILE_NAME = args.load_training_file if \
+        args.load_training_file.startswith("/") else "data/{}".format(args.load_training_file)
   if args.store_training_file:
-    Config.STORE_TRAINING_DATA_FILE_NAME = "data/{}".format(args.store_training_file)
+    Config.STORE_TRAINING_DATA_FILE_NAME = args.store_training_file if \
+        args.store_training_file.startswith("/") else "data/{}".format(args.store_training_file)
   if args.store_game_type_file:
-    Config.STORE_GAME_TYPE_DECISIONS_FILE_NAME = "data/{}".format(args.store_game_type_file)
+    Config.STORE_GAME_TYPE_DECISIONS_FILE_NAME = args.store_game_type_file if \
+        args.store_game_type_file.startswith("/") else "data/{}".format(args.store_game_type_file)
   Config.EVALUATION_DIRECTORY = "evaluations/{}".format(args.eid)
   Config.LOSS_FILE = "{}/loss.csv".format(Config.EVALUATION_DIRECTORY)
 
