@@ -31,9 +31,12 @@ lc: CURVE_SCORES := $(THIS_EVAL_DIR)/curve_scores.csv
 lint: LINT_FILES:=src/*.py test/*.py
 combine-round-results: NAME=
 combine-round-results: THIS_EVAL_DIR := $(EVAL_DIR)/$(NAME)-combined
+create-multi-regressor: MULTI_NAME=
+create-multi-regressor: REG_NAMES=
 
 .PHONY: run train eval store link-model online-round offline-round lc lint test explore wait \
 	20-round 21-round 22-round 23-round 24-round 25-round 26-round \
+	combine-round-results create-multi-regressor \
 	pause resume kill remove-eval archive archive-unnamed venv freeze install uninstall
 
 run:
@@ -315,6 +318,18 @@ endif
 		# append sum of the two batch scores\
 		tail -n +2 $(SCORES) | awk -F, 'NR%2 { split($$0, a); next } { for (i=2; i<NF-1; i++) printf "%d,", a[i]+$$i; for (i=NF-1; i<NF; i++) printf "%d,\n", $$i }' >> $(CURVE_SCORES); \
 	done)
+
+create-multi-regressor:
+ifndef MOD
+	$(error Must specify model)
+endif
+ifndef MULTI_NAME
+	$(error Must name for multi-regressor)
+endif
+ifndef REG_NAMES
+	$(error Must names of regressors to combine)
+endif
+	$(BIN)/python src/multi_reg_combiner.py --model=$(MOD) --multi-regressor-name=$(MULTI_NAME) --regressors=$(REG_NAMES)
 
 lint:
 	@PYTHONPATH="$$PYTHONPATH:src/" $(BIN)/pylint $(LINT_FILES) --ignore=venv/ -f colorized -r n \
