@@ -28,7 +28,7 @@ class LearnerPlayer(Player):
 
     :name: Name of the player, for display purposes only.
     :number: Number of the player, to determine neighboring players.
-    :regressor: Model to use.
+    :regressor: Regressor model to use.
     :log: Logger instance.
     """
     self.regressor = regressor
@@ -38,14 +38,14 @@ class LearnerPlayer(Player):
   @staticmethod
   def _get_regressor(regressor_constructor, log, regressor_name=None):
     """
-    Retrieves the model. Either loads an existing or creates a new model.
-    Also does initial offline training so that the returned model is always valid and ready for inference.
+    Retrieves the regressor model. Either loads an existing or creates a new regressor.
+    Also does initial offline training so that the returned regressor is always valid and ready for inference.
 
-    :regressor_constructor: Constructor to instantiate a new model.
+    :regressor_constructor: Constructor to instantiate a new regressor.
     :log: Logger instance.
-    :regressor_name: Optional: Name of the model to load.
+    :regressor_name: Optional: Name of the regressor to load.
 
-    :returns: Model instance.
+    :returns: Regressor instance.
     """
 
     assert Config.FORCE_GAME_TYPE, "learner players are currently for specific game types only"
@@ -60,38 +60,39 @@ class LearnerPlayer(Player):
     if os.path.exists(pickle_file_name):
       with open(pickle_file_name, "rb") as fh:
         regressor = pickle.load(fh)
-        if not hasattr(regressor, "game_type"):
-          # previously, the regressors didn't know/care about their game type
-          regressor.game_type = Config.FORCE_GAME_TYPE
 
-        real_path = os.path.realpath(pickle_file_name)[len(os.getcwd())+1:]
-        path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
-        log.info("Loaded model from {}{} for {} (trained on {} samples - {} hands, loss {:.1f})".format(
-          pickle_file_name, path_difference, regressor.game_type, utils.format_human(regressor.training_samples),
-          utils.format_human(regressor.training_samples/32), regressor.loss_))
+      if not hasattr(regressor, "game_type"):
+        # previously, the regressors didn't know/care about their game type
+        regressor.game_type = Config.FORCE_GAME_TYPE
 
-        assert regressor.__class__.__name__ == regressor_constructor.__name__, \
-            "Loaded model is a different instance type than desired, aborting"
-        assert regressor.game_type == Config.FORCE_GAME_TYPE, "Loaded model is for a different game type, aborting"
+      real_path = os.path.realpath(pickle_file_name)[len(os.getcwd())+1:]
+      path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
+      log.info("Loaded regressor from {}{} for {} (trained on {} samples - {} hands, loss {:.1f})".format(
+        pickle_file_name, path_difference, regressor.game_type, utils.format_human(regressor.training_samples),
+        utils.format_human(regressor.training_samples/32), regressor.loss_))
 
-        if Config.ONLINE_TRAINING:
-          # this is a bit of a crutch to avoid writing the loss when creating the LC...
-          with open(Config.LOSS_FILE, "a") as fh:
-            fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
+      assert regressor.__class__.__name__ == regressor_constructor.__name__, \
+          "Loaded regressor is a different instance type than desired, aborting"
+      assert regressor.game_type == Config.FORCE_GAME_TYPE, "Loaded regressor is for a different game type, aborting"
 
-        if Config.LOAD_TRAINING_DATA_FILE_NAME and os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME):
-          log.warning("Training loaded model on stored data: {}".format(Config.LOAD_TRAINING_DATA_FILE_NAME))
-          log.info("Model details: {}".format(regressor))
-          LearnerPlayer._train_regressor_from_file(regressor, log)
+      if Config.ONLINE_TRAINING:
+        # this is a bit of a crutch to avoid writing the loss when creating the LC...
+        with open(Config.LOSS_FILE, "a") as fh:
+          fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
 
-          trained_pickle_file_name = "{}/{}-trained-offline.pkl".format(Config.EVALUATION_DIRECTORY,
-              os.path.splitext(Config.REGRESSOR_NAME)[0])
-          log.warning("Writing newly-trained model to {}".format(trained_pickle_file_name))
-          with open(trained_pickle_file_name, "wb") as fh:
-            pickle.dump(regressor, fh)
-        else:
-          log.info("Model details: {}".format(regressor))
-        return regressor
+      if Config.LOAD_TRAINING_DATA_FILE_NAME and os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME):
+        log.warning("Training loaded regressor on stored data: {}".format(Config.LOAD_TRAINING_DATA_FILE_NAME))
+        log.info("Regressor details: {}".format(regressor))
+        LearnerPlayer._train_regressor_from_file(regressor, log)
+
+        trained_pickle_file_name = "{}/{}-trained-offline.pkl".format(Config.EVALUATION_DIRECTORY,
+            os.path.splitext(Config.REGRESSOR_NAME)[0])
+        log.warning("Writing newly-trained regressor to {}".format(trained_pickle_file_name))
+        with open(trained_pickle_file_name, "wb") as fh:
+          pickle.dump(regressor, fh)
+      else:
+        log.info("Regressor details: {}".format(regressor))
+      return regressor
 
     assert Config.LOAD_TRAINING_DATA_FILE_NAME and os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME), \
         "Found neither regressor '{}' nor training data file '{}'".format(
@@ -108,10 +109,10 @@ class LearnerPlayer(Player):
     regressor.training_samples = 0
     regressor.game_type = Config.FORCE_GAME_TYPE
 
-    log.warning("Training new model for {} on stored data {}: {}".format(
+    log.warning("Training new regressor for {} on stored data {}: {}".format(
       regressor.game_type, Config.LOAD_TRAINING_DATA_FILE_NAME, regressor))
     LearnerPlayer._train_regressor_from_file(regressor, log)
-    log.warning("Writing newly-trained model to {}".format(pickle_file_name))
+    log.warning("Writing newly-trained regressor to {}".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:
       pickle.dump(regressor, fh)
 
@@ -122,7 +123,7 @@ class LearnerPlayer(Player):
     """
     Trains the provided regressor on offline data.
 
-    :regressor: Model instance.
+    :regressor: Regressor instance.
     :log: Logger instance.
     """
     # TODO: Simplify
@@ -176,9 +177,9 @@ class LearnerPlayer(Player):
   @staticmethod
   def _train_regressor(regressor, training_data, log, last_training_done=None):
     """
-    Trains the provided model on the provided training data.
+    Trains the provided regressor on the provided training data.
 
-    :regressor: Model to train.
+    :regressor: Regressor to train.
     :training_data: 2D-numpy-array of samples to train on.
     :log: Logger instance.
     :last_training_done: Optional. Time when the last training was done.
@@ -206,7 +207,7 @@ class LearnerPlayer(Player):
     file_name = unformatted_file_name.format(self.name,
         self.regressor.__class__.__name__, current_iteration)
     file_path = "{}/{}".format(Config.EVALUATION_DIRECTORY, file_name)
-    log.info("Storing model in '{}' at iteration {}/{} ({:.1f}%)".format(file_name,
+    log.info("Storing regressor in '{}' at iteration {}/{} ({:.1f}%)".format(file_name,
       utils.format_human(current_iteration), utils.format_human(total_iterations),
       100.0*current_iteration/total_iterations))
 
@@ -255,7 +256,7 @@ class OtherMlpPlayer(LearnerPlayer):
 
   def __init__(self, name, number, log):
     if OtherMlpPlayer._mlp_regressor is None:
-      log.fatal("WARNING: If the other model is trained on an incompatible encoding, it probably won't work!")
+      log.fatal("WARNING: If the other regressor is trained on an incompatible encoding, it probably won't work!")
       OtherMlpPlayer._mlp_regressor = LearnerPlayer._get_regressor(MLPRegressor, log,
           regressor_name=Config.OTHER_REGRESSOR_NAME)
     super(OtherMlpPlayer, self).__init__(name, number, OtherMlpPlayer._mlp_regressor, log)

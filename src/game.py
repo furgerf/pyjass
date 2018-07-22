@@ -87,7 +87,7 @@ class Game:
 
 
   def play(self):
-    # pylint: disable=too-many-statements
+    # pylint: disable=too-many-statements,too-many-branches
     self.initialize()
 
     start_time = time.time()
