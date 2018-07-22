@@ -101,6 +101,7 @@ class LearnerPlayer(Player):
     if regressor_args:
       log.warning("Applying custom arguments: '{}'".format(regressor_args))
     regressor_args["warm_start"] = True
+    regressor_args["n_jobs"] = 4 # try limiting learning to 4 CPUs only to reduce context switching
 
     # instantiate new regressor and add custom fields
     regressor = regressor_constructor(**regressor_args)
@@ -216,7 +217,7 @@ class LearnerPlayer(Player):
     return self.regressor.training_samples
 
   def _select_game_type(self):
-    raise NotImplementedError()
+    raise RuntimeError("Learner players shouldn't be asked to select a game type")
 
 
 class SgdPlayer(LearnerPlayer):

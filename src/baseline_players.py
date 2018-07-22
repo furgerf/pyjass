@@ -30,7 +30,7 @@ class BaselinePlayer(Player):
     pass
 
   def get_checkpoint_data(self):
-    return None
+    pass
 
   @staticmethod
   def _select_random_game_type():

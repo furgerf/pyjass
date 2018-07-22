@@ -184,19 +184,23 @@ endif
 24-round:
 ifeq ($(NAME), 6x100)
 	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=7x100 \
-		ARGS='--hands=4e6' TARGET=$@
+		ARGS='--hands=4e6 --force-game-type=obenabe' TARGET=$@
 else ifeq ($(NAME), 7x100)
 	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=6x100 \
-		ARGS='--hands=4e6' TARGET=$@
+		ARGS='--hands=4e6 --force-game-type=obenabe' TARGET=$@
 else ifeq ($(NAME), 8x100)
 	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=9x100 \
-		ARGS='--hands=4e6' TARGET=$@
+		ARGS='--hands=4e6 --force-game-type=obenabe' TARGET=$@
 else ifeq ($(NAME), 9x100)
 	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=8x100 \
-		ARGS='--hands=4e6' TARGET=$@
+		ARGS='--hands=4e6 --force-game-type=obenabe' TARGET=$@
 else ifeq ($(NAME), 4x200)
 	$(MAKE) --no-print-directory train MOD=24 EID=24-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
-		ARGS='--hands=8e6' TARGET=$@
+		ARGS='--hands=8e6 --force-game-type=obenabe' TARGET=$@
+	$(MAKE) --no-print-directory link-model PID= MOD=24 EID=24-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+else ifeq ($(NAME), 4x200-unnenufe)
+	$(MAKE) --no-print-directory train MOD=24 EID=24-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+		ARGS='--hands=8e6 --force-game-type=unnenufe' TARGET=$@
 	$(MAKE) --no-print-directory link-model PID= MOD=24 EID=24-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 else
 	$(error Unknown name: $(NAME))
