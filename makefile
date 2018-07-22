@@ -33,7 +33,7 @@ combine-round-results: NAME=
 combine-round-results: THIS_EVAL_DIR := $(EVAL_DIR)/$(NAME)-combined
 
 .PHONY: run train eval store link-model online-round offline-round lc lint test explore wait \
-	20-round 21-round 22-round 23-round 24-round \
+	20-round 21-round 22-round 23-round 24-round 25-round 26-round \
 	pause resume kill remove-eval archive archive-unnamed venv freeze install uninstall
 
 run:
@@ -212,6 +212,24 @@ else ifeq ($(NAME), 4x200-unnenufe)
 		REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl GT=unnenufe ARGS='--hands=8e6' TARGET=$@
 	$(MAKE) --no-print-directory link-model PID= MOD=24 EID=24-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+else
+	$(error Unknown name: $(NAME))
+endif
+
+25-round:
+ifeq ($(NAME), 10x100-obenabe)
+	@$(MAKE) --no-print-directory online-round MOD=25 ENC=18 OTHER_NAME=4x200-obenabe GT=obenabe TARGET=$@
+else ifeq ($(NAME), 4x200-obenabe)
+	@$(MAKE) --no-print-directory online-round MOD=25 ENC=18 OTHER_NAME=10x100-obenabe GT=obenabe TARGET=$@
+else
+	$(error Unknown name: $(NAME))
+endif
+
+26-round:
+ifeq ($(NAME), 10x100-obenabe)
+	@$(MAKE) --no-print-directory online-round MOD=26 ENC=19 OTHER_NAME=4x200-obenabe GT=obenabe TARGET=$@
+else ifeq ($(NAME), 4x200-obenabe)
+	@$(MAKE) --no-print-directory online-round MOD=26 ENC=19 OTHER_NAME=10x100-obenabe GT=obenabe TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
