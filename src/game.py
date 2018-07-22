@@ -55,6 +55,7 @@ class Game:
     self._score_fh = None
     self._score_writer = None
     self._training_data_fh = None
+    self._game_type_decisions_fh = None
     self._training_data_writer = None
 
   def initialize(self):
@@ -64,10 +65,8 @@ class Game:
       self._score_writer = csv.writer(self._score_fh, lineterminator="\n")
 
     if Config.STORE_TRAINING_DATA:
-      if os.path.exists(Config.STORE_TRAINING_DATA_FILE_NAME):
-        raise ValueError("Not overwriting training data!")
-
       self._training_data_fh = open(Config.STORE_TRAINING_DATA_FILE_NAME, "wb")
+      self._game_type_decisions_fh = open(Config.STORE_GAME_TYPE_DECISIONS_FILE_NAME, "wb")
 
     if Config.STORE_TRAINING_DATA and Config.ONLINE_TRAINING:
       training_description = "(training online AND storing data) "
@@ -128,7 +127,7 @@ class Game:
       self.log.debug("Processing results of batch")
       for result in results:
         self._overall_score.add_other_score(result[0])
-        self._selected_game_types += result[3]
+        self._selected_game_types += result[4]
 
       played_hands += Config.BATCH_SIZE * Config.PARALLEL_PROCESSES
       batch_round += 1
@@ -146,10 +145,15 @@ class Game:
         if played_hands % Config.TRAINING_INTERVAL == 0:
           self._handle_training_data(training_data)
 
+      # store game type decisions
+      if Config.STORE_TRAINING_DATA:
+        for result in results:
+          self._write_game_type_decisions(result[2])
+
       # checkpoint
       if Config.STORE_SCORES:
         for result in results:
-          self._checkpoint_data.extend(result[2])
+          self._checkpoint_data.extend(result[3])
       if played_hands % Config.CHECKPOINT_INTERVAL == 0:
         self._create_checkpoint(played_hands, Config.TOTAL_HANDS)
         if Config.STORE_SCORES:
@@ -175,6 +179,8 @@ class Game:
     # cleanup
     if self._training_data_fh:
       self._training_data_fh.close()
+    if self._game_type_decisions_fh:
+      self._game_type_decisions_fh.close()
     if self._score_fh:
       self._score_fh.close()
 
@@ -184,6 +190,11 @@ class Game:
     if Config.ONLINE_TRAINING:
       for player in self._get_distinct_strategy_players():
         player.train(training_data, self.log)
+
+  def _write_game_type_decisions(self, game_type_decisions):
+    self._game_type_decisions_fh.write(struct.pack(
+      "=" + ("B{}h".format(Const.CARDS_PER_PLAYER * "B")) * len(game_type_decisions),
+      *game_type_decisions.reshape(-1)))
 
   def _create_checkpoint(self, current_iteration, total_iterations):
     if Config.STORE_SCORES:

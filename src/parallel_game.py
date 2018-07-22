@@ -37,9 +37,13 @@ class ParallelGame:
 
   def play_hands(self, already_played_hands):
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
+      # samples per game times number of games, number of cards plus score
       training_data = np.ones((Const.DECISIONS_PER_HAND * Config.BATCH_SIZE, Const.CARDS_PER_HAND + 1), dtype=int)
+      # number of games, number of initial hand cards plus chosen game type and score
+      game_type_decisions = np.ones((Config.BATCH_SIZE, Const.CARDS_PER_PLAYER + 2), dtype=int)
     else:
       training_data = None
+      game_type_decisions = None
     last_to_index = 0
     checkpoint_data = list()
     batch_score = Score()
@@ -83,10 +87,11 @@ class ParallelGame:
         assert from_index == last_to_index
         last_to_index = to_index
         training_data[from_index:to_index] = hand.new_training_data
+        game_type_decisions[i] = hand.game_type_decision
 
     LOG.debug("[{}]: ... finished playing {} hands".format(self._id, utils.format_human(Config.BATCH_SIZE)))
 
-    return batch_score, training_data, checkpoint_data, selected_game_types
+    return batch_score, training_data, game_type_decisions, checkpoint_data, selected_game_types
 
   @staticmethod
   def set_seed_and_get_pid(worker_id):

@@ -17,6 +17,7 @@ class Hand:
       self._training_data = list()
     self.log = log
     self._known_cards = np.zeros(Const.CARDS_PER_HAND, dtype=int)
+    self.game_type_decision = None
 
     # shuffle and distribute cards
     self.cards = np.random.permutation(cards)
@@ -34,6 +35,8 @@ class Hand:
 
     # choose game type and set up cards accordingly
     game_type = self._players[dealer].select_game_type()
+    initial_dealer = dealer
+    self.game_type_decision = [game_type.value] + [card.card_index for card in self._players[dealer].hand]
     self.log.debug("{} ({}) selected game type: {}".format(self._players[dealer].name,
       self._players[dealer].__class__.__name__, game_type.name))
     for card in self.cards:
@@ -66,6 +69,7 @@ class Hand:
         if not winner and _score_team_2 + initial_score_team_2 > Const.WINNING_SCORE:
           winner = 2
 
+      self.log.debug("States:\n{}".format(states))
       # if we gather training data and actually had a decision to make, update training data
       if i < Const.CARDS_PER_PLAYER-1 and (Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING):
         Hand._update_current_training_data(training_data_team_1, training_data_team_2, states, score, dealer)
@@ -82,6 +86,10 @@ class Hand:
       if not winner and _score_team_2 + initial_score_team_2 > Const.WINNING_SCORE:
         winner = 2
 
+    self.log.debug("The round ended {} vs {} (overall: {} vs {}) with {}".format(_score_team_1, _score_team_2,
+      _score_team_1 + initial_score_team_1, _score_team_2 + initial_score_team_2,
+      "no winner" if not winner else "team {} winning the game".format(winner)))
+
     # after concluding the hand, update the global training data
     if Config.STORE_TRAINING_DATA or Config.ONLINE_TRAINING:
       for team_1_training_entry in training_data_team_1:
@@ -95,6 +103,10 @@ class Hand:
       #   self._training_data.append(training_data_team_2[i])
       self._training_data.extend(training_data_team_1)
       self._training_data.extend(training_data_team_2)
+
+    # add score to game type decision
+    self.game_type_decision.append(_score_team_1 if initial_dealer % 2 == 0 else _score_team_2)
+    self.log.debug("Game type decision: {}".format(self.game_type_decision))
 
     return (_score_team_1, _score_team_2), winner, game_type
 

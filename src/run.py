@@ -47,6 +47,8 @@ def parse_arguments():
       help="Name of the training data file to train on")
   parser.add_argument("--store-training-file",
       help="Name of the training data file to write to")
+  parser.add_argument("--store-game-type-file",
+      help="Name of the file to write game type decisions to")
   parser.add_argument("--model", required=True,
       help="Name of the folder in the models/ directory, determines the encoding to use")
   parser.add_argument("--regressor-name",
@@ -112,6 +114,8 @@ def apply_arguments(args):
     Config.LOAD_TRAINING_DATA_FILE_NAME = "data/{}".format(args.load_training_file)
   if args.store_training_file:
     Config.STORE_TRAINING_DATA_FILE_NAME = "data/{}".format(args.store_training_file)
+  if args.store_game_type_file:
+    Config.STORE_GAME_TYPE_DECISIONS_FILE_NAME = "data/{}".format(args.store_game_type_file)
   Config.EVALUATION_DIRECTORY = "evaluations/{}".format(args.eid)
   Config.LOSS_FILE = "{}/loss.csv".format(Config.EVALUATION_DIRECTORY)
 
@@ -179,16 +183,18 @@ def check_config(log):
     return False
 
   if Config.STORE_TRAINING_DATA:
-    if not Config.STORE_TRAINING_DATA_FILE_NAME:
-      log.error("Need a training file name when storing data")
+    if not Config.STORE_TRAINING_DATA_FILE_NAME or not Config.STORE_GAME_TYPE_DECISIONS_FILE_NAME:
+      log.error("Need training and game type decision file names when storing data")
       return False
-    if os.path.exists(Config.STORE_TRAINING_DATA_FILE_NAME) and \
-        os.stat(Config.STORE_TRAINING_DATA_FILE_NAME).st_size > 0:
-      log.error("Training data file exists already")
+    if (os.path.exists(Config.STORE_TRAINING_DATA_FILE_NAME) and \
+        os.stat(Config.STORE_TRAINING_DATA_FILE_NAME).st_size > 0) or \
+        (os.path.exists(Config.STORE_GAME_TYPE_DECISIONS_FILE_NAME) and \
+        os.stat(Config.STORE_GAME_TYPE_DECISIONS_FILE_NAME).st_size > 0):
+      log.error("Training data or game type decision file exists already")
       return False
   else:
-    if Config.STORE_TRAINING_DATA_FILE_NAME:
-      log.error("Specified a training data file without storing data")
+    if Config.STORE_TRAINING_DATA_FILE_NAME or Config.STORE_GAME_TYPE_DECISIONS_FILE_NAME:
+      log.error("Specified a training data or game type decisions file without storing data")
       return False
 
   if Config.LOAD_TRAINING_DATA_FILE_NAME and not os.path.exists(Config.LOAD_TRAINING_DATA_FILE_NAME):
@@ -349,6 +355,7 @@ def get_encodings():
 
 def main():
   # TODO:
+  # - match
   # - trump
   # - schieben
   # - better baseline rules - must be better than starting with the best card of the first(!) suit
