@@ -37,7 +37,7 @@ create-multi-regressor: REG_NAMES=
 .PHONY: run train eval store link-model online-round offline-round lc lint test explore wait \
 	20-round 21-round 22-round 23-round 24-round 25-round 26-round \
 	combine-round-results create-multi-regressor \
-	pause resume kill remove-eval archive archive-unnamed venv freeze install uninstall
+	pause resume kill remove-eval archive archive-unnamed freeze install uninstall
 
 run:
 ifndef MOD
@@ -393,6 +393,8 @@ archive:
 	done
 
 venv:
+	@[ $$(command -v python3) ] || (echo 'python 3 is missing'; exit 1)
+	@(( $$(readlink $$(which python3) | cut -d. -f2) >= 5 )) || (echo 'python >= 3.5 is required'; exit 1)
 	virtualenv -p python3 $(VENV)
 
 freeze: venv
