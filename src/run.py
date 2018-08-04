@@ -357,12 +357,6 @@ def get_encodings():
 
 
 def main():
-  # TODO:
-  # - match
-  # - trump
-  # - schieben
-  # - better baseline rules - must be better than starting with the best card of the first(!) suit
-
   start_time = time.time()
   args = parse_arguments()
   apply_arguments(args)
