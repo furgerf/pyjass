@@ -22,8 +22,6 @@ class Encoding:
     # ensure that we get a list or an int
     assert relative_in_play_encoding == isinstance(card_code_in_play, list)
     assert relative_in_play_encoding != isinstance(card_code_in_play, int)
-    if sort_states:
-      assert card_index_by_suit, "Sorting doesn't make sense if the cards are ordered by value"
 
     self._baseline = baseline
     self._card_code_players = card_code_players

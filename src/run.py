@@ -19,7 +19,7 @@ from game import Game
 from game_type import GameType
 from parallel_game import ParallelGame
 
-__version__ = "0.2"
+__version__ = "0.3"
 
 def parse_arguments():
   parser = ArgumentParser()
@@ -326,6 +326,11 @@ def get_encodings():
       relative_player_encoding=True, relative_in_play_encoding=True,
       card_index_by_suit=True, sort_states=True)
 
+  # NOTE: Currently explored - sorting the states but ordering cards by value
+  encoding_20 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4,
+      relative_player_encoding=True, relative_in_play_encoding=True,
+      card_index_by_suit=False, sort_states=True)
+
   return {
       "01": encoding_1,
       "02": encoding_1,
@@ -353,6 +358,7 @@ def get_encodings():
       "24": encoding_17,
       "25": encoding_18,
       "26": encoding_19,
+      "27": encoding_20,
       }
 
 

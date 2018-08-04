@@ -84,7 +84,7 @@ class Player(ABC):
     # if requested, sort the decision state
     # afterwards, the encoding of the current state mustn't be modified, all that's missing is cost
     if Config.ENCODING.sort_states:
-      decision_state = Player._sort_decision_state(decision_state)
+      decision_state = Player._sort_decision_state(decision_state, Config.ENCODING.card_index_by_suit)
 
     return selected_card, decision_state
 
@@ -186,19 +186,31 @@ class Player(ABC):
     return cards
 
   @staticmethod
-  def _sort_decision_state(decision_state):
+  def _sort_decision_state(decision_state, cards_by_suit):
     """
     Re-arranges the decision state by sorting the suits in a way that the suit itself is irrelevant.
 
     :decision_state: A list representing the decision state to sort.
+    :cards_by_suit: True if the decision state represents cards that are ordered by suit, false if
+                    they're ordered by value.
 
     :returns: The list of the sorted decision state.
     """
     assert len(decision_state) == Const.CARDS_PER_PLAYER * Const.PLAYER_COUNT
 
     # split the decision state into separate lists per suit
-    cards_per_suit = [decision_state[Const.CARDS_PER_PLAYER*i:Const.CARDS_PER_PLAYER*(i+1)] \
-        for i in range(Const.PLAYER_COUNT)]
+    if cards_by_suit:
+      cards_per_suit = [decision_state[Const.CARDS_PER_SUIT*i:Const.CARDS_PER_SUIT*(i+1)] \
+          for i in range(Const.SUIT_COUNT)]
+    else:
+      cards_per_suit = [decision_state[i::Const.SUIT_COUNT] for i in range(Const.SUIT_COUNT)]
 
-    # sort the suits as byte arrays and return the flattened result
-    return np.array([item for sublist in sorted(cards_per_suit, key=bytearray) for item in sublist])
+    # sort the suits as byte arrays
+    sorted_suits = sorted(cards_per_suit, key=bytearray)
+
+    # if the cards are ordered by value, the suit lists need to be zipped to re-establish that order
+    if not cards_by_suit:
+      sorted_suits = zip(*sorted_suits)
+
+    # flatten and return the sorted decision state
+    return np.array([item for sublist in sorted_suits for item in sublist])

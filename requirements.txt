@@ -12,6 +12,7 @@ matplotlib==2.1.2
 mccabe==0.6.1
 numpy==1.14.0
 pandas==0.22.0
+parameterized==0.6.1
 parso==0.1.1
 pexpect==4.4.0
 pickleshare==0.7.4
