@@ -79,6 +79,9 @@ def get_enum_by_name(enum, name):
       return en
   return None
 
+def flatten(nested_list):
+  return [item for sublist in nested_list for item in sublist]
+
 class StoreDictKeyPair(argparse.Action):
   def __call__(self, parser, namespace, values, option_string=None):
     my_dict = {}

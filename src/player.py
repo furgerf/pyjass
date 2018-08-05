@@ -213,4 +213,4 @@ class Player(ABC):
       sorted_suits = zip(*sorted_suits)
 
     # flatten and return the sorted decision state
-    return np.array([item for sublist in sorted_suits for item in sublist])
+    return np.array(utils.flatten(sorted_suits))

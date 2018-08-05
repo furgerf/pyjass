@@ -9,6 +9,7 @@ import numpy as np
 from const import Const
 from parameterized import parameterized
 from player import Player
+from utils import flatten
 
 
 class PlayerTest(TestCase):
@@ -19,23 +20,22 @@ class PlayerTest(TestCase):
         else PlayerTest.get_permutations_by_value(all_cards_by_suit)
 
     for permutation in all_permutations:
-      foo = Player._sort_decision_state(permutation, cards_by_suit)
       self.assertTrue(np.array_equal(Player._sort_decision_state(permutation, cards_by_suit), correct_order))
 
   @staticmethod
   def get_permutations_by_suit(cards_by_suit):
-    return [[item for sublist in permutation for item in sublist] for permutation in permutations(cards_by_suit)]
+    return [flatten(permutation) for permutation in permutations(cards_by_suit)]
 
   @staticmethod
   def get_permutations_by_value(cards_by_suit):
-    return [[item for sublist in zip(*permutation) for item in sublist] for permutation in permutations(cards_by_suit)]
+    return [flatten(zip(*permutation)) for permutation in permutations(cards_by_suit)]
 
   @staticmethod
   def get_correct_decision_state(cards, order, cards_by_suit):
     ordered_cards = [cards[i] for i in order]
     if cards_by_suit:
-      return [item for sublist in ordered_cards for item in sublist]
-    return [item for sublist in zip(*ordered_cards) for item in sublist]
+      return flatten(ordered_cards)
+    return flatten(zip(*ordered_cards))
 
   @parameterized.expand([
     [True],
