@@ -8,6 +8,7 @@ import numpy as np
 
 import utils
 from const import Const
+from game_type import GameType
 
 
 class Player(ABC):
@@ -60,15 +61,7 @@ class Player(ABC):
     :returns: The selected card to play and the associated decision state.
     """
     # get all cards that would be valid to play
-    # NOTE: this also depends on game type!
-    if played_cards:
-      # try to match suit
-      valid_cards = list(filter(lambda c: played_cards[0].suit == c.suit, self.hand))
-      if not valid_cards:
-        # can't match suit, any card is allowed
-        valid_cards = self.hand
-    else:
-      valid_cards = self.hand
+    valid_cards = self.get_valid_cards_to_play(played_cards, game_type)
 
     # actually select a card
     selected_card = self._select_card((valid_cards, played_cards, known_cards, game_type), log)
@@ -99,6 +92,27 @@ class Player(ABC):
     :returns: The selected card instance.
     """
     pass
+
+  def get_valid_cards_to_play(self, played_cards, game_type):
+    """
+    Get all cards in the player's hand that would be valid to play.
+
+    :played_cards: The cards that are currently in play.
+    :game_type: The current game type.
+
+    :returns: A list of all cards that the player is allowed to play.
+    """
+    if game_type in [GameType.OBENABE, GameType.UNNENUFE]:
+      if played_cards:
+        # try to match suit
+        valid_cards = list(filter(lambda c: played_cards[0].suit == c.suit, self.hand))
+        if not valid_cards:
+          # can't match suit, any card is allowed
+          valid_cards = self.hand
+      else:
+        valid_cards = self.hand
+      return valid_cards
+    raise NotImplementedError()
 
   def select_game_type(self):
     """

@@ -9,6 +9,12 @@ from game_type import GameType
 
 class Card:
 
+  # NOTE: the suit numbers are linked to the trump numbers
+  SPADES = 0
+  HEARTS = 1
+  DIAMONDS = 2
+  CLUBS = 3
+
   SUITS = "♠♥♦♣"
   VALUES = "6789TJQKA"
 
@@ -51,6 +57,9 @@ class Card:
 
   def __str__(self):
     return self._icon
+
+  def __eq__(self, other):
+    return isinstance(other, Card) and self.suit == other.suit and self.value == other.value
 
   def set_game_type(self, game_type):
     """
