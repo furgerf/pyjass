@@ -35,7 +35,7 @@ create-multi-regressor: MULTI_NAME=
 create-multi-regressor: REG_NAMES=
 
 .PHONY: run train eval store link-model online-round offline-round lc lint test explore wait \
-	20-round 21-round 22-round 23-round 24-round 25-round 26-round \
+	20-round 21-round 22-round 23-round 24-round 25-round 26-round 27-round \
 	combine-round-results create-multi-regressor \
 	pause resume kill remove-eval archive archive-unnamed freeze install uninstall
 
@@ -44,7 +44,6 @@ ifndef MOD
 	$(error Must specify model)
 endif
 ifdef PID
-	$(info Waiting for process $(PID)...)
 	@$(MAKE) --no-print-directory wait
 endif
 	@mkdir -p $(MODELS_DIR)/$(MOD)
@@ -94,7 +93,6 @@ ifndef ROUND
 	$(error Must specify round number)
 endif
 ifdef PID
-	$(info Waiting for process $(PID)...)
 	@$(MAKE) --no-print-directory wait
 endif
 	@# NOTE: this relies that the default hands for train is 4M and that it isn't overwritten
@@ -120,7 +118,6 @@ ifndef ROUND
 	$(error Must specify round number)
 endif
 ifdef PID
-	$(info Waiting for process $(PID)...)
 	@$(MAKE) --no-print-directory wait
 endif
 	$(MAKE) --no-print-directory eval PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
@@ -152,7 +149,7 @@ else ifeq ($(NAME), 6x100)
 else ifeq ($(NAME), 5x100-offline)
 	@$(MAKE) --no-print-directory offline-round MOD=21 ENC=14 GT=obenabe TARGET=$@
 else ifeq ($(NAME), 6x100-online-only)
-	$(MAKE) --no-print-directory train MOD=21 EID=21-$(NAME)-round-$(ROUND) \
+	@$(MAKE) --no-print-directory train MOD=21 EID=21-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl GT=obenabe TARGET=$@
 else
 	$(error Unknown name: $(NAME))
@@ -169,14 +166,14 @@ else ifeq ($(NAME), 6x100-own-data)
 	@$(MAKE) --no-print-directory online-round MOD=22 ENC=15 OTHER_NAME=6x100 GT=obenabe \
 		ARGS='--no-store-data --store-training-file= --load-training-file=15-2m-6x100-round-$(ROUND).bin --hands=2e6' TARGET=$@
 else ifeq ($(NAME), 4x200)
-	$(MAKE) --no-print-directory train MOD=22 EID=22-$(NAME)-round-$(ROUND) \
+	@$(MAKE) --no-print-directory train MOD=22 EID=22-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl GT=obenabe TARGET=$@
-	$(MAKE) --no-print-directory link-model PID= MOD=22 EID=22-$(NAME)-round-$(ROUND) \
+	@$(MAKE) --no-print-directory link-model PID= MOD=22 EID=22-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 else ifeq ($(NAME), 300-200-300)
-	$(MAKE) --no-print-directory train MOD=22 EID=22-$(NAME)-round-$(ROUND) \
+	@$(MAKE) --no-print-directory train MOD=22 EID=22-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl GT=obenabe TARGET=$@
-	$(MAKE) --no-print-directory link-model PID= MOD=22 EID=22-$(NAME)-round-$(ROUND) \
+	@$(MAKE) --no-print-directory link-model PID= MOD=22 EID=22-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 else
 	$(error Unknown name: $(NAME))
@@ -188,9 +185,9 @@ ifeq ($(NAME), 6x100)
 else ifeq ($(NAME), 7x100)
 	@$(MAKE) --no-print-directory online-round MOD=23 ENC=16 OTHER_NAME=6x100 GT=obenabe TARGET=$@
 else ifeq ($(NAME), 4x200)
-	$(MAKE) --no-print-directory train MOD=23 EID=23-$(NAME)-round-$(ROUND) \
+	@$(MAKE) --no-print-directory train MOD=23 EID=23-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl GT=obenabe ARGS='--hands=8e6' TARGET=$@
-	$(MAKE) --no-print-directory link-model PID= MOD=23 EID=23-$(NAME)-round-$(ROUND) \
+	@$(MAKE) --no-print-directory link-model PID= MOD=23 EID=23-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 else
 	$(error Unknown name: $(NAME))
@@ -206,15 +203,19 @@ else ifeq ($(NAME), 8x100)
 else ifeq ($(NAME), 9x100)
 	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=8x100 GT=obenabe TARGET=$@
 else ifeq ($(NAME), 4x200)
-	$(MAKE) --no-print-directory train MOD=24 EID=24-$(NAME)-round-$(ROUND) \
+	@$(MAKE) --no-print-directory train MOD=24 EID=24-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl GT=obenabe ARGS='--hands=8e6' TARGET=$@
-	$(MAKE) --no-print-directory link-model PID= MOD=24 EID=24-$(NAME)-round-$(ROUND) \
+	@$(MAKE) --no-print-directory link-model PID= MOD=24 EID=24-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
 else ifeq ($(NAME), 4x200-unnenufe)
-	$(MAKE) --no-print-directory train MOD=24 EID=24-$(NAME)-round-$(ROUND) \
+	@$(MAKE) --no-print-directory train MOD=24 EID=24-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl GT=unnenufe ARGS='--hands=8e6' TARGET=$@
-	$(MAKE) --no-print-directory link-model PID= MOD=24 EID=24-$(NAME)-round-$(ROUND) \
+	@$(MAKE) --no-print-directory link-model PID= MOD=24 EID=24-$(NAME)-round-$(ROUND) \
 		REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+else ifeq ($(NAME), 5x200)
+	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=3x300 GT=obenabe TARGET=$@
+else ifeq ($(NAME), 3x300)
+	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=5x200 GT=obenabe TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
@@ -233,6 +234,15 @@ ifeq ($(NAME), 10x100-obenabe)
 	@$(MAKE) --no-print-directory online-round MOD=26 ENC=19 OTHER_NAME=4x200-obenabe GT=obenabe TARGET=$@
 else ifeq ($(NAME), 4x200-obenabe)
 	@$(MAKE) --no-print-directory online-round MOD=26 ENC=19 OTHER_NAME=10x100-obenabe GT=obenabe TARGET=$@
+else
+	$(error Unknown name: $(NAME))
+endif
+
+27-round:
+ifeq ($(NAME), 10x100-obenabe)
+	@$(MAKE) --no-print-directory online-round MOD=27 ENC=20 OTHER_NAME=4x200-obenabe GT=obenabe TARGET=$@
+else ifeq ($(NAME), 4x200-obenabe)
+	@$(MAKE) --no-print-directory online-round MOD=27 ENC=20 OTHER_NAME=10x100-obenabe GT=obenabe TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
@@ -269,7 +279,6 @@ ifndef REG
 	$(error Must specify model name for symlink)
 endif
 ifdef PID
-	$(info Waiting for process $(PID)...)
 	@$(MAKE) --no-print-directory wait
 endif
 	@pushd $(MODELS_DIR)/$(MOD) > /dev/null; \
@@ -293,7 +302,6 @@ ifndef EID
 	$(error Must specify evaluation ID)
 endif
 ifdef PID
-	$(info Waiting for process $(PID)...)
 	@$(MAKE) --no-print-directory wait
 endif
 	@> $(CURVE_SCORES)
@@ -345,6 +353,7 @@ wait:
 ifndef PID
 	$(error Must specify pid)
 endif
+	$(info Waiting for process $(PID)...)
 	@while [ -d /proc/$$PID ]; do \
 		sleep 60; \
 	done

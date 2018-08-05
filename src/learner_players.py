@@ -68,7 +68,7 @@ class LearnerPlayer(Player):
       real_path = os.path.realpath(pickle_file_name)[len(os.getcwd())+1:]
       path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
       log.info("Loaded regressor from {}{} for {} (trained on {} samples - {} hands, loss {:.1f})".format(
-        pickle_file_name, path_difference, regressor.game_type, utils.format_human(regressor.training_samples),
+        pickle_file_name, path_difference, regressor.game_type.name, utils.format_human(regressor.training_samples),
         utils.format_human(regressor.training_samples/32), regressor.loss_))
 
       assert regressor.__class__.__name__ == regressor_constructor.__name__, \
@@ -102,7 +102,6 @@ class LearnerPlayer(Player):
     if regressor_args:
       log.warning("Applying custom arguments: '{}'".format(regressor_args))
     regressor_args["warm_start"] = True
-    regressor_args["n_jobs"] = 4 # try limiting learning to 4 CPUs only to reduce context switching
 
     # instantiate new regressor and add custom fields
     regressor = regressor_constructor(**regressor_args)
@@ -110,7 +109,7 @@ class LearnerPlayer(Player):
     regressor.game_type = Config.FORCE_GAME_TYPE
 
     log.warning("Training new regressor for {} on stored data {}: {}".format(
-      regressor.game_type, Config.LOAD_TRAINING_DATA_FILE_NAME, regressor))
+      regressor.game_type.name, Config.LOAD_TRAINING_DATA_FILE_NAME, regressor))
     LearnerPlayer._train_regressor_from_file(regressor, log)
     log.warning("Writing newly-trained regressor to {}".format(pickle_file_name))
     with open(pickle_file_name, "wb") as fh:
