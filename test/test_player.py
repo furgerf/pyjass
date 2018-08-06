@@ -113,7 +113,7 @@ class PlayerTest(TestCase):
     ])
   def test_sort_decision_state_randomized(self, cards_by_suit):
     np.random.seed(42)
-    for _ in range(int(1e3)):
+    for _ in range(int(1e2)):
       all_cards = [
           list(np.random.randint(0, 255, Const.CARDS_PER_SUIT)),
           list(np.random.randint(0, 255, Const.CARDS_PER_SUIT)),
@@ -150,3 +150,45 @@ class PlayerTest(TestCase):
     self.assertEqual(testee.get_valid_cards_to_play([Card(Card.HEARTS, 1)], game_type),
         [Card(Card.HEARTS, 0), Card(Card.HEARTS, 7)])
     self.assertEqual(testee.get_valid_cards_to_play([Card(Card.CLUBS, 1)], game_type), [Card(Card.CLUBS, 3)])
+
+  def test_get_valid_cards_to_play_trump(self):
+    testee = RandomCardPlayer("testee", 0, MagicMock())
+    testee.hand = [
+        Card(Card.SPADES, 5), # J
+        Card(Card.HEARTS, 5), # J
+        Card(Card.HEARTS, 7), # K
+        Card(Card.CLUBS, 3), # 9
+        ]
+
+    # non-trump is played without any trump in play
+    game_type = GameType.TRUMP_HEARTS
+    played_cards = [Card(Card.SPADES, 1)]
+    for card in testee.hand + played_cards:
+      card.set_game_type(game_type)
+    self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.SPADES, 5), Card(Card.HEARTS, 5), Card(Card.HEARTS, 7)])
+
+    game_type = GameType.TRUMP_CLUBS
+    played_cards = [Card(Card.SPADES, 1), Card(Card.DIAMONDS, 3)]
+    for card in testee.hand + played_cards:
+      card.set_game_type(game_type)
+    self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.SPADES, 5), Card(Card.CLUBS, 3)])
+
+    # non-trump is played with a trump in play
+    game_type = GameType.TRUMP_HEARTS
+    played_cards = [Card(Card.SPADES, 1), Card(Card.HEARTS, 8)]
+    for card in testee.hand + played_cards:
+      card.set_game_type(game_type)
+    self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.SPADES, 5), Card(Card.HEARTS, 5)]) # not allowed to play K (undertrump)
+
+    # trump is played
+    game_type = GameType.TRUMP_HEARTS
+    played_cards = [Card(Card.HEARTS, 1), Card(Card.HEARTS, 2)]
+    for card in testee.hand + played_cards:
+      card.set_game_type(game_type)
+    self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.HEARTS, 5), Card(Card.HEARTS, 7)])
+
+    game_type = GameType.TRUMP_SPADES
+    played_cards = [Card(Card.SPADES, 1), Card(Card.SPADES, 2)]
+    for card in testee.hand + played_cards:
+      card.set_game_type(game_type)
+    self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), testee.hand)

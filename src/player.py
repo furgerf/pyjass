@@ -9,6 +9,7 @@ import numpy as np
 import utils
 from const import Const
 from game_type import GameType
+from card import Card
 
 
 class Player(ABC):
@@ -65,8 +66,9 @@ class Player(ABC):
 
     # actually select a card
     selected_card = self._select_card((valid_cards, played_cards, known_cards, game_type), log)
-    log.debug("{} selects card {} to play (valid: {})".format(
-      self.name, selected_card, utils.format_cards(valid_cards)))
+    log.debug("{} selects card {} to play (valid: {} -  invalid: {})".format(
+      self.name, selected_card, utils.format_cards(valid_cards), \
+          utils.format_cards([card for card in self.hand if card not in valid_cards])))
 
     # a decision was made, create the corresponding state
     decision_state = self._encode_current_state(played_cards, known_cards)
@@ -102,17 +104,33 @@ class Player(ABC):
 
     :returns: A list of all cards that the player is allowed to play.
     """
+    if not played_cards:
+      # the first player can always choose from all cards
+      return self.hand
+
     if game_type in [GameType.OBENABE, GameType.UNNENUFE]:
-      if played_cards:
-        # try to match suit
-        valid_cards = list(filter(lambda c: played_cards[0].suit == c.suit, self.hand))
-        if not valid_cards:
-          # can't match suit, any card is allowed
-          valid_cards = self.hand
-      else:
-        valid_cards = self.hand
+      # try to match suit
+      valid_cards = list(filter(lambda c: played_cards[0].suit == c.suit, self.hand))
+      # all cards are valid if unable to match suit
+      return valid_cards or self.hand
+    if game_type.is_trump_game_type:
+      # try to match suit
+      valid_cards = list(filter(lambda c: played_cards[0].suit == c.suit, self.hand))
+      if not valid_cards:
+        # all cards are valid if unable to match suit
+        return self.hand
+      if played_cards[0].is_trump:
+        # if the only valid (trump) card is the buur, all cards are valid, otherwise all valid (trump) cards are
+        return self.hand if len(valid_cards) == 1 and valid_cards[0].is_buur else valid_cards
+      # besides matching suit, non-undertrumping trumps can also be played
+      played_trumps = list(filter(lambda c: c.is_trump, played_cards))
+      worst_trump = played_trumps[0] if played_trumps else None
+      for played_trump in played_trumps:
+        if played_trump.is_beaten_by(worst_trump):
+          worst_trump = played_trump
+      valid_cards.extend(filter(lambda c: c.is_trump and (worst_trump is None or worst_trump.is_beaten_by(c)), self.hand))
       return valid_cards
-    raise NotImplementedError()
+    raise ValueError("Unknown game type: '{}'".format(GameType.name))
 
   def select_game_type(self):
     """
