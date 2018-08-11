@@ -14,6 +14,9 @@ class SimpleRulesPlayer(RulesPlayer):
   Only the current round is considered, no memory of previous rounds.
   """
 
+  def __init__(self, name, number, log):
+    super(SimpleRulesPlayer, self).__init__(name, number, [GameType.OBENABE, GameType.UNNENUFE], log)
+
   @staticmethod
   def _select_worst_card(choices):
     """

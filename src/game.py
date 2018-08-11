@@ -84,7 +84,10 @@ class Game:
               Config.TEAM_2_STRATEGY == "baseline" else ""))
     if Config.FORCE_GAME_TYPE:
       self.log.warning("Forcing game type: {}".format(Config.FORCE_GAME_TYPE))
-
+      assert self.players[0].knows_game_type(Config.FORCE_GAME_TYPE) and \
+          self.players[1].knows_game_type(Config.FORCE_GAME_TYPE), "a team doesn't know the forced game type"
+    else:
+      assert self.players[0].knows_same_game_types_as(self.players[1]), "the teams don't know the same game types"
 
   def play(self):
     # pylint: disable=too-many-statements,too-many-branches

@@ -17,7 +17,7 @@ class Player(ABC):
   Abstract base class of a player providing the interface for the game.
   """
 
-  def __init__(self, name, number, log):
+  def __init__(self, name, number, known_game_types, log):
     """
     Creates a new player.
 
@@ -28,6 +28,7 @@ class Player(ABC):
     # DON'T store the log or the player can't be serialized
     self._name = name
     self._number = number
+    self._known_game_types = known_game_types
     self._hand = None
     log.debug("Created player {}".format(self.name))
 
@@ -50,6 +51,26 @@ class Player(ABC):
     # sort hand cards, NOTE: might be omitted for performance
     self._hand = sorted(hand, key=lambda c: str(c.suit) + str(c.value))
 
+  def knows_game_type(self, game_type):
+    """
+    Check if the player knows the queried game type.
+
+    :game_type: The game type to check.
+
+    :returns: True if the player knows the game type.
+    """
+    return game_type in self._known_game_types
+
+  def knows_same_game_types_as(self, other_player):
+    """
+    Checks if the player knows the same game types as another player.
+
+    :other_player: The other player to compare the known game types against.
+
+    :returns True if both players know the same game types.
+    """
+    return set(self._known_game_types) == set(other_player._known_game_types)
+
   def select_card_to_play(self, played_cards, known_cards, game_type, log):
     """
     Have the player select a valid hand card to play.
@@ -61,6 +82,8 @@ class Player(ABC):
 
     :returns: The selected card to play and the associated decision state.
     """
+    assert self.knows_game_type(game_type)
+
     # get all cards that would be valid to play
     valid_cards = self.get_valid_cards_to_play(played_cards, game_type)
 
@@ -138,7 +161,7 @@ class Player(ABC):
 
     :returns: The selected game type.
     """
-    assert len(self.hand) == Const.CARDS_PER_PLAYER
+    assert len(self.hand) == Const.CARDS_PER_PLAYER, "only select game type when no cards are played"
     if Config.FORCE_GAME_TYPE:
       return Config.FORCE_GAME_TYPE
     return self._select_game_type()

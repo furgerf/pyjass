@@ -42,6 +42,10 @@ class RandomCardPlayer(BaselinePlayer):
   Player that makes random decisions.
   """
 
+  def __init__(self, name, number, log):
+    super(RandomCardPlayer, self).__init__(name, number, [GameType.OBENABE, GameType.UNNENUFE,
+      GameType.TRUMP_HEARTS, GameType.TRUMP_SPADES, GameType.TRUMP_DIAMONDS, GameType.TRUMP_CLUBS], log)
+
   def _select_card(self, args, log):
     valid_cards = args[0]
     return valid_cards[np.random.randint(len(valid_cards))]
@@ -51,8 +55,13 @@ class RandomCardPlayer(BaselinePlayer):
 
 class HighestCardPlayer(BaselinePlayer):
   """
-  Player that selects card with the highest value.
+  Player that selects card with the highest value (not necessarily the best card).
   """
+
+  def __init__(self, name, number, log):
+    super(HighestCardPlayer, self).__init__(name, number, [GameType.OBENABE, GameType.UNNENUFE,
+      GameType.TRUMP_HEARTS, GameType.TRUMP_SPADES, GameType.TRUMP_DIAMONDS, GameType.TRUMP_CLUBS], log)
+
   def _select_card(self, args, log):
     game_type = args[3]
     valid_cards = sorted(args[0], key=lambda c: c.value, reverse=(game_type != GameType.UNNENUFE))
