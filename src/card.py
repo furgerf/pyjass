@@ -24,6 +24,9 @@ class Card:
 
   VALUES = "6789TJQKA"
 
+  VALUE_BUUR = 5
+  VALUE_NELL = 3
+
   def __init__(self, suit, value):
     self._suit = suit
     self._value = value
@@ -65,14 +68,14 @@ class Card:
     """
     True if the card is the buur (trump J).
     """
-    return self.is_trump and self.value == 5
+    return self.is_trump and self.value == Card.VALUE_BUUR
 
   @property
   def is_nell(self):
     """
     True if the card is the nell (trump 9).
     """
-    return self.is_trump and self.value == 3
+    return self.is_trump and self.value == Card.VALUE_NELL
 
   @property
   def card_index(self):

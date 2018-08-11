@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import numpy as np
+
 from baseline_players import RulesPlayer
 from card import Card
 from game_type import GameType
@@ -93,7 +95,12 @@ class SimpleRulesPlayer(RulesPlayer):
     return worst_card
 
   def _select_game_type(self):
-    #  decide between obenabe and unnenufe by checking whether there are more cards above or below 10 in the hand
-    high_card_count = len(list(filter(lambda card: card.value > int(len(Card.VALUES)/2), self.hand)))
-    low_card_count = len(list(filter(lambda card: card.value < int(len(Card.VALUES)/2), self.hand)))
-    return GameType.OBENABE if high_card_count >= low_card_count else GameType.UNNENUFE
+    # for obenabe/unnenufe, count the number of cards above/below 10
+    # for trump, count the number of (potential) trump cards while buur/nell count double
+    game_type_counts = {game_type: len(list(filter(lambda card: card.suit == suit, self.hand))) + \
+        len(list(filter(lambda card: card.suit == suit and card.value in [Card.VALUE_BUUR, Card.VALUE_NELL], self.hand))) \
+        for game_type, suit in Card.TRUMP_GAME_TYPE_TO_SUIT.items()}
+    game_type_counts[GameType.OBENABE] = len(list(filter(lambda card: card.value > int(len(Card.VALUES)/2), self.hand)))
+    game_type_counts[GameType.UNNENUFE] = len(list(filter(lambda card: card.value < int(len(Card.VALUES)/2), self.hand)))
+    best_choices = [game_type for game_type in game_type_counts.keys() if game_type_counts[game_type] == max(game_type_counts.values())]
+    return best_choices[np.random.randint(len(best_choices))]
