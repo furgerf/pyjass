@@ -17,7 +17,7 @@ from utils import flatten
 
 
 class PlayerTest(TestCase):
-  # pylint: disable=invalid-name,protected-access
+  # pylint: disable=invalid-name,protected-access,line-too-long
 
   def verify_card_permutations(self, all_cards_by_suit, correct_order, cards_by_suit):
     all_permutations = PlayerTest.get_permutations_by_suit(all_cards_by_suit) if cards_by_suit \
@@ -224,4 +224,3 @@ class PlayerTest(TestCase):
     for card in testee.hand + played_cards:
       card.set_game_type(game_type)
     self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.HEARTS, 5), Card(Card.HEARTS, 7)])
-

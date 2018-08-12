@@ -151,6 +151,7 @@ class Card:
     self._score = scores[self._value]
 
   def is_beaten_by(self, other_card):
+    # pylint: disable=too-many-return-statements
     """
     Determines if the current card is beaten by the other card.
 

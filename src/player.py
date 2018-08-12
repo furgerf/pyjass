@@ -9,7 +9,6 @@ import numpy as np
 import utils
 from const import Const
 from game_type import GameType
-from card import Card
 
 
 class Player(ABC):
@@ -69,6 +68,7 @@ class Player(ABC):
 
     :returns True if both players know the same game types.
     """
+    # pylint: disable=protected-access
     return set(self._known_game_types) == set(other_player._known_game_types)
 
   def select_card_to_play(self, played_cards, known_cards, game_type, log):
