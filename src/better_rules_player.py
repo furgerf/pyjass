@@ -8,7 +8,15 @@ from game_type import GameType
 
 
 class BetterRulesPlayer(RulesPlayer):
+  """
+  Player that selects cards based on some improved rules.
+  Only the current round is considered, no memory of previous rounds.
+  """
+
   HIGH_SCORE_LOW_VALUE_CARDS = [2, 4] # 8 and 10
+
+  def __init__(self, name, number, log):
+    super(BetterRulesPlayer, self).__init__(name, number, [GameType.OBENABE, GameType.UNNENUFE], log)
 
   @staticmethod
   def _get_counts_per_suit(cards):
@@ -98,7 +106,7 @@ class BetterRulesPlayer(RulesPlayer):
       return worst_card
 
     if len(played_cards) == 2:
-      # third player: check if the round currently belongs to the team
+      # third player: check if the round currently belongs to the team NOTE: THIS CHECK IS WRONG
       if played_cards[1].is_beaten_by(played_cards[0]):
         # the round is the first player's: play the highest-score or worst card
         worst_card = BetterRulesPlayer._select_high_scoring_or_useless_card(valid_cards, game_type)
@@ -118,7 +126,7 @@ class BetterRulesPlayer(RulesPlayer):
           .format(worst_card))
       return worst_card
 
-    # fourth player: check if the round currently belongs to the team
+    # fourth player: check if the round currently belongs to the team NOTE: THIS CHECK IS WRONG
     if played_cards[0].is_beaten_by(played_cards[1]) and played_cards[2].is_beaten_by(played_cards[1]):
       # the round is the second player's: play the highest-score or worst card
       worst_card = BetterRulesPlayer._select_high_scoring_or_useless_card(valid_cards, game_type)

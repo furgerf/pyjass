@@ -95,6 +95,6 @@ class RulesPlayer(BaselinePlayer):
     """
     best_card = choices[0]
     for card in choices:
-      if best_card.is_beaten_by(card):
+      if best_card.is_beaten_by(card) and best_card.suit == card.suit:
         best_card = card
     return best_card

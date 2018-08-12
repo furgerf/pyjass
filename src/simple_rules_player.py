@@ -14,8 +14,11 @@ class SimpleRulesPlayer(RulesPlayer):
   Only the current round is considered, no memory of previous rounds.
   """
 
+  STECHEN_THRESHOLD = 5 # "more than a king"
+
   def __init__(self, name, number, log):
-    super(SimpleRulesPlayer, self).__init__(name, number, [GameType.OBENABE, GameType.UNNENUFE], log)
+    super(SimpleRulesPlayer, self).__init__(name, number, [GameType.OBENABE, GameType.UNNENUFE,
+        GameType.TRUMP_HEARTS, GameType.TRUMP_SPADES, GameType.TRUMP_DIAMONDS, GameType.TRUMP_CLUBS], log)
 
   @staticmethod
   def _select_worst_card(choices):
@@ -28,18 +31,20 @@ class SimpleRulesPlayer(RulesPlayer):
     """
     worst_card = choices[0]
     for card in choices:
-      # compare value because that also works if the player can't match suit
-      if card.has_worse_value_than(worst_card):
+      # for non-trumps, compare value because that also works if the player can't match suit
+      # if the current worst card is a trump, then it must beat the worst card
+      if (not worst_card.is_trump and not card.is_trump and card.has_worse_value_than(worst_card)) or \
+          (worst_card.is_trump and card.is_beaten_by(worst_card)):
         worst_card = card
     return worst_card
 
   # pylint: disable=too-many-return-statements
   def _select_card(self, args, log):
-    valid_cards, played_cards, _, _ = args
+    valid_cards, played_cards, _, game_type = args
 
     if len(played_cards) == 0: # pylint: disable=len-as-condition
       # first player: choose best card
-      log.debug("First player choses the card with highest value")
+      log.debug("First player choses the best card of the first suit")
       return RulesPlayer._select_best_card_of_first_suit(valid_cards)
 
     if len(played_cards) == 1:
@@ -47,6 +52,20 @@ class SimpleRulesPlayer(RulesPlayer):
       beating_cards = list(filter(played_cards[0].is_beaten_by, valid_cards))
       if beating_cards:
         # first player can be beat: play worst beating card
+        if all(map(lambda card: card.is_trump, beating_cards)):
+          assert game_type.is_trump_game_type
+          # decide whether to play a trump (stechen)
+          points = sum(map(lambda card: card.score, played_cards))
+          if points >= SimpleRulesPlayer.STECHEN_THRESHOLD:
+            trump_card = SimpleRulesPlayer._select_worst_card(beating_cards)
+            log.debug("Second player stichs with worst trump: {}".format(trump_card))
+            return trump_card
+          else:
+            worst_card = SimpleRulesPlayer._select_worst_card(valid_cards)
+            log.debug("Second player can't beat with same suit but doesn't stich, selecting lowest value: {}"
+                .format(worst_card))
+            return worst_card
+        # NOTE: that should select a card of the same suit, even if trumps were available
         best_card = SimpleRulesPlayer._select_worst_card(beating_cards)
         log.debug("Second player can beat first card, selecting worst beating: {}".format(best_card))
         return best_card
@@ -57,7 +76,7 @@ class SimpleRulesPlayer(RulesPlayer):
       return worst_card
 
     if len(played_cards) == 2:
-      # third player: check if the round currently belongs to the team
+      # third player: check if the round currently belongs to the team NOTE: THIS CHECK IS WRONG
       if played_cards[1].is_beaten_by(played_cards[0]):
         # the round is the first player's: play the worst card
         worst_card = SimpleRulesPlayer._select_worst_card(valid_cards)
@@ -67,7 +86,21 @@ class SimpleRulesPlayer(RulesPlayer):
       # the round isn't the first player's: check if he can beat player 2
       beating_cards = list(filter(played_cards[1].is_beaten_by, valid_cards))
       if beating_cards:
-        # first player can be beat: play worst beating card
+        # second player can be beat: play worst beating card
+        if all(map(lambda card: card.is_trump, beating_cards)):
+          assert game_type.is_trump_game_type
+          # decide whether to play a trump (stechen)
+          points = sum(map(lambda card: card.score, played_cards))
+          if points >= SimpleRulesPlayer.STECHEN_THRESHOLD:
+            trump_card = SimpleRulesPlayer._select_worst_card(beating_cards)
+            log.debug("Third player stichs with worst trump: {}".format(trump_card))
+            return trump_card
+          else:
+            worst_card = SimpleRulesPlayer._select_worst_card(valid_cards)
+            log.debug("Third player can't beat with same suit but doesn't stich, selecting lowest value: {}"
+                .format(worst_card))
+            return worst_card
+        # NOTE: that should select a card of the same suit, even if trumps were available
         best_card = SimpleRulesPlayer._select_worst_card(beating_cards)
         log.debug("Third player can beat second card, selecting worst beating: {}".format(best_card))
         return best_card
@@ -77,7 +110,7 @@ class SimpleRulesPlayer(RulesPlayer):
           .format(worst_card))
       return worst_card
 
-    # fourth player: check if the round currently belongs to the team
+    # fourth player: check if the round currently belongs to the team NOTE: THIS CHECK IS WRONG
     if played_cards[0].is_beaten_by(played_cards[1]) and played_cards[2].is_beaten_by(played_cards[1]):
       # the round is the second player's: play the worst card
       worst_card = SimpleRulesPlayer._select_worst_card(valid_cards)
@@ -89,6 +122,20 @@ class SimpleRulesPlayer(RulesPlayer):
       played_cards[0].is_beaten_by(my_card) and played_cards[2].is_beaten_by(my_card), valid_cards))
     if beating_cards:
       # the round can be won, play WORST beating card
+      if all(map(lambda card: card.is_trump, beating_cards)):
+        assert game_type.is_trump_game_type
+        # decide whether to play a trump (stechen)
+        points = sum(map(lambda card: card.score, played_cards))
+        if points >= SimpleRulesPlayer.STECHEN_THRESHOLD:
+          trump_card = SimpleRulesPlayer._select_worst_card(beating_cards)
+          log.debug("Fourth player stichs with worst trump: {}".format(trump_card))
+          return trump_card
+        else:
+          worst_card = SimpleRulesPlayer._select_worst_card(valid_cards)
+          log.debug("Fourth player can't beat with same suit but doesn't stich, selecting lowest value: {}"
+              .format(worst_card))
+          return worst_card
+      # NOTE: that should select a card of the same suit, even if trumps were available
       worst_card = SimpleRulesPlayer._select_worst_card(beating_cards)
       log.debug("Fourth player can win round, selecting worst: {}".format(worst_card))
       return worst_card
