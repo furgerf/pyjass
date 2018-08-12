@@ -173,12 +173,33 @@ class PlayerTest(TestCase):
       card.set_game_type(game_type)
     self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.SPADES, 5), Card(Card.CLUBS, 3)])
 
+    # non-trump is played which can't be matched without any trump in play
+    game_type = GameType.TRUMP_HEARTS
+    played_cards = [Card(Card.DIAMONDS, 1), Card(Card.CLUBS, 8)]
+    for card in testee.hand + played_cards:
+      card.set_game_type(game_type)
+    self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.SPADES, 5), Card(Card.HEARTS, 5), Card(Card.HEARTS, 7), Card(Card.CLUBS, 3)])
+
     # non-trump is played with a trump in play
     game_type = GameType.TRUMP_HEARTS
     played_cards = [Card(Card.SPADES, 1), Card(Card.HEARTS, 8)]
     for card in testee.hand + played_cards:
       card.set_game_type(game_type)
     self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.SPADES, 5), Card(Card.HEARTS, 5)]) # not allowed to play K (undertrump)
+
+    # non-trump is played with two trumps in play
+    game_type = GameType.TRUMP_HEARTS
+    played_cards = [Card(Card.SPADES, 1), Card(Card.HEARTS, 0), Card(Card.HEARTS, 8)]
+    for card in testee.hand + played_cards:
+      card.set_game_type(game_type)
+    self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.SPADES, 5), Card(Card.HEARTS, 5)]) # not allowed to play K (undertrump)
+
+    # non-trump is played which can't be matched with a trump in play
+    game_type = GameType.TRUMP_HEARTS
+    played_cards = [Card(Card.DIAMONDS, 1), Card(Card.HEARTS, 8)]
+    for card in testee.hand + played_cards:
+      card.set_game_type(game_type)
+    self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.SPADES, 5), Card(Card.HEARTS, 5), Card(Card.CLUBS, 3)]) # STILL not allowed to play K (undertrump)
 
     # trump is played
     game_type = GameType.TRUMP_HEARTS
@@ -192,3 +213,15 @@ class PlayerTest(TestCase):
     for card in testee.hand + played_cards:
       card.set_game_type(game_type)
     self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), testee.hand)
+
+    testee.hand = [
+        Card(Card.HEARTS, 5), # J
+        Card(Card.HEARTS, 7), # K
+        ]
+
+    # untertrumping is allowed if there are only trumps in the hand
+    played_cards = [Card(Card.DIAMONDS, 1), Card(Card.HEARTS, 8)]
+    for card in testee.hand + played_cards:
+      card.set_game_type(game_type)
+    self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.HEARTS, 5), Card(Card.HEARTS, 7)])
+

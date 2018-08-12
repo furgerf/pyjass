@@ -139,19 +139,24 @@ class Player(ABC):
     if game_type.is_trump_game_type:
       # try to match suit
       valid_cards = list(filter(lambda c: played_cards[0].suit == c.suit, self.hand))
+      # prepare trump-related things
+      played_trumps = list(filter(lambda c: c.is_trump, played_cards))
+      best_trump = played_trumps[0] if played_trumps else None
+      for played_trump in played_trumps:
+        if best_trump.is_beaten_by(played_trump):
+          best_trump = played_trump
+      non_undertrumping_trumps = list(filter(lambda c: c.is_trump and \
+          (best_trump is None or best_trump.is_beaten_by(c)), self.hand))
       if not valid_cards:
-        # all cards are valid if unable to match suit
-        return self.hand
+        # all non-undertrumping cards are valid if unable to match suit and non-trump cards are in the hand
+        if all(map(lambda c: c.is_trump, self.hand)):
+          return self.hand
+        return list(filter(lambda c: not c.is_trump or c in non_undertrumping_trumps, self.hand))
       if played_cards[0].is_trump:
         # if the only valid (trump) card is the buur, all cards are valid, otherwise all valid (trump) cards are
         return self.hand if len(valid_cards) == 1 and valid_cards[0].is_buur else valid_cards
       # besides matching suit, non-undertrumping trumps can also be played
-      played_trumps = list(filter(lambda c: c.is_trump, played_cards))
-      worst_trump = played_trumps[0] if played_trumps else None
-      for played_trump in played_trumps:
-        if played_trump.is_beaten_by(worst_trump):
-          worst_trump = played_trump
-      valid_cards.extend(filter(lambda c: c.is_trump and (worst_trump is None or worst_trump.is_beaten_by(c)), self.hand))
+      valid_cards.extend(non_undertrumping_trumps)
       return valid_cards
     raise ValueError("Unknown game type: '{}'".format(GameType.name))
 
