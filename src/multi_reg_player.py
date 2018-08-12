@@ -28,7 +28,7 @@ class MultiRegPlayer(Player):
     :log: Logger instance.
     """
     self.regressors = MultiRegPlayer._load_regressors(log)
-    super(MultiRegPlayer, self).__init__(name, number, log)
+    super(MultiRegPlayer, self).__init__(name, number, self.regressors.keys(), log)
 
   @staticmethod
   def _load_regressors(log):

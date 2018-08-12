@@ -33,7 +33,7 @@ class LearnerPlayer(Player):
     """
     self.regressor = regressor
     self.last_training_done = time.time()
-    super(LearnerPlayer, self).__init__(name, number, self.regressor.game_type, log)
+    super(LearnerPlayer, self).__init__(name, number, [self.regressor.game_type], log)
 
   @staticmethod
   def _get_regressor(regressor_constructor, log, regressor_name=None):
