@@ -24,8 +24,10 @@ class Card:
 
   VALUES = "6789TJQKA"
 
-  VALUE_BUUR = 5
+  VALUE_ACHT = 2
   VALUE_NELL = 3
+  VALUE_BANNER = 4
+  VALUE_BUUR = 5
 
   def __init__(self, suit, value):
     self._suit = suit
@@ -55,6 +57,17 @@ class Card:
     Number of points gained by winnning this card, the value depends on the game type.
     """
     return self._score
+
+  @property
+  def is_high_score_low_value_card(self):
+    """
+    True if the card is a high score but low value card.
+    """
+    if self._game_type.is_trump_game_type:
+      return self.value == Card.VALUE_BANNER
+    if self._game_type in [GameType.OBENABE, GameType.UNNENUFE]:
+      return self.value in [Card.VALUE_ACHT, Card.VALUE_BANNER]
+    assert False
 
   @property
   def is_trump(self):

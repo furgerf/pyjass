@@ -42,7 +42,7 @@ class SimpleRulesPlayer(RulesPlayer):
   def _select_card_player_1(valid_cards, log):
     # first player: choose best card
     log.debug("First player choses the best card of the first suit")
-    return RulesPlayer._select_best_card_of_first_suit(valid_cards)
+    return RulesPlayer._select_best_card_of_first_non_trump_suit(valid_cards)
 
   @staticmethod
   def _select_card_player_2(valid_cards, played_cards, game_type, log):

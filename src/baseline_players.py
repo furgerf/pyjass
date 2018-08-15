@@ -82,9 +82,9 @@ class RulesPlayer(BaselinePlayer):
     pass
 
   @staticmethod
-  def _select_best_card_of_first_suit(choices):
+  def _select_best_card_of_first_non_trump_suit(choices):
     """
-    Selects the best card of the first suit.
+    Selects the best card of the first suit that isn't the trump suit.
     Note that, counterintuitively, this appears to be better than selecting the "globally" best card.
     Maybe that's because then, the best cards are always played first, and the opponents aren't forced
     to play and lose high-score cards.
@@ -93,8 +93,10 @@ class RulesPlayer(BaselinePlayer):
 
     :returns: Selected card.
     """
-    best_card = choices[0]
+    best_card = None
+    all_trumps = all(map(lambda card: card.is_trump, choices))
     for card in choices:
-      if best_card.is_beaten_by(card) and best_card.suit == card.suit:
+      if (best_card is None or (best_card.is_beaten_by(card) and best_card.suit == card.suit)) and \
+          (all_trumps or not card.is_trump):
         best_card = card
     return best_card
