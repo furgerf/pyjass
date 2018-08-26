@@ -106,7 +106,7 @@ Also training wider models (4x200, 300-200-300 -> same # of weights) only on own
 => 38M hands
 6x100: 66.8/66.4%, loss: 1490.4
 4x200: 72.2/70.5%, loss: 1457.7
-300-200-300: /%, loss: 
+300-200-300: 66.9/68.2%, loss: 1433.9
 
 # Round 10
 => 40M hands
@@ -117,7 +117,7 @@ Also training wider models (4x200, 300-200-300 -> same # of weights) only on own
 => 42M hands
 6x100: 66.7/67.3%, loss: 1485.8
 4x200: 68.7/70.9%, loss: 1446.0
-300-200-300: /%, loss: 
+300-200-300: 69.7/68.5%, loss: 1466.5
 
 # Round 11
 => 44M hands
@@ -128,7 +128,6 @@ Also training wider models (4x200, 300-200-300 -> same # of weights) only on own
 => 46M hands
 6x100: 69.7/66.9%, loss: 1494.5
 4x200: 71.4/71.0%, loss: 1452.5
-300-200-300: /%, loss: 
 
 # Round 12
 => 48M hands
@@ -139,7 +138,6 @@ Also training wider models (4x200, 300-200-300 -> same # of weights) only on own
 => 50M hands
 6x100: 68.0/67.8%, loss: 1498.9
 4x200: 69.5/72.3%, loss: 1425.2
-300-200-300: /%, loss: 
 
 # Round 13
 => 52M hands
@@ -150,7 +148,6 @@ Also training wider models (4x200, 300-200-300 -> same # of weights) only on own
 => 54M hands
 6x100: 68.6/68.6%, loss: 1468.9
 4x200: 72.4/72.4%, loss: 1449.8
-300-200-300: /%, loss: 
 
 # Round 14
 => 56M hands
@@ -161,7 +158,6 @@ Also training wider models (4x200, 300-200-300 -> same # of weights) only on own
 => 58M hands
 6x100: 70.0/68.8%, loss: 1475.6
 4x200: 71.6/72.9%, loss: 1438.9
-300-200-300: /%, loss: 
 
 # Round 15
 => 62M hands
@@ -172,6 +168,4 @@ Also training wider models (4x200, 300-200-300 -> same # of weights) only on own
 => 64M hands
 6x100: 71.5/69.3%, loss: 1459.4
 4x200: 73.1/73.0%, loss: 1435.3
-300-200-300: /%, loss: 
-
 
