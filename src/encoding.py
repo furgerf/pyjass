@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import numpy as np
+
 from const import Const
 
 
@@ -10,15 +12,21 @@ class Encoding:
   def __init__(self, baseline, card_code_players, card_code_in_hand, card_code_in_play, card_code_selected,
       round_score_factor, hand_score_factor,
       relative_player_encoding=False, relative_in_play_encoding=False,
-      card_index_by_suit=False, sort_states=False):
+      card_index_by_suit=False, sort_states=False, trump_code_offset=0):
 
-    # don't assign same code multiple times
-    assert not set(card_code_in_play if isinstance(card_code_in_play, list) else [card_code_in_play] + \
-        [0, card_code_in_hand, card_code_selected]).intersection(card_code_players)
-    # get valid numbers
-    all_codes = card_code_players + [card_code_in_hand] + [card_code_selected] + \
-        (card_code_in_play if isinstance(card_code_in_play, list) else [card_code_in_play])
+    all_non_trump_codes = np.array(card_code_players + [card_code_in_hand] + [card_code_selected] + \
+        (card_code_in_play if isinstance(card_code_in_play, list) else [card_code_in_play]))
+    if trump_code_offset == 0:
+      all_codes = all_non_trump_codes
+    else:
+      all_trump_codes = all_non_trump_codes + trump_code_offset
+      all_codes = list(all_trump_codes) + list(all_non_trump_codes)
+
+    # ensure that no code is out of bounds
     assert min(all_codes) >= Const.MIN_CARD_CODE and max(all_codes) <= Const.MAX_CARD_CODE
+    # ensure that no code is assigned multiple times
+    assert len(set(all_codes)) == len(all_codes)
+
     # ensure that we get a list or an int
     assert relative_in_play_encoding == isinstance(card_code_in_play, list)
     assert relative_in_play_encoding != isinstance(card_code_in_play, int)
@@ -34,6 +42,7 @@ class Encoding:
     self._relative_in_play_encoding = relative_in_play_encoding
     self._card_index_by_suit = card_index_by_suit
     self._sort_states = sort_states
+    self._trump_code_offset = trump_code_offset
 
 
   @property
@@ -56,6 +65,10 @@ class Encoding:
   @property
   def card_code_selected(self):
     return self._card_code_selected
+
+  @property
+  def trump_code_offset(self):
+    return self._trump_code_offset
 
 
   @property

@@ -56,7 +56,8 @@ class Hand:
       # update known cards - mark the cards that were played during this round
       for j in range(Const.PLAYER_COUNT):
         assert self._known_cards[played_cards[j].card_index] == 0, "Can't change known card"
-        self._known_cards[played_cards[j].card_index] = Config.ENCODING.card_code_players[j]
+        self._known_cards[played_cards[j].card_index] = Config.ENCODING.card_code_players[j] + \
+            (Config.ENCODING.trump_code_offset if played_cards[j].is_trump else 0)
       self.log.debug("Known cards: {}".format(utils.format_cards(self._known_cards)))
 
       # update score

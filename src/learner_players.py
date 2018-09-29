@@ -155,7 +155,8 @@ class LearnerPlayer(Player):
     state = self._encode_current_state(played_cards, known_cards)
     for card in valid_cards:
       my_state = np.array(state, copy=True)
-      my_state[card.card_index] = Config.ENCODING.card_code_selected
+      my_state[card.card_index] = Config.ENCODING.card_code_selected + \
+          (Config.ENCODING.trump_code_offset if card.is_trump else 0)
       if Config.ENCODING.sort_states:
         my_state = Player._sort_decision_state(my_state, Config.ENCODING.card_index_by_suit)
       states.append(my_state)

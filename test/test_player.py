@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from config import Config
 from itertools import permutations
 from unittest import TestCase
 from unittest.mock import MagicMock
@@ -10,6 +11,7 @@ import numpy as np
 from baseline_players import RandomCardPlayer
 from card import Card
 from const import Const
+from encoding import Encoding
 from game_type import GameType
 from parameterized import parameterized
 from player import Player
@@ -18,6 +20,11 @@ from utils import flatten
 
 class PlayerTest(TestCase):
   # pylint: disable=invalid-name,protected-access,line-too-long
+
+  @classmethod
+  def setUpClass(cls):
+    Config.ENCODING = Encoding("better", [1, 2, 3, 4], 5, [10, 15, 20], 50, 0, 0,
+        relative_in_play_encoding=True, trump_code_offset=100)
 
   def verify_card_permutations(self, all_cards_by_suit, correct_order, cards_by_suit):
     all_permutations = PlayerTest.get_permutations_by_suit(all_cards_by_suit) if cards_by_suit \
@@ -224,3 +231,67 @@ class PlayerTest(TestCase):
     for card in testee.hand + played_cards:
       card.set_game_type(game_type)
     self.assertEqual(testee.get_valid_cards_to_play(played_cards, game_type), [Card(Card.HEARTS, 5), Card(Card.HEARTS, 7)])
+
+  def test_convert_to_relative_invalid(self):
+    testee = RandomCardPlayer("testee", 0, MagicMock())
+
+    # the player number must be among the valid codes and specifically, among the player codes
+    self.assertRaises(AssertionError, lambda: testee.convert_to_relative(6))
+    self.assertRaises(AssertionError, lambda: testee.convert_to_relative(106))
+    self.assertRaises(AssertionError, lambda: testee.convert_to_relative(10))
+    self.assertRaises(AssertionError, lambda: testee.convert_to_relative(50))
+
+    # unknown cards are ok and stay unknown
+    self.assertEqual(testee.convert_to_relative(0), 0)
+
+  def test_convert_to_relative_non_trump(self):
+    # non-trump in -> non-trump out
+    testee = RandomCardPlayer("testee", 1, MagicMock())
+    self.assertEqual(testee.convert_to_relative(1), 1)
+    self.assertEqual(testee.convert_to_relative(2), 2)
+    self.assertEqual(testee.convert_to_relative(3), 3)
+    self.assertEqual(testee.convert_to_relative(4), 4)
+
+    testee = RandomCardPlayer("testee", 2, MagicMock())
+    self.assertEqual(testee.convert_to_relative(1), 4)
+    self.assertEqual(testee.convert_to_relative(2), 1)
+    self.assertEqual(testee.convert_to_relative(3), 2)
+    self.assertEqual(testee.convert_to_relative(4), 3)
+
+    testee = RandomCardPlayer("testee", 3, MagicMock())
+    self.assertEqual(testee.convert_to_relative(1), 3)
+    self.assertEqual(testee.convert_to_relative(2), 4)
+    self.assertEqual(testee.convert_to_relative(3), 1)
+    self.assertEqual(testee.convert_to_relative(4), 2)
+
+    testee = RandomCardPlayer("testee", 4, MagicMock())
+    self.assertEqual(testee.convert_to_relative(1), 2)
+    self.assertEqual(testee.convert_to_relative(2), 3)
+    self.assertEqual(testee.convert_to_relative(3), 4)
+    self.assertEqual(testee.convert_to_relative(4), 1)
+
+  def test_convert_to_relative_trump(self):
+    # trump in -> trump out
+    testee = RandomCardPlayer("testee", 1, MagicMock())
+    self.assertEqual(testee.convert_to_relative(101), 101)
+    self.assertEqual(testee.convert_to_relative(102), 102)
+    self.assertEqual(testee.convert_to_relative(103), 103)
+    self.assertEqual(testee.convert_to_relative(104), 104)
+
+    testee = RandomCardPlayer("testee", 2, MagicMock())
+    self.assertEqual(testee.convert_to_relative(101), 104)
+    self.assertEqual(testee.convert_to_relative(102), 101)
+    self.assertEqual(testee.convert_to_relative(103), 102)
+    self.assertEqual(testee.convert_to_relative(104), 103)
+
+    testee = RandomCardPlayer("testee", 3, MagicMock())
+    self.assertEqual(testee.convert_to_relative(101), 103)
+    self.assertEqual(testee.convert_to_relative(102), 104)
+    self.assertEqual(testee.convert_to_relative(103), 101)
+    self.assertEqual(testee.convert_to_relative(104), 102)
+
+    testee = RandomCardPlayer("testee", 4, MagicMock())
+    self.assertEqual(testee.convert_to_relative(101), 102)
+    self.assertEqual(testee.convert_to_relative(102), 103)
+    self.assertEqual(testee.convert_to_relative(103), 104)
+    self.assertEqual(testee.convert_to_relative(104), 101)

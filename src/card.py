@@ -67,7 +67,7 @@ class Card:
       return self.value == Card.VALUE_BANNER
     if self._game_type in [GameType.OBENABE, GameType.UNNENUFE]:
       return self.value in [Card.VALUE_ACHT, Card.VALUE_BANNER]
-    assert False
+    raise NotImplementedError()
 
   @property
   def is_trump(self):

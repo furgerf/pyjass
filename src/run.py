@@ -19,7 +19,7 @@ from game import Game
 from game_type import GameType
 from parallel_game import ParallelGame
 
-__version__ = "0.5"
+__version__ = "0.6"
 
 def parse_arguments():
   parser = ArgumentParser()
@@ -316,20 +316,25 @@ def get_encodings():
   encoding_17 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4,
       relative_player_encoding=True, relative_in_play_encoding=True)
 
-  # NOTE: Currently explored - re-ordering the cards
+  # NOTE: Retired - re-ordering the cards
   encoding_18 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4,
       relative_player_encoding=True, relative_in_play_encoding=True,
       card_index_by_suit=True)
 
-  # NOTE: Currently explored - re-ordering the cards sorting the states
+  # NOTE: Retired - re-ordering the cards sorting the states
   encoding_19 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4,
       relative_player_encoding=True, relative_in_play_encoding=True,
       card_index_by_suit=True, sort_states=True)
 
-  # NOTE: Currently explored - sorting the states but ordering cards by value
+  # NOTE: Retired - sorting the states but ordering cards by value
   encoding_20 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4,
       relative_player_encoding=True, relative_in_play_encoding=True,
       card_index_by_suit=False, sort_states=True)
+
+  # NOTE: Currently explored - highlighting trump cards
+  encoding_21 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 235, 1, 4,
+      relative_player_encoding=True, relative_in_play_encoding=True,
+      card_index_by_suit=False, sort_states=False, trump_code_offset=20)
 
   return {
       "01": encoding_1,
@@ -359,6 +364,7 @@ def get_encodings():
       "25": encoding_18,
       "26": encoding_19,
       "27": encoding_20,
+      "28": encoding_21,
       }
 
 

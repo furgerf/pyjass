@@ -15,5 +15,5 @@ class GameType(Enum):
 
   @property
   def is_trump_game_type(self):
-    return self == GameType.TRUMP_SPADES or self == GameType.TRUMP_HEARTS or \
-        self == GameType.TRUMP_DIAMONDS or self == GameType.TRUMP_CLUBS
+    return self in [GameType.TRUMP_SPADES, GameType.TRUMP_HEARTS, \
+        GameType.TRUMP_DIAMONDS, GameType.TRUMP_CLUBS]

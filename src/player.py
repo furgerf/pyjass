@@ -95,9 +95,11 @@ class Player(ABC):
 
     # a decision was made, create the corresponding state
     decision_state = self._encode_current_state(played_cards, known_cards)
-    assert decision_state[selected_card.card_index] == Config.ENCODING.card_code_in_hand, \
+    assert decision_state[selected_card.card_index] in [Config.ENCODING.card_code_in_hand, \
+        Config.ENCODING.card_code_in_hand + Config.ENCODING.trump_code_offset], \
         "Card to be played must be in the player's hand."
-    decision_state[selected_card.card_index] = Config.ENCODING.card_code_selected
+    decision_state[selected_card.card_index] = Config.ENCODING.card_code_selected + \
+        (Config.ENCODING.trump_code_offset if selected_card.is_trump else 0)
 
     # if requested, sort the decision state
     # afterwards, the encoding of the current state mustn't be modified, all that's missing is cost
@@ -217,12 +219,21 @@ class Player(ABC):
 
     :returns: Relative player number.
     """
-    if player_number not in Config.ENCODING.card_code_players:
-      # the number isn't actually a player number, return it unchanged
-      return player_number
+    if player_number == 0:
+      # unknown cards stay unknown
+      return 0
+    # all other known cards must have been previously played by some player
+    # check if the card code is for a trump card of a player
+    card_is_trump = Config.ENCODING.trump_code_offset and player_number in \
+        np.array(Config.ENCODING.card_code_players) + Config.ENCODING.trump_code_offset
+    if card_is_trump:
+      player_number -= Config.ENCODING.trump_code_offset
+    # after accounting for trump cards, the card's code must be a player's
+    assert player_number in Config.ENCODING.card_code_players
     own_index = Config.ENCODING.card_code_players.index(self._number)
     player_index = Config.ENCODING.card_code_players.index(player_number)
-    return Config.ENCODING.card_code_players[(player_index - own_index) % Const.PLAYER_COUNT]
+    return Config.ENCODING.card_code_players[(player_index - own_index) % Const.PLAYER_COUNT] + \
+        (Config.ENCODING.trump_code_offset if card_is_trump else 0)
 
   def _encode_current_state(self, played_cards, known_cards):
     """
@@ -238,11 +249,13 @@ class Player(ABC):
         Config.ENCODING.relative_player_encoding else np.array(known_cards, copy=True)
     for i, pc in enumerate(played_cards):
       assert cards[pc.card_index] == 0, "Cards in play must've previously been unknown"
-      cards[pc.card_index] = Config.ENCODING.card_code_in_play[len(played_cards) - i - 1] if \
-          Config.ENCODING.relative_in_play_encoding else Config.ENCODING.card_code_in_play
+      cards[pc.card_index] = (Config.ENCODING.card_code_in_play[len(played_cards) - i - 1] if \
+          Config.ENCODING.relative_in_play_encoding else Config.ENCODING.card_code_in_play) + \
+          (Config.ENCODING.trump_code_offset if pc.is_trump else 0)
     for hc in self.hand:
       assert cards[hc.card_index] == 0, "Cards in the player's hand must be unknown"
-      cards[hc.card_index] = Config.ENCODING.card_code_in_hand
+      cards[hc.card_index] = Config.ENCODING.card_code_in_hand + \
+          (Config.ENCODING.trump_code_offset if hc.is_trump else 0)
     return cards
 
   @staticmethod
