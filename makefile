@@ -216,6 +216,10 @@ else ifeq ($(NAME), 5x200)
 	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=3x300 GT=obenabe TARGET=$@
 else ifeq ($(NAME), 3x300)
 	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=5x200 GT=obenabe TARGET=$@
+else ifeq ($(NAME), 5x200-spades)
+	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=3x300-spades GT=trump_spades TARGET=$@
+else ifeq ($(NAME), 3x300-spades)
+	@$(MAKE) --no-print-directory online-round MOD=24 ENC=17 OTHER_NAME=5x200-spades GT=trump_spades TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
@@ -225,6 +229,10 @@ ifeq ($(NAME), 10x100-obenabe)
 	@$(MAKE) --no-print-directory online-round MOD=25 ENC=18 OTHER_NAME=4x200-obenabe GT=obenabe TARGET=$@
 else ifeq ($(NAME), 4x200-obenabe)
 	@$(MAKE) --no-print-directory online-round MOD=25 ENC=18 OTHER_NAME=10x100-obenabe GT=obenabe TARGET=$@
+else ifeq ($(NAME), 5x200-spades)
+	@$(MAKE) --no-print-directory online-round MOD=25 ENC=18 OTHER_NAME=3x300-spades GT=trump_spades TARGET=$@
+else ifeq ($(NAME), 3x300-spades)
+	@$(MAKE) --no-print-directory online-round MOD=25 ENC=18 OTHER_NAME=5x200-spades GT=trump_spades TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
@@ -243,6 +251,24 @@ ifeq ($(NAME), 10x100-obenabe)
 	@$(MAKE) --no-print-directory online-round MOD=27 ENC=20 OTHER_NAME=4x200-obenabe GT=obenabe TARGET=$@
 else ifeq ($(NAME), 4x200-obenabe)
 	@$(MAKE) --no-print-directory online-round MOD=27 ENC=20 OTHER_NAME=10x100-obenabe GT=obenabe TARGET=$@
+else
+	$(error Unknown name: $(NAME))
+endif
+
+28-round:
+ifeq ($(NAME), 5x200-spades)
+	@$(MAKE) --no-print-directory online-round MOD=28 ENC=21 OTHER_NAME=3x300-spades GT=trump_spades TARGET=$@
+else ifeq ($(NAME), 3x300-spades)
+	@$(MAKE) --no-print-directory online-round MOD=28 ENC=21 OTHER_NAME=5x200-spades GT=trump_spades TARGET=$@
+else
+	$(error Unknown name: $(NAME))
+endif
+
+29-round:
+ifeq ($(NAME), 5x200-spades)
+	@$(MAKE) --no-print-directory online-round MOD=29 ENC=22 OTHER_NAME=3x300-spades GT=trump_spades TARGET=$@
+else ifeq ($(NAME), 3x300-spades)
+	@$(MAKE) --no-print-directory online-round MOD=29 ENC=22 OTHER_NAME=5x200-spades GT=trump_spades TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
