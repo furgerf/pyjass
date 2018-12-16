@@ -43,8 +43,10 @@ class Round:
 
     # evaluate round
     winner, score = Round._evaluate(played_cards, dealer)
-    self.log.debug("{} wins the round ({} points)".format(self._players[winner].name, score))
-    return winner, score, np.roll(played_cards, dealer, axis=0), np.roll(states, dealer, axis=0)
+    rolled_cards = np.roll(played_cards, dealer, axis=0)
+    self.log.debug("{} wins the round ({} points): {} beats {}".format(self._players[winner].name, score,
+      rolled_cards[winner], utils.format_cards([c for c in played_cards if not c == rolled_cards[winner]])))
+    return winner, score, rolled_cards, np.roll(states, dealer, axis=0)
 
   @staticmethod
   def _evaluate(played_cards, dealer):

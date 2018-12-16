@@ -89,7 +89,7 @@ class Player(ABC):
 
     # actually select a card
     selected_card = self._select_card((valid_cards, played_cards, known_cards, game_type), log)
-    log.debug("{} selects card {} to play (valid: {} -  invalid: {})".format(
+    log.debug("{} selects card {} to play (valid: {} - invalid: {})".format(
       self.name, selected_card, utils.format_cards(valid_cards), \
           utils.format_cards([card for card in self.hand if card not in valid_cards])))
 

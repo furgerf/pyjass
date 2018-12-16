@@ -15,6 +15,7 @@ import utils
 from baseline_players import HighestCardPlayer, RandomCardPlayer
 from better_rules_player import BetterRulesPlayer
 from const import Const
+from fixed_better_rules_player import FixedBetterRulesPlayer
 from game_type import GameType
 from learner_players import MlpPlayer, OtherMlpPlayer, SgdPlayer
 from parallel_game import ParallelGame
@@ -28,6 +29,7 @@ class Game:
       "highest": HighestCardPlayer,
       "simple": SimpleRulesPlayer,
       "better": BetterRulesPlayer,
+      "fixed-better": FixedBetterRulesPlayer,
       "baseline": None,
       "sgd": SgdPlayer,
       "mlp": MlpPlayer,

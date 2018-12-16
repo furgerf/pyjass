@@ -331,15 +331,20 @@ def get_encodings():
       relative_player_encoding=True, relative_in_play_encoding=True,
       card_index_by_suit=False, sort_states=True)
 
-  # NOTE: Currently explored - highlighting trump cards
+  # NOTE: Retired - highlighting trump cards
   encoding_21 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 235, 1, 4,
       relative_player_encoding=True, relative_in_play_encoding=True,
       card_index_by_suit=False, sort_states=False, trump_code_offset=20)
 
-  # NOTE: Currently explored - highlighting trump cards and sorting cards by suit
+  # NOTE: Retired - highlighting trump cards and sorting cards by suit
   encoding_22 = Encoding("better", [1, 2, 13, 4], 50, [125, 200, 100], 235, 1, 4,
       relative_player_encoding=True, relative_in_play_encoding=True,
       card_index_by_suit=True, sort_states=False, trump_code_offset=20)
+
+  # NOTE: Currently explored - trying fixed baseline with "simple" configuration
+  encoding_23 = Encoding("fixed-better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4,
+      relative_player_encoding=True, relative_in_play_encoding=True,
+      card_index_by_suit=False, sort_states=False, trump_code_offset=0)
 
   return {
       "01": encoding_1,
@@ -371,6 +376,7 @@ def get_encodings():
       "27": encoding_20,
       "28": encoding_21,
       "29": encoding_22,
+      "30": encoding_23,
       }
 
 
