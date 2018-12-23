@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from config import Config
 from unittest import TestCase
 
 from card import Card
-from parameterized import parameterized
+from encoding import Encoding
 from game_type import GameType
+from parameterized import parameterized
 
 
 class CardTest(TestCase):
+  # pylint: disable=line-too-long
   def setUp(self):
     self.cards_suit_1 = [Card(0, 1), Card(0, 2)]
     self.cards_suit_2 = [Card(1, 1), Card(1, 2)]
@@ -128,3 +131,73 @@ class CardTest(TestCase):
     self.assertTrue(non_trump_1.is_beaten_by(normal_trump_1))
     self.assertTrue(non_trump_1.is_beaten_by(nell))
     self.assertTrue(non_trump_1.is_beaten_by(buur))
+
+  def test_card_index_by_suit(self):
+    Config.ENCODING = Encoding("better", [1, 2, 3, 4], 5, 10, 50, 0, 0, order_value=True, card_index_by_suit=True)
+    cards = [
+        Card(Card.SPADES, 0), Card(Card.SPADES, Card.VALUE_NELL), Card(Card.SPADES, Card.VALUE_BUUR), Card(Card.SPADES, 8),
+        Card(Card.HEARTS, 0), Card(Card.HEARTS, Card.VALUE_NELL), Card(Card.HEARTS, Card.VALUE_BUUR), Card(Card.HEARTS, 8),
+        Card(Card.DIAMONDS, 0), Card(Card.DIAMONDS, Card.VALUE_NELL), Card(Card.DIAMONDS, Card.VALUE_BUUR), Card(Card.DIAMONDS, 8),
+        Card(Card.CLUBS, 0), Card(Card.CLUBS, Card.VALUE_NELL), Card(Card.CLUBS, Card.VALUE_BUUR), Card(Card.CLUBS, 8)
+        ]
+    for card in cards:
+      card.set_game_type(GameType.TRUMP_DIAMONDS)
+
+    # SPADES: not trump, doesn't get reshuffled
+    self.assertEqual(0, cards[0].card_index)
+    self.assertEqual(3, cards[1].card_index)
+    self.assertEqual(5, cards[2].card_index)
+    self.assertEqual(8, cards[3].card_index)
+
+    # HEARTS: not trump, doesn't get reshuffled
+    self.assertEqual(0+9, cards[4].card_index)
+    self.assertEqual(3+9, cards[5].card_index)
+    self.assertEqual(5+9, cards[6].card_index)
+    self.assertEqual(8+9, cards[7].card_index)
+
+    # DIAMONDS: trump, gets reshuffled
+    self.assertEqual(0+18, cards[8].card_index)
+    self.assertEqual(7+18, cards[9].card_index)
+    self.assertEqual(8+18, cards[10].card_index)
+    self.assertEqual(6+18, cards[11].card_index)
+
+    # CLUBS: not trump, doesn't get reshuffled
+    self.assertEqual(0+27, cards[12].card_index)
+    self.assertEqual(3+27, cards[13].card_index)
+    self.assertEqual(5+27, cards[14].card_index)
+    self.assertEqual(8+27, cards[15].card_index)
+
+  def test_card_index_by_value(self):
+    Config.ENCODING = Encoding("better", [1, 2, 3, 4], 5, 10, 50, 0, 0, order_value=True, card_index_by_suit=False)
+    cards = [
+        Card(Card.SPADES, 0), Card(Card.SPADES, Card.VALUE_NELL), Card(Card.SPADES, Card.VALUE_BUUR), Card(Card.SPADES, 8),
+        Card(Card.HEARTS, 0), Card(Card.HEARTS, Card.VALUE_NELL), Card(Card.HEARTS, Card.VALUE_BUUR), Card(Card.HEARTS, 8),
+        Card(Card.DIAMONDS, 0), Card(Card.DIAMONDS, Card.VALUE_NELL), Card(Card.DIAMONDS, Card.VALUE_BUUR), Card(Card.DIAMONDS, 8),
+        Card(Card.CLUBS, 0), Card(Card.CLUBS, Card.VALUE_NELL), Card(Card.CLUBS, Card.VALUE_BUUR), Card(Card.CLUBS, 8)
+        ]
+    for card in cards:
+      card.set_game_type(GameType.TRUMP_DIAMONDS)
+
+    # SPADES: not trump, doesn't get reshuffled
+    self.assertEqual(0, cards[0].card_index)
+    self.assertEqual(12, cards[1].card_index)
+    self.assertEqual(20, cards[2].card_index)
+    self.assertEqual(32, cards[3].card_index)
+
+    # HEARTS: not trump, doesn't get reshuffled
+    self.assertEqual(1, cards[4].card_index)
+    self.assertEqual(13, cards[5].card_index)
+    self.assertEqual(21, cards[6].card_index)
+    self.assertEqual(33, cards[7].card_index)
+
+    # DIAMONDS: trump, gets reshuffled
+    self.assertEqual(2, cards[8].card_index)
+    self.assertEqual(14+16, cards[9].card_index)
+    self.assertEqual(22+12, cards[10].card_index)
+    self.assertEqual(34-8, cards[11].card_index)
+
+    # CLUBS: not trump, doesn't get reshuffled
+    self.assertEqual(3, cards[12].card_index)
+    self.assertEqual(15, cards[13].card_index)
+    self.assertEqual(23, cards[14].card_index)
+    self.assertEqual(35, cards[15].card_index)

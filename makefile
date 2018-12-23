@@ -286,6 +286,15 @@ else
 	$(error Unknown name: $(NAME))
 endif
 
+31-round:
+ifeq ($(NAME), 5x200-spades)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=3x300-spades GT=trump_spades TARGET=$@
+else ifeq ($(NAME), 3x300-spades)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=5x200-spades GT=trump_spades TARGET=$@
+else
+	$(error Unknown name: $(NAME))
+endif
+
 # TODO: use better locale
 combine-round-results:
 ifndef NAME

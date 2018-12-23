@@ -346,6 +346,12 @@ def get_encodings():
       relative_player_encoding=True, relative_in_play_encoding=True,
       card_index_by_suit=False, sort_states=False, trump_code_offset=0)
 
+  # NOTE: Currently explored - trying fixed baseline with "simple" configuration
+  # TODO: maybe try highlighting "own player/self" too?
+  encoding_24 = Encoding("fixed-better", [1, 2, 13, 4], 50, [125, 200, 100], 250, 1, 4,
+      relative_player_encoding=True, relative_in_play_encoding=True,
+      card_index_by_suit=False, sort_states=False, trump_code_offset=0, order_value=True)
+
   return {
       "01": encoding_1,
       "02": encoding_1,
@@ -377,6 +383,7 @@ def get_encodings():
       "28": encoding_21,
       "29": encoding_22,
       "30": encoding_23,
+      "31": encoding_24,
       }
 
 

@@ -29,6 +29,8 @@ class Card:
   VALUE_BANNER = 4
   VALUE_BUUR = 5
 
+  VALUE_ORDER_TRUMP = [0, 1, 2, 7, 3, 8, 4, 5, 6]
+
   def __init__(self, suit, value):
     self._suit = suit
     self._value = value
@@ -95,9 +97,11 @@ class Card:
     """
     Index of the card within an array of all cards.
     """
+    value_map = Card.VALUE_ORDER_TRUMP if Config.ENCODING.order_value and self.is_trump else \
+        range(Const.CARDS_PER_SUIT)
     if Config.ENCODING.card_index_by_suit:
-      return self.value + self.suit * Const.CARDS_PER_SUIT
-    return Const.SUIT_COUNT * self.value + self.suit
+      return value_map[self.value] + self.suit * Const.CARDS_PER_SUIT
+    return Const.SUIT_COUNT * value_map[self.value] + self.suit
 
   def __str__(self):
     return self._icon

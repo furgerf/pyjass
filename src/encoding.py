@@ -12,7 +12,7 @@ class Encoding:
   def __init__(self, baseline, card_code_players, card_code_in_hand, card_code_in_play, card_code_selected,
       round_score_factor, hand_score_factor,
       relative_player_encoding=False, relative_in_play_encoding=False,
-      card_index_by_suit=False, sort_states=False, trump_code_offset=0):
+      card_index_by_suit=False, sort_states=False, trump_code_offset=0, order_value=False):
 
     all_non_trump_codes = np.array(card_code_players + [card_code_in_hand] + [card_code_selected] + \
         (card_code_in_play if isinstance(card_code_in_play, list) else [card_code_in_play]))
@@ -43,6 +43,7 @@ class Encoding:
     self._card_index_by_suit = card_index_by_suit
     self._sort_states = sort_states
     self._trump_code_offset = trump_code_offset
+    self._order_value = order_value
 
 
   @property
@@ -69,6 +70,10 @@ class Encoding:
   @property
   def trump_code_offset(self):
     return self._trump_code_offset
+
+  @property
+  def order_value(self):
+    return self._order_value
 
 
   @property
