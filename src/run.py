@@ -19,7 +19,7 @@ from game import Game
 from game_type import GameType
 from parallel_game import ParallelGame
 
-__version__ = "0.6"
+__version__ = "0.7"
 
 def parse_arguments():
   parser = ArgumentParser()

@@ -171,12 +171,13 @@ class Game:
 
         elapsed_minutes = (time.time() - start_time) / 60
         estimated_hours, estimated_minutes = divmod(elapsed_minutes / percentage - elapsed_minutes, 60)
-        self.log.warning("Finished round {}/{} ({:.1f}%, ETA: {:%H:%M} ({}:{:02d})), hands: {}/{}, memory: {}={:.1f}M"
+        self.log.warning(
+            "Round {}/{} ({:.1f}%) ETA: {:%H:%M} ({}:{:02d}), {}/{} hands; current T1 wins: {:.1f}%, memory: {}={:.1f}M"
             .format(utils.format_human(batch_round), utils.format_human(Config.BATCH_COUNT), 100.0 * percentage,
-          datetime.now() + timedelta(hours=estimated_hours, minutes=estimated_minutes),
-          int(estimated_hours), int(estimated_minutes),
-          utils.format_human(played_hands), utils.format_human(Config.TOTAL_HANDS),
-          "+".join(str(m) for m in memory), sum(memory)))
+              datetime.now() + timedelta(hours=estimated_hours, minutes=estimated_minutes),
+              int(estimated_hours), int(estimated_minutes),
+              utils.format_human(played_hands), utils.format_human(Config.TOTAL_HANDS),
+              self._overall_score.team_1_win_percentage, "+".join(str(m) for m in memory), sum(memory)))
 
     # the game is over
     self._print_results()

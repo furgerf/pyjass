@@ -2,14 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # pylint: disable=unused-import,too-many-statements
-import os
 import csv
+import os
+import pickle
+import re
+
+import numpy as np
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import EngFormatter
-import numpy as np
 import pandas as pd
-import pickle
-
 import utils
 
 plt.ion()
@@ -124,3 +126,67 @@ def visualize_scores(eid, loss_max=1000):
   plt.show()
 
   return scores, loss
+
+
+def compare_loss_performance(model_number, verbose=False):
+  with open("models/{}/description.md".format(model_number)) as fh:
+    lines = fh.readlines()
+
+  data = {}
+
+  current_round = None
+  for line in lines:
+    line = line.strip()
+    round_match = re.match(r"# round (\d+).*", line, re.IGNORECASE)
+    if round_match:
+      current_round = int(round_match.group(1))
+      if verbose:
+        print("Parsing round {}".format(current_round))
+      continue
+
+    model_match = re.match("^([-_A-z0-9]+): ([.\d]+)/([.\d]+)%, loss: ([.\d]+).*", line)
+    if model_match:
+      model = model_match.group(1)
+      trained_percentage = float(model_match.group(2))
+      training_percentage = float(model_match.group(3))
+      loss = float(model_match.group(4))
+      if model not in data:
+        data[model] = []
+      assert len(data[model]) == current_round-1, "Round mismatch for {}, current round: {}, data entries: {}".format(
+          model, current_round, len(data[model]))
+      data[model].append((trained_percentage, training_percentage, loss))
+      if verbose:
+        print("{} had {} and {}% with loss {} ('{}')".format(
+          model, trained_percentage, training_percentage, loss, line))
+      continue
+
+    hands_match = re.match("^=> \d+M hands$", line)
+    if hands_match:
+      # ignore the number of played hands
+      continue
+
+    if not current_round or not line:
+      # ignore header and empty lines
+      continue
+
+    print("*** Unmatched line: '{}'".format(line))
+
+  fig = plt.figure()
+  plt.title("Model {}".format(model_number))
+  plt.grid()
+  plt.xlabel("Round")
+  plt.xticks(range(current_round), range(1, current_round + 1))
+
+  score_ax = fig.axes[0]
+  score_ax.set_ylabel("Training score")
+  score_ax.axhline(y=50, c="r", linestyle="--")
+  loss_ax = score_ax.twinx()
+  loss_ax.set_ylabel("Loss")
+
+  for model, metrics in data.items():
+    scores = [m[0] for m in metrics]
+    losses = [m[-1] for m in metrics]
+    score_ax.plot(scores, label="{}: scores".format(model))
+    loss_ax.plot(losses, label="{}: losses".format(model), alpha=0.5, ls="--")
+
+  fig.legend()

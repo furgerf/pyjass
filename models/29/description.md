@@ -31,13 +31,3 @@ Highlighting trump cards with offset, playing trump spades, sorting by suit
 5x200: 45.3/44.0%, loss: 5369.0
 3x300: 46.2/43.2%, loss: 5427.0
 
-# Round 6
-=> 48M hands
-5x200: /%, loss: 
-3x300: /%, loss: 
-
-# Round 7
-=> 56M hands
-5x200: /%, loss: 
-3x300: /%, loss: 
-

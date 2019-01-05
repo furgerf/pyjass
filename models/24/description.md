@@ -15,14 +15,14 @@ Only using normal parameters
 8x100: 52.9/44.1%, loss: 6348.1
 9x100: 52.8/42.8%, loss: 6189.6
 5x200: 58.4/50.2%, loss: 6075.0
-5x200: 38.6/36.0%, loss: 5487.4 spades
+5x200-spades: 38.6/36.0%, loss: 5487.4
 3x300: 61.0/54.3%, loss: 5866.6
-3x300: 34.9/35.4%, loss: 5897.4 spades <-- had to re-start from round-0
+3x300-spades: 34.9/35.4%, loss: 5897.4 <-- had to re-start from round-0
 
 # Round 1.5
 => 8M hands
 4x200: 56.7/49.6%, loss: 5892.5
-4x200: 55.8/53.9%, loss: 5919.6 unnenufe
+4x200-unnenufe: 55.8/53.9%, loss: 5919.6
 
 # Round 2
 => 16M hands
@@ -31,14 +31,14 @@ Only using normal parameters
 8x100: 61.6/58.8%, loss: 5813.0
 9x100: 57.5/56.7%, loss: 5829.1
 5x200: 65.7/64.9%, loss: 5932.3
-5x200: 43.2/42.9%, loss: 5291.4 spades
+5x200-spades: 43.2/42.9%, loss: 5291.4
 3x300: 70.8/66.2%, loss: 5799.4
-3x300: 40.8/41.2%, loss: 5396.6 spades
+3x300-spades: 40.8/41.2%, loss: 5396.6
 
 # Round 2.5
 => 16M hands
 4x200: 71.6/64.1%, loss: 5960.0
-4x200: 73.1/66.1%, loss: 5943.7 unnenufe
+4x200-unnenufe: 73.1/66.1%, loss: 5943.7
 
 # Round 3
 => 24M hands
@@ -47,14 +47,14 @@ Only using normal parameters
 8x100: 67.3/64.9%, loss: 5780.9
 9x100: 66.5/63.8%, loss: 5927.9
 5x200: 67.8/67.7%, loss: 5734.4
-5x200: 41.4/44.3%, loss: 5201.4 spades
+5x200-spades: 41.4/44.3%, loss: 5201.4
 3x300: 70.8/70.0%, loss: 5706.6
-3x300: 41.4/41.7%, loss: 5529.4 spades
+3x300-spades: 41.4/41.7%, loss: 5529.4
 
 # Round 3.5
 => 24M hands
 4x200: 72.9/70.4%, loss: 5841.3
-4x200: 69.2/71.5%, loss: 5669.0 unnenufe
+4x200-unnenufe: 69.2/71.5%, loss: 5669.0
 
 # Round 4
 => 32M hands
@@ -63,14 +63,14 @@ Only using normal parameters
 8x100: 68.0/66.7%, loss: 5743.5
 9x100: 68.8/68.1%, loss: 5705.5
 5x200: 69.8/69.7%, loss: 5711.3
-5x200: 42.9/45.0%, loss: 5166.0 spades
+5x200-spades: 42.9/45.0%, loss: 5166.0
 3x300: 75.1/71.6%, loss: 5646.1
-3x300: 45.9/43.5%, loss: 5452.0 spades
+3x300-spades: 45.9/43.5%, loss: 5452.0
 
 # Round 4.5
 => 32M hands
 4x200: 74.7/72.6%, loss: 5834.5
-4x200: 72.2/74.1%, loss: 5655.0 unnenufe
+4x200-unnenufe: 72.2/74.1%, loss: 5655.0
 
 # Round 5
 => 40M hands
@@ -79,9 +79,9 @@ Only using normal parameters
 8x100: 72.6/69.6%, loss: 5879.2
 9x100: 71.5/71.0%, loss: 5876.3
 5x200: 71.7/71.8%, loss: 5663.1
-5x200: 41.9/45.2%, loss: 5226.8 spades
+5x200-spades: 41.9/45.2%, loss: 5226.8
 3x300: 75.2/73.0%, loss: 5729.7
-3x300: 45.4/43.9%, loss: 5243.6 spades
+3x300-spades: 45.4/43.9%, loss: 5243.6
 
 # Round 5.5
 => 40M hands
@@ -94,9 +94,9 @@ Only using normal parameters
 8x100: 71.1/70.9%, loss: 5767.1
 9x100: 70.3/72.0%, loss: 5926.9
 5x200: 72.8/73.1%, loss: 5735.3
-5x200: 43.1/45.3%, loss: 5215.3 spades
+5x200-spades: 43.1/45.3%, loss: 5215.3
 3x300: 71.7/74.9%, loss: 5730.5
-3x300: 43.3/44.0%, loss: 4993.5 spades
+3x300-spades: 43.3/44.0%, loss: 4993.5
 
 # Round 6.5
 => 52M hands
@@ -104,12 +104,12 @@ Only using normal parameters
 
 # Round 7
 => 56M hands
-6x100: 70.6/67.2%, loss 5866.8
+6x100: 70.6/67.2%, loss: 5866.8
 7x100: 69.5/70.6%, loss: 5892.2
 8x100: 72.9/71.5%, loss: 5811.9
 9x100: 73.3/73.6%, loss: 5870.2
-5x200: 73.3/74.1%, loss: 5649.2 spades
-3x300: 78.2/75.5%, loss: 5639.6 spades
+5x200: 73.3/74.1%, loss: 5649.2
+3x300: 78.2/75.5%, loss: 5639.6
 
 # Round 7.5
 => 60M hands
