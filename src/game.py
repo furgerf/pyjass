@@ -5,7 +5,6 @@ import csv
 import os
 import struct
 import time
-from config import Config
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -14,13 +13,14 @@ from psutil import Process
 import utils
 from baseline_players import HighestCardPlayer, RandomCardPlayer
 from better_rules_player import BetterRulesPlayer
+from config import Config
 from const import Const
 from fixed_better_rules_player import FixedBetterRulesPlayer
 from game_type import GameType
-from learner_players import MlpPlayer, OtherMlpPlayer, SgdPlayer
 from parallel_game import ParallelGame
 from score import Score
 from simple_rules_player import SimpleRulesPlayer
+from sklearn_player import MlpPlayer, OtherMlpPlayer, SgdPlayer
 
 
 class Game:

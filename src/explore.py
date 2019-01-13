@@ -144,7 +144,7 @@ def compare_loss_performance(model_number, verbose=False):
         print("Parsing round {}".format(current_round))
       continue
 
-    model_match = re.match("^([-_A-z0-9]+): ([.\d]+)/([.\d]+)%, loss: ([.\d]+).*", line)
+    model_match = re.match(r"^([-_A-z0-9]+): ([.\d]+)/([.\d]+)%, loss: ([.\d]+).*", line)
     if model_match:
       model = model_match.group(1)
       trained_percentage = float(model_match.group(2))
@@ -160,7 +160,7 @@ def compare_loss_performance(model_number, verbose=False):
           model, trained_percentage, training_percentage, loss, line))
       continue
 
-    hands_match = re.match("^=> \d+M hands$", line)
+    hands_match = re.match(r"^=> \d+M hands$", line)
     if hands_match:
       # ignore the number of played hands
       continue
