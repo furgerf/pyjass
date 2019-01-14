@@ -158,7 +158,7 @@ class SgdPlayer(SklearnPlayer):
     offline_training = False
     if SgdPlayer._sgd_regressor is None:
       SgdPlayer._sgd_regressor = SklearnPlayer._create_or_load_model(SGDRegressor, log)
-      offline_training = True
+      offline_training = Config.LOAD_TRAINING_DATA_FILE_NAME is not None
     super(SgdPlayer, self).__init__(name, number, SgdPlayer._sgd_regressor, offline_training, log)
 
 
@@ -173,7 +173,7 @@ class MlpPlayer(SklearnPlayer):
     offline_training = False
     if MlpPlayer._mlp_regressor is None:
       MlpPlayer._mlp_regressor = SklearnPlayer._create_or_load_model(MLPRegressor, log)
-      offline_training = True
+      offline_training = Config.LOAD_TRAINING_DATA_FILE_NAME is not None
     super(MlpPlayer, self).__init__(name, number, MlpPlayer._mlp_regressor, offline_training, log)
 
 
@@ -190,6 +190,6 @@ class OtherMlpPlayer(SklearnPlayer):
       log.fatal("WARNING: If the other regressor is trained on an incompatible encoding, it probably won't work!")
       OtherMlpPlayer._mlp_regressor = SklearnPlayer._create_or_load_model(MLPRegressor, log,
           regressor_name=Config.OTHER_REGRESSOR_NAME)
-      offline_training = True
+      offline_training = Config.LOAD_TRAINING_DATA_FILE_NAME is not None
     super(OtherMlpPlayer, self).__init__(name, number, OtherMlpPlayer._mlp_regressor, offline_training, log,
         regressor_name=Config.OTHER_REGRESSOR_NAME)

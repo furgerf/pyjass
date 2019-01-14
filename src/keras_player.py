@@ -43,7 +43,7 @@ class KerasPlayer(LearnerPlayer):
     if KerasPlayer._keras_regressor is None:
       KerasPlayer._keras_regressor, self._training_samples, self._game_type, self._last_loss = \
           KerasPlayer._create_or_load_model(log)
-      offline_training = True
+      offline_training = Config.LOAD_TRAINING_DATA_FILE_NAME is not None
     self.regressor = KerasPlayer._keras_regressor
     self.last_training_done = time.time()
 
