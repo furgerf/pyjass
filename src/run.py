@@ -19,7 +19,7 @@ from game import Game
 from game_type import GameType
 from parallel_game import ParallelGame
 
-__version__ = "0.8"
+__version__ = "1.0"
 
 def parse_arguments():
   parser = ArgumentParser()
@@ -106,6 +106,7 @@ def apply_arguments(args):
   if args.model:
     Config.MODEL_DIRECTORY = "models/{}".format(args.model)
     Config.ENCODING = get_encodings().get(args.model)
+  Config.ARCHITECTURE_DIRECTORY = "architectures"
   if args.regressor_name:
     Config.REGRESSOR_NAME = args.regressor_name
   if args.other_regressor_name:
@@ -160,7 +161,7 @@ def apply_arguments(args):
 
 def check_config(log):
   # pylint: disable=too-many-return-statements,too-many-branches
-  model_based_strategies = ["sgd", "mlp", "mlp-other"]
+  model_based_strategies = ["sgd", "mlp", "mlp-other", "keras"]
   other_models = ["mlp-other"]
   uses_model = Config.TEAM_1_STRATEGY in model_based_strategies or \
       Config.TEAM_2_STRATEGY in model_based_strategies

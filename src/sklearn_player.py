@@ -49,7 +49,7 @@ class SklearnPlayer(LearnerPlayer):
 
   @property
   def trained_samples(self):
-    return self.regressor.training_samples
+    return self.regressor.trained_samples
 
   @property
   def model_type(self):
@@ -57,7 +57,7 @@ class SklearnPlayer(LearnerPlayer):
 
   def _train_model(self, training_data, log):
     self.regressor.partial_fit(training_data[:, :-1], training_data[:, -1])
-    self.regressor.training_samples += len(training_data)
+    self.regressor.trained_samples += len(training_data)
     return self.regressor.loss_
 
   def _predict_scores(self, states):
@@ -99,8 +99,8 @@ class SklearnPlayer(LearnerPlayer):
     path_difference = "" if real_path == pickle_file_name else " ({})".format(real_path)
     log.info("Loaded regressor from {}{} for {} (trained on {} hands - {} hands, loss {:.1f})".format(
       pickle_file_name, path_difference, regressor.game_type.name,
-      utils.format_human(regressor.training_samples/Const.DECISIONS_PER_HAND),
-      utils.format_human(regressor.training_samples/32), regressor.loss_))
+      utils.format_human(regressor.trained_samples/Const.DECISIONS_PER_HAND),
+      utils.format_human(regressor.trained_samples/32), regressor.loss_))
     log.info("Regressor details: {}".format(regressor))
 
     assert regressor.__class__.__name__ == regressor_constructor.__name__, \
@@ -110,7 +110,7 @@ class SklearnPlayer(LearnerPlayer):
     if Config.ONLINE_TRAINING:
       # this is a bit of a crutch to avoid writing the loss when creating the LC... TODO: check if that's needed
       with open(Config.LOSS_FILE, "a") as fh:
-        fh.write("{},{}\n".format(regressor.training_samples, regressor.loss_))
+        fh.write("{},{}\n".format(regressor.trained_samples, regressor.loss_))
 
     return regressor
 
@@ -127,7 +127,7 @@ class SklearnPlayer(LearnerPlayer):
 
     # instantiate new regressor and add custom fields
     regressor = regressor_constructor(**regressor_args)
-    regressor.training_samples = 0
+    regressor.trained_samples = 0
     regressor.game_type = Config.FORCE_GAME_TYPE
 
     log.warning("New regressor: {}".format(regressor))

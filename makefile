@@ -10,7 +10,7 @@ EVAL_DIR=evaluations
 OLD_EVAL_DIR=old-evaluations
 DIRECTORIES=$(DATA_DIR) $(MODELS_DIR) $(EVAL_DIR) $(OLD_EVAL_DIR)
 
-REGRESSORS=SGDRegressor MLPRegressor
+REGRESSORS=SGDRegressor MLPRegressor Sequential
 
 # TODO
 # - Special archiving for (tracked) evaluations
@@ -23,6 +23,8 @@ PID=
 UUID=$(shell uuidgen)
 TARGET=run
 EID:=$(TARGET)-$(UUID)
+REG_EXT=pkl
+TEAM1=mlp
 THIS_EVAL_DIR:=$(EVAL_DIR)/$(EID)
 EVAL_LOG:=$(THIS_EVAL_DIR)/evaluation_$(shell date '+%Y%m%d_%H%M%S').log
 
@@ -52,17 +54,17 @@ endif
 		--force-game-type=$(GT) $(ARGS) 2>&1 | tee $(EVAL_LOG); [ $${PIPESTATUS[0]} -eq 0 ]
 	@for reg in $(REGRESSORS); do \
 		unset -v latest; \
-		for pkl in $(THIS_EVAL_DIR)/p*_"$$reg"_*.pkl; do \
-			[[ $$pkl -nt $$latest ]] && latest=$$pkl; \
+		for stored_model in $(THIS_EVAL_DIR)/p*_"$$reg"_*.$(REG_EXT); do \
+			[[ $$stored_model -nt $$latest ]] && latest=$$stored_model; \
 		done; \
 		[ -z "$$latest" ] && continue; \
-		ln -s $$(basename $$latest) $(THIS_EVAL_DIR)/final-$$reg.pkl; \
-		echo "Created symlink for final $$reg: $$(ls -l $(THIS_EVAL_DIR)/final-$$reg.pkl | cut -d' ' -f 10-)"; \
+		ln -s $$(basename $$latest) $(THIS_EVAL_DIR)/final-$$reg.$(REG_EXT); \
+		echo "Created symlink for final $$reg: $$(ls -l $(THIS_EVAL_DIR)/final-$$reg.$(REG_EXT) | cut -d' ' -f 10-)"; \
 	done
 
 train:
 	@# NOTE: batchsize/trainingint: maximum (regarding memory); chkres = batchsize; chkint/logint selected freely
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team2=baseline --online --store-scores \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=$(TEAM1) --team2=baseline --online --store-scores \
 		--hands=4e6 --batchsize=2.5e4 --chkres=2.5e4 --chkint=2e5 --trainingint=1e5 --logint=2e5 $(ARGS)' TARGET=$@
 
 store:
@@ -73,7 +75,7 @@ store:
 
 eval:
 	@# NOTE: batchsize = logint / procs - doesn't keep any data; checkpoints "disabled"; logint selected freely
-	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=mlp --team2=baseline \
+	@$(MAKE) --no-print-directory run ARGS='--seed --procs --team1=$(TEAM1) --team2=baseline \
 		--hands=5e5 --batchsize=5e4 --chkint=5e5 --logint=1e5 $(ARGS)' TARGET=$@
 
 online-round:
@@ -98,11 +100,11 @@ endif
 	@# NOTE: this relies that the default hands for train is 4M and that it isn't overwritten
 	@# TODO: move hands to a variable
 	$(MAKE) --no-print-directory train PID= EID=$(MOD)-$(NAME)-round-$(ROUND) \
-		REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+		REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).$(REG_EXT) \
 		ARGS='--load-training-file=$(ENC)-4m-$(OTHER_NAME)-round-$(shell echo $(ROUND)-1 | bc).bin \
 		--store-data --store-training-file=$(ENC)-4m-$(NAME)-round-$(ROUND).bin \
-		--store-game-type-file=$(ENC)-4m-$(NAME)-round-$(ROUND)-game-type-decisions.bin $(ARGS)' TARGET=$@
-	$(MAKE) --no-print-directory link-model PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+		--store-game-type-file=$(ENC)-4m-$(NAME)-round-$(ROUND)-game-type-decisions.bin --chkint=1e5 --hands=5e5 $(ARGS)' TARGET=$@
+	$(MAKE) --no-print-directory link-model PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).$(REG_EXT) TARGET=$@
 
 offline-round:
 ifndef MOD
@@ -120,9 +122,9 @@ endif
 ifdef PID
 	@$(MAKE) --no-print-directory wait
 endif
-	$(MAKE) --no-print-directory eval PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).pkl \
+	$(MAKE) --no-print-directory eval PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).$(REG_EXT) \
 		ARGS='--load-training-file=$(ENC)-4m-combined-round-$(ROUND).bin $(ARGS)' TARGET=$@
-	$(MAKE) --no-print-directory link-model PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).pkl TARGET=$@
+	$(MAKE) --no-print-directory link-model PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).$(REG_EXT) TARGET=$@
 
 20-round:
 ifeq ($(NAME), 3x100)
@@ -291,6 +293,10 @@ ifeq ($(NAME), 5x200-spades)
 	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=3x300-spades GT=trump_spades TARGET=$@
 else ifeq ($(NAME), 3x300-spades)
 	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=5x200-spades GT=trump_spades TARGET=$@
+else ifeq ($(NAME), 5x200-spades-keras)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=3x300-spades-keras GT=trump_spades REG_EXT=zip TARGET=$@
+else ifeq ($(NAME), 3x300-spades-keras)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=5x200-spades-keras GT=trump_spades REG_EXT=zip TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
@@ -330,10 +336,10 @@ ifdef PID
 	@$(MAKE) --no-print-directory wait
 endif
 	@pushd $(MODELS_DIR)/$(MOD) > /dev/null; \
-	if [ $$(ls -l ../../$(THIS_EVAL_DIR)/*.pkl | wc -l) -eq 1 ]; then \
-		LINK_TARGETS=$$(ls ../../$(THIS_EVAL_DIR)/*.pkl); \
+	if [ $$(ls -l ../../$(THIS_EVAL_DIR)/*.$(REG_EXT) | wc -l) -eq 1 ]; then \
+		LINK_TARGETS=$$(ls ../../$(THIS_EVAL_DIR)/*.$(REG_EXT)); \
 	else \
-		LINK_TARGETS=$$(ls ../../$(THIS_EVAL_DIR)/final-*.pkl); \
+		LINK_TARGETS=$$(ls ../../$(THIS_EVAL_DIR)/final-*.$(REG_EXT)); \
 	fi; \
 	for reg in $$LINK_TARGETS; do \
 		ln -s$(FORCE) ../../$(THIS_EVAL_DIR)/$$(basename $$reg) $(REG) && echo "Created symlink: $$(ls -l $(REG) | cut -d' ' -f 9-)" || \
@@ -354,7 +360,7 @@ ifdef PID
 endif
 	@> $(CURVE_SCORES)
 	@count=0; \
-	time (for reg in $(THIS_EVAL_DIR)/p1_MLPRegressor_*.pkl; do \
+	time (for reg in $(THIS_EVAL_DIR)/p1_*_*.$(REG_EXT); do \
 		reg_path=../../$(THIS_EVAL_DIR)/$$(basename $$reg); \
 		echo "Processing $$reg..."; \
 		# we want to write another evaluation to this directory \
@@ -362,7 +368,7 @@ endif
 		# about the seed: always play the "same" game but do a different one than what was trained \
 		$(UNBUF) $(NICE) $(BIN)/python src/run.py --eid=$(EID) --model=$(MOD) --seed2 --procs --store-scores \
 			--hands=1e5 --chkint=1e5 --logint=1e5 --chkres=5e4 --batchsize=5e4 \
-			--team1=mlp --regressor=$$reg_path $(ARGS) 2>&1 \
+			--team1=$(TEAM1) --regressor=$$reg_path $(ARGS) 2>&1 \
 			| tee $(THIS_EVAL_DIR)/curve_$$(basename $$reg).log; [ $${PIPESTATUS[0]} -eq 0 ]; \
 		# fail if we don't have exactly 3 lines in the scores file (header + 2 batch results) \
 		[[ $$(wc -l < $(SCORES)) != 3 ]] && echo "Unexpected number of lines in score file!" && exit 1; \
@@ -380,10 +386,10 @@ ifndef MOD
 	$(error Must specify model)
 endif
 ifndef MULTI_NAME
-	$(error Must name for multi-regressor)
+	$(error Must specify name for multi-regressor)
 endif
 ifndef REG_NAMES
-	$(error Must names of regressors to combine)
+	$(error Must specify names of regressors to combine)
 endif
 	$(BIN)/python src/multi_reg_combiner.py --model=$(MOD) --multi-regressor-name=$(MULTI_NAME) --regressors=$(REG_NAMES)
 

@@ -25,6 +25,7 @@ class Config:
 
   # files/directories
   MODEL_DIRECTORY = None
+  ARCHITECTURE_DIRECTORY = None
   REGRESSOR_NAME = None
   OTHER_REGRESSOR_NAME = None
   LOAD_TRAINING_DATA_FILE_NAME = None

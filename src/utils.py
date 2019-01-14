@@ -6,9 +6,9 @@ import logging
 import math
 import struct
 
+import coloredlogs
 import numpy as np
 
-import coloredlogs
 from const import Const
 
 
@@ -87,5 +87,8 @@ class StoreDictKeyPair(argparse.Action):
     my_dict = {}
     for kv in values.split(";"):
       key, val = kv.split("=")
-      my_dict[key] = eval(val) # pylint: disable=eval-used
+      try:
+        my_dict[key] = eval(val) # pylint: disable=eval-used
+      except (SyntaxError, NameError):
+        my_dict[key] = val
     setattr(namespace, self.dest, my_dict)

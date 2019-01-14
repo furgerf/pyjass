@@ -7,11 +7,13 @@ import os
 import pickle
 import re
 
-import numpy as np
-
 import matplotlib.pyplot as plt
 from matplotlib.ticker import EngFormatter
+import numpy as np
 import pandas as pd
+from keras.layers import Activation, Dense
+from keras.models import Sequential
+
 import utils
 
 plt.ion()

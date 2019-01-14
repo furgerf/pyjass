@@ -17,6 +17,7 @@ from config import Config
 from const import Const
 from fixed_better_rules_player import FixedBetterRulesPlayer
 from game_type import GameType
+from keras_player import KerasPlayer
 from parallel_game import ParallelGame
 from score import Score
 from simple_rules_player import SimpleRulesPlayer
@@ -33,7 +34,8 @@ class Game:
       "baseline": None,
       "sgd": SgdPlayer,
       "mlp": MlpPlayer,
-      "mlp-other": OtherMlpPlayer
+      "mlp-other": OtherMlpPlayer,
+      "keras": KerasPlayer
       }
 
   def __init__(self, pool, log):
