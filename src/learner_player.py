@@ -32,7 +32,7 @@ class LearnerPlayer(Player):
     super(LearnerPlayer, self).__init__(name, number, known_game_types, log)
 
   @abstractproperty
-  def trained_samples(self):
+  def training_samples(self):
     """
     Returns the number of samples the model has been trained on.
     """
@@ -74,7 +74,7 @@ class LearnerPlayer(Player):
     loss = self._train_model(training_data, log)
 
     with open(Config.LOSS_FILE, "a") as fh:
-      fh.write("{},{}\n".format(self.trained_samples, loss))
+      fh.write("{},{}\n".format(self.training_samples, loss))
 
     training_mins, training_secs = divmod(time.time() - training_start, 60)
     since_last = ""
@@ -83,7 +83,7 @@ class LearnerPlayer(Player):
       since_last = " ({}m{}s since last)".format(int(last_mins), int(last_secs))
     log.info("Trained {} on {} new hands (now has {}) in {}m{}s{}; loss {:.1f}".format(
       self.model_type, utils.format_human(len(training_data)/Const.DECISIONS_PER_HAND),
-      utils.format_human(self.trained_samples/Const.DECISIONS_PER_HAND),
+      utils.format_human(self.training_samples/Const.DECISIONS_PER_HAND),
       int(training_mins), int(training_secs), since_last, loss))
 
     self.last_training_done = time.time()
@@ -98,7 +98,7 @@ class LearnerPlayer(Player):
     training_start = time.time()
     total_hands = os.stat(Config.LOAD_TRAINING_DATA_FILE_NAME).st_size/Const.BYTES_PER_SAMPLE/Const.DECISIONS_PER_HAND
     log.warning("Training regressor with {} hands on {} new hands from file {}".format(
-      utils.format_human(self.trained_samples/Const.DECISIONS_PER_HAND),
+      utils.format_human(self.training_samples/Const.DECISIONS_PER_HAND),
       utils.format_human(total_hands), Config.LOAD_TRAINING_DATA_FILE_NAME))
     for training_data in utils.process_binary_file(Config.LOAD_TRAINING_DATA_FILE_NAME, Const.OFFLINE_CHUNK_SIZE):
       offset += len(training_data)
@@ -122,7 +122,7 @@ class LearnerPlayer(Player):
     log.warning("Finished offline training in {}h{}m".format(int(training_hours), int(training_minutes)))
 
   def get_checkpoint_data(self):
-    return self.trained_samples
+    return self.training_samples
 
   def _select_card(self, args, log):
     valid_cards, played_cards, known_cards, _ = args

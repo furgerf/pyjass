@@ -27,7 +27,7 @@ class KerasPlayer(LearnerPlayer):
   _keras_regressor = None
 
   NAME_FIELD = "name"
-  TRAINED_SAMPLES_FIELD = "trained_samples"
+  TRAINED_SAMPLES_FIELD = "training_samples"
   GAME_TYPE_FIELD = "game_type"
   LAST_LOSS_FIELD = "last_loss"
 
@@ -41,7 +41,7 @@ class KerasPlayer(LearnerPlayer):
     """
     offline_training = False
     if KerasPlayer._keras_regressor is None:
-      KerasPlayer._keras_regressor, self._trained_samples, self._game_type, self._last_loss = \
+      KerasPlayer._keras_regressor, self._training_samples, self._game_type, self._last_loss = \
           KerasPlayer._create_or_load_model(log)
       offline_training = True
     self.regressor = KerasPlayer._keras_regressor
@@ -52,7 +52,7 @@ class KerasPlayer(LearnerPlayer):
       new_model_file_name = "{}/{}".format(Config.MODEL_DIRECTORY, Config.REGRESSOR_NAME)
       existing_model_file_name = "{}/{}-trained-offline.zip".format(Config.EVALUATION_DIRECTORY,
           os.path.splitext(Config.REGRESSOR_NAME)[0])
-      trained_model_file = existing_model_file_name if self.trained_samples else new_model_file_name
+      trained_model_file = existing_model_file_name if self.training_samples else new_model_file_name
       self._train_regressor_from_file(log)
       log.info("Writing newly-trained regressor to {}".format(trained_model_file))
       self._save_model(trained_model_file)
@@ -60,8 +60,8 @@ class KerasPlayer(LearnerPlayer):
     super(KerasPlayer, self).__init__(name, number, [Config.FORCE_GAME_TYPE], log)
 
   @property
-  def trained_samples(self):
-    return self._trained_samples
+  def training_samples(self):
+    return self._training_samples
 
   @property
   def model_type(self):
@@ -69,7 +69,7 @@ class KerasPlayer(LearnerPlayer):
 
   def _train_model(self, training_data, log):
     history = self.regressor.fit(training_data[:, :-1], training_data[:, -1], verbose=0)
-    self._trained_samples += len(training_data)
+    self._training_samples += len(training_data)
     loss = np.mean(history.history["loss"])
     self._last_loss = loss
     return loss
@@ -109,7 +109,7 @@ class KerasPlayer(LearnerPlayer):
     with open(metadata_path, "r") as fh:
       metadata = json.loads(fh.read())
 
-    trained_samples = metadata[KerasPlayer.TRAINED_SAMPLES_FIELD]
+    training_samples = metadata[KerasPlayer.TRAINED_SAMPLES_FIELD]
     game_type = GameType(metadata[KerasPlayer.GAME_TYPE_FIELD])
     last_loss = metadata[KerasPlayer.LAST_LOSS_FIELD]
 
@@ -124,8 +124,8 @@ class KerasPlayer(LearnerPlayer):
     path_difference = "" if real_path == model_path else " ({})".format(real_path)
     log.info("Loaded regressor {} from {}{} for {} (trained on {} hands - {} hands, loss {:.1f})".format(
       metadata[KerasPlayer.NAME_FIELD], model_path, path_difference, game_type,
-      utils.format_human(trained_samples/Const.DECISIONS_PER_HAND),
-      utils.format_human(trained_samples/32), last_loss))
+      utils.format_human(training_samples/Const.DECISIONS_PER_HAND),
+      utils.format_human(training_samples/32), last_loss))
     log.info("Regressor details")
     regressor.summary()
 
@@ -134,9 +134,9 @@ class KerasPlayer(LearnerPlayer):
     if Config.ONLINE_TRAINING:
       # this is a bit of a crutch to avoid writing the loss when creating the LC... TODO: check if that's needed
       with open(Config.LOSS_FILE, "a") as fh:
-        fh.write("{},{}\n".format(trained_samples, last_loss))
+        fh.write("{},{}\n".format(training_samples, last_loss))
 
-    return regressor, trained_samples, game_type, last_loss
+    return regressor, training_samples, game_type, last_loss
 
   @staticmethod
   def _create_model(log):
@@ -150,7 +150,7 @@ class KerasPlayer(LearnerPlayer):
 
     # instantiate new regressor and add custom fields
     regressor = model_from_json(model_json)
-    trained_samples = 0
+    training_samples = 0
     game_type = Config.FORCE_GAME_TYPE
     last_loss = None
 
@@ -158,7 +158,7 @@ class KerasPlayer(LearnerPlayer):
     regressor.compile(optimizer="adam", loss="mse", metrics=["mse"])
     regressor.summary()
 
-    return regressor, trained_samples, game_type, last_loss
+    return regressor, training_samples, game_type, last_loss
 
   def _save_model(self, path):
     temp_dir = mkdtemp()
@@ -171,7 +171,7 @@ class KerasPlayer(LearnerPlayer):
     # save metadata
     metadata = json.dumps({
       KerasPlayer.NAME_FIELD: model_file_name,
-      KerasPlayer.TRAINED_SAMPLES_FIELD: self._trained_samples,
+      KerasPlayer.TRAINED_SAMPLES_FIELD: self._training_samples,
       KerasPlayer.GAME_TYPE_FIELD: self._game_type.value,
       KerasPlayer.LAST_LOSS_FIELD: self._last_loss
       })
