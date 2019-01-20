@@ -206,7 +206,7 @@ class Game:
 
   def _create_checkpoint(self, current_iteration, total_iterations):
     if Config.STORE_SCORES:
-      self.log.info("Writing {} scores at iteration {}/{} ({:.1f}%)"
+      self.log.debug("Writing {} scores at iteration {}/{} ({:.1f}%)"
           .format(utils.format_human(len(self._checkpoint_data)),
             utils.format_human(current_iteration), utils.format_human(total_iterations),
             100.0*current_iteration/total_iterations))

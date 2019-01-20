@@ -6,10 +6,12 @@ import math
 import os
 import time
 from shutil import rmtree
+from sys import getsizeof
 from tempfile import mkdtemp
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import numpy as np
+from keras import backend as K
 from keras.models import load_model, model_from_json
 
 import utils
@@ -27,7 +29,7 @@ class KerasPlayer(LearnerPlayer):
   _keras_regressor = None
 
   NAME_FIELD = "name"
-  TRAINED_SAMPLES_FIELD = "training_samples"
+  TRAINING_SAMPLES_FIELD = "training_samples"
   GAME_TYPE_FIELD = "game_type"
   LAST_LOSS_FIELD = "last_loss"
 
@@ -109,23 +111,21 @@ class KerasPlayer(LearnerPlayer):
     with open(metadata_path, "r") as fh:
       metadata = json.loads(fh.read())
 
-    training_samples = metadata[KerasPlayer.TRAINED_SAMPLES_FIELD]
+    training_samples = metadata[KerasPlayer.TRAINING_SAMPLES_FIELD]
     game_type = GameType(metadata[KerasPlayer.GAME_TYPE_FIELD])
     last_loss = metadata[KerasPlayer.LAST_LOSS_FIELD]
 
-    model_file_name = os.path.splitext(os.path.basename(model_path))[0]
     model_path = "{}/{}.h5".format(temp_dir, metadata[KerasPlayer.NAME_FIELD])
     regressor = load_model(model_path)
 
     # cleanup
     rmtree(temp_dir)
 
-    real_path = os.path.realpath(model_path)[len(os.getcwd())+1:]
+    real_path = os.path.realpath(model_path)[len(os.getcwd())+1:] # TODO: fix for when model is outside cwd
     path_difference = "" if real_path == model_path else " ({})".format(real_path)
-    log.info("Loaded regressor {} from {}{} for {} (trained on {} hands - {} hands, loss {:.1f})".format(
+    log.info("Loaded regressor {} from {}{} for {} (trained on {} hands, loss {:.1f})".format(
       metadata[KerasPlayer.NAME_FIELD], model_path, path_difference, game_type,
-      utils.format_human(training_samples/Const.DECISIONS_PER_HAND),
-      utils.format_human(training_samples/32), last_loss))
+      utils.format_human(training_samples/Const.DECISIONS_PER_HAND), last_loss))
     log.info("Regressor details")
     regressor.summary()
 
@@ -171,7 +171,7 @@ class KerasPlayer(LearnerPlayer):
     # save metadata
     metadata = json.dumps({
       KerasPlayer.NAME_FIELD: model_file_name,
-      KerasPlayer.TRAINED_SAMPLES_FIELD: self._training_samples,
+      KerasPlayer.TRAINING_SAMPLES_FIELD: self._training_samples,
       KerasPlayer.GAME_TYPE_FIELD: self._game_type.value,
       KerasPlayer.LAST_LOSS_FIELD: self._last_loss
       })
@@ -192,7 +192,34 @@ class KerasPlayer(LearnerPlayer):
     file_name = unformatted_file_name.format(self.name,
         self.regressor.__class__.__name__, current_iteration)
     file_path = "{}/{}".format(Config.EVALUATION_DIRECTORY, file_name)
-    log.info("Storing regressor in '{}' at iteration {}/{} ({:.1f}%)".format(file_name,
-      utils.format_human(current_iteration), utils.format_human(total_iterations),
-      100.0*current_iteration/total_iterations))
+    if current_iteration != total_iterations:
+      log.info("Storing regressor in '{}' at iteration {}/{} ({:.1f}%)".format(file_name,
+        utils.format_human(current_iteration), utils.format_human(total_iterations),
+        100.0*current_iteration/total_iterations))
+    else:
+      log.fatal("Storing final regressor in '{}' with loss {}".format(file_name, self._last_loss))
+    log.fatal("Current estimated regressor memory usage: {}/{}".format(
+      utils.format_human(getsizeof(self.regressor)),
+      utils.format_human(get_model_memory_usage(1e5*Const.DECISIONS_PER_HAND, self.regressor))))
     self._save_model(file_path)
+
+def get_model_memory_usage(batch_size, model):
+  shapes_mem_count = 0
+  for layer in model.layers:
+    single_layer_mem = 1
+    for shape in layer.output_shape:
+      if shape is None:
+        continue
+      single_layer_mem *= shape
+    shapes_mem_count += single_layer_mem
+
+  trainable_count = np.sum([K.count_params(param) for param in set(model.trainable_weights)])
+  non_trainable_count = np.sum([K.count_params(param) for param in set(model.non_trainable_weights)])
+
+  number_size = 4.0
+  if K.floatx() == 'float16':
+    number_size = 2.0
+  if K.floatx() == 'float64':
+    number_size = 8.0
+
+  return number_size*(batch_size*shapes_mem_count + trainable_count + non_trainable_count)
