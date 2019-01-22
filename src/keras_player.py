@@ -6,12 +6,10 @@ import math
 import os
 import time
 from shutil import rmtree
-from sys import getsizeof
 from tempfile import mkdtemp
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import numpy as np
-from keras import backend as K
 from keras.models import load_model, model_from_json
 
 import utils
@@ -198,28 +196,4 @@ class KerasPlayer(LearnerPlayer):
         100.0*current_iteration/total_iterations))
     else:
       log.fatal("Storing final regressor in '{}' with loss {}".format(file_name, self._last_loss))
-    log.fatal("Current estimated regressor memory usage: {}/{}".format(
-      utils.format_human(getsizeof(self.regressor)),
-      utils.format_human(get_model_memory_usage(1e5*Const.DECISIONS_PER_HAND, self.regressor))))
     self._save_model(file_path)
-
-def get_model_memory_usage(batch_size, model):
-  shapes_mem_count = 0
-  for layer in model.layers:
-    single_layer_mem = 1
-    for shape in layer.output_shape:
-      if shape is None:
-        continue
-      single_layer_mem *= shape
-    shapes_mem_count += single_layer_mem
-
-  trainable_count = np.sum([K.count_params(param) for param in set(model.trainable_weights)])
-  non_trainable_count = np.sum([K.count_params(param) for param in set(model.non_trainable_weights)])
-
-  number_size = 4.0
-  if K.floatx() == 'float16':
-    number_size = 2.0
-  if K.floatx() == 'float64':
-    number_size = 8.0
-
-  return number_size*(batch_size*shapes_mem_count + trainable_count + non_trainable_count)
