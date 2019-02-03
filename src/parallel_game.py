@@ -103,12 +103,13 @@ class ParallelGame:
       np.random.seed()
       seed = "random"
     pid = os.getpid()
-    LOG.info("Found PID {} for worker {} (seed: {})".format(pid, worker_id, seed))
+    LOG.debug("Found PID {} for worker {} (seed: {})".format(pid, worker_id, seed))
     return pid
 
   @property
   def _id(self):
     # pylint: disable=protected-access,not-callable
-    if current_process()._identity:
-      return current_process()._identity[0]
+    process_identity = current_process()._identity
+    if process_identity:
+      return process_identity[0]
     return "0"

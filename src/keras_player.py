@@ -5,17 +5,21 @@ import json
 import math
 import os
 import time
+from config import Config
 from tempfile import TemporaryDirectory
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import numpy as np
-from keras.models import load_model, model_from_json
 
 import utils
-from config import Config
 from const import Const
 from game_type import GameType
 from learner_player import LearnerPlayer
+
+try:
+  from keras.models import load_model, model_from_json
+except ImportError:
+  print("Unable to import Keras!")
 
 
 class KerasPlayer(LearnerPlayer):
