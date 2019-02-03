@@ -5,8 +5,7 @@ import json
 import math
 import os
 import time
-from shutil import rmtree
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import numpy as np
@@ -100,24 +99,20 @@ class KerasPlayer(LearnerPlayer):
 
   @staticmethod
   def _load_model(model_path, log):
-    temp_dir = mkdtemp()
+    with TemporaryDirectory() as temp_dir:
+      with ZipFile(model_path, "r") as zip_file:
+        zip_file.extractall(temp_dir)
 
-    with ZipFile(model_path, "r") as zip_file:
-      zip_file.extractall(temp_dir)
+      metadata_path = "{}/info.json".format(temp_dir)
+      with open(metadata_path, "r") as fh:
+        metadata = json.loads(fh.read())
 
-    metadata_path = "{}/info.json".format(temp_dir)
-    with open(metadata_path, "r") as fh:
-      metadata = json.loads(fh.read())
+      training_samples = metadata[KerasPlayer.TRAINING_SAMPLES_FIELD]
+      game_type = GameType(metadata[KerasPlayer.GAME_TYPE_FIELD])
+      last_loss = metadata[KerasPlayer.LAST_LOSS_FIELD]
 
-    training_samples = metadata[KerasPlayer.TRAINING_SAMPLES_FIELD]
-    game_type = GameType(metadata[KerasPlayer.GAME_TYPE_FIELD])
-    last_loss = metadata[KerasPlayer.LAST_LOSS_FIELD]
-
-    model_path = "{}/{}.h5".format(temp_dir, metadata[KerasPlayer.NAME_FIELD])
-    regressor = load_model(model_path)
-
-    # cleanup
-    rmtree(temp_dir)
+      model_path = "{}/{}.h5".format(temp_dir, metadata[KerasPlayer.NAME_FIELD])
+      regressor = load_model(model_path)
 
     real_path = os.path.realpath(model_path)[len(os.getcwd())+1:] # TODO: fix for when model is outside cwd
     path_difference = "" if real_path == model_path else " ({})".format(real_path)
@@ -159,31 +154,27 @@ class KerasPlayer(LearnerPlayer):
     return regressor, training_samples, game_type, last_loss
 
   def _save_model(self, path):
-    temp_dir = mkdtemp()
+    with TemporaryDirectory() as temp_dir:
+      # save model
+      model_file_name = os.path.splitext(os.path.basename(path))[0]
+      model_path = "{}/{}.h5".format(temp_dir, model_file_name)
+      self.regressor.save(model_path)
 
-    # save model
-    model_file_name = os.path.splitext(os.path.basename(path))[0]
-    model_path = "{}/{}.h5".format(temp_dir, model_file_name)
-    self.regressor.save(model_path)
+      # save metadata
+      metadata = json.dumps({
+        KerasPlayer.NAME_FIELD: model_file_name,
+        KerasPlayer.TRAINING_SAMPLES_FIELD: self._training_samples,
+        KerasPlayer.GAME_TYPE_FIELD: self._game_type.value,
+        KerasPlayer.LAST_LOSS_FIELD: self._last_loss
+        })
+      metadata_path = "{}/info.json".format(temp_dir)
+      with open(metadata_path, "w") as fh:
+        fh.write(metadata)
 
-    # save metadata
-    metadata = json.dumps({
-      KerasPlayer.NAME_FIELD: model_file_name,
-      KerasPlayer.TRAINING_SAMPLES_FIELD: self._training_samples,
-      KerasPlayer.GAME_TYPE_FIELD: self._game_type.value,
-      KerasPlayer.LAST_LOSS_FIELD: self._last_loss
-      })
-    metadata_path = "{}/info.json".format(temp_dir)
-    with open(metadata_path, "w") as fh:
-      fh.write(metadata)
-
-    # zip model and metadata into model file
-    with ZipFile(path, "w", ZIP_DEFLATED) as zip_file:
-      zip_file.write(model_path, os.path.basename(model_path))
-      zip_file.write(metadata_path, os.path.basename(metadata_path))
-
-    # cleanup
-    rmtree(temp_dir)
+      # zip model and metadata into model file
+      with ZipFile(path, "w", ZIP_DEFLATED) as zip_file:
+        zip_file.write(model_path, os.path.basename(model_path))
+        zip_file.write(metadata_path, os.path.basename(metadata_path))
 
   def checkpoint(self, current_iteration, total_iterations, log):
     unformatted_file_name = "{}_{}_{:0" + str(int(math.log10(total_iterations))+1) + "d}.zip"
@@ -195,5 +186,5 @@ class KerasPlayer(LearnerPlayer):
         utils.format_human(current_iteration), utils.format_human(total_iterations),
         100.0*current_iteration/total_iterations))
     else:
-      log.fatal("Storing final regressor in '{}' with loss {}".format(file_name, self._last_loss))
+      log.fatal("Storing final regressor in '{}' with loss {:.1f}".format(file_name, self._last_loss))
     self._save_model(file_path)

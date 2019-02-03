@@ -121,13 +121,12 @@ class Game:
     while played_hands < Config.TOTAL_HANDS:
       self.log.debug("Starting batch {}".format(batch_round+1))
       if Config.PARALLEL_PROCESSES > 1:
-        self.log.fatal("Re-creating parallel game")
-        parallel_games = [ParallelGame(self.players) for _ in range(Config.PARALLEL_PROCESSES)]
         batch = [self.pool.apply_async(game.play_hands, (played_hands + i * Config.BATCH_SIZE,))
           for i, game in enumerate(parallel_games)]
         self.log.debug("Started parallel batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
         results = [b.get() for b in batch]
       else:
+        ParallelGame.inject_log(self.log) # this seems needed even though the pool is initialized with the log
         self.log.debug("Starting sequential batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
         results = [game.play_hands(played_hands + i * Config.BATCH_SIZE)
             for i, game in enumerate(parallel_games)]

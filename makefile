@@ -103,7 +103,7 @@ endif
 		REG=$(NAME)-round-$(shell echo $(ROUND)-1 | bc).$(REG_EXT) \
 		ARGS='--load-training-file=$(ENC)-4m-$(OTHER_NAME)-round-$(shell echo $(ROUND)-1 | bc).bin \
 		--store-data --store-training-file=$(ENC)-4m-$(NAME)-round-$(ROUND).bin \
-		--store-game-type-file=$(ENC)-4m-$(NAME)-round-$(ROUND)-game-type-decisions.bin --chkint=1e5 --hands=5e5 $(ARGS)' TARGET=$@
+		--store-game-type-file=$(ENC)-4m-$(NAME)-round-$(ROUND)-game-type-decisions.bin $(ARGS)' TARGET=$@
 	$(MAKE) --no-print-directory link-model PID= EID=$(MOD)-$(NAME)-round-$(ROUND) REG=$(NAME)-round-$(ROUND).$(REG_EXT) TARGET=$@
 
 offline-round:
@@ -293,10 +293,18 @@ ifeq ($(NAME), 5x200-spades)
 	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=3x300-spades GT=trump_spades TARGET=$@
 else ifeq ($(NAME), 3x300-spades)
 	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=5x200-spades GT=trump_spades TARGET=$@
+else ifeq ($(NAME), 5x100-spades)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=2x200-spades GT=trump_spades TARGET=$@
+else ifeq ($(NAME), 2x200-spades)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=5x100-spades GT=trump_spades TARGET=$@
+else ifeq ($(NAME), 6x300-spades)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=4x400-spades GT=trump_spades TARGET=$@
+else ifeq ($(NAME), 4x400-spades)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=6x300-spades GT=trump_spades TARGET=$@
 else ifeq ($(NAME), 5x200-spades-keras)
-	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=3x300-spades-keras GT=trump_spades REG_EXT=zip TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=3x300-spades-keras GT=trump_spades REG_EXT=zip TEAM1=keras TARGET=$@
 else ifeq ($(NAME), 3x300-spades-keras)
-	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=5x200-spades-keras GT=trump_spades REG_EXT=zip TARGET=$@
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=5x200-spades-keras GT=trump_spades REG_EXT=zip TEAM1=keras TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
