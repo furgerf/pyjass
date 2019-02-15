@@ -9,6 +9,7 @@ import time
 import traceback
 from argparse import ArgumentParser
 from config import Config
+from multiprocessing import Pool
 
 import numpy as np
 
@@ -16,6 +17,7 @@ import utils
 from encoding import Encoding
 from game import Game
 from game_type import GameType
+from parallel_game import ParallelGame
 
 __version__ = "1.0"
 
@@ -429,9 +431,11 @@ def main():
 
   try:
     log.warning("Starting evaluation '{}' (PID: {})".format(args.eid, os.getpid()))
-    game = Game(log)
-    if Config.TOTAL_HANDS:
-      game.play()
+    # fork as early as possible
+    with Pool(processes=Config.PARALLEL_PROCESSES, initializer=ParallelGame.inject_log, initargs=(log,)) as pool:
+      game = Game(pool, log)
+      if Config.TOTAL_HANDS:
+        game.play()
   except Exception as ex:
     log.critical("{} during evaluation: {}".format(type(ex).__name__, str(ex)))
     log.critical(traceback.format_exc())

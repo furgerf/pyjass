@@ -5,9 +5,7 @@ import csv
 import os
 import struct
 import time
-from config import Config
 from datetime import datetime, timedelta
-from multiprocessing import Pool
 
 import numpy as np
 from psutil import Process
@@ -15,6 +13,7 @@ from psutil import Process
 import utils
 from baseline_players import HighestCardPlayer, RandomCardPlayer
 from better_rules_player import BetterRulesPlayer
+from config import Config
 from const import Const
 from fixed_better_rules_player import FixedBetterRulesPlayer
 from game_type import GameType
@@ -39,7 +38,8 @@ class Game:
       "keras": KerasPlayer
       }
 
-  def __init__(self, log):
+  def __init__(self, pool, log):
+    self.pool = pool
     self.log = log
 
     Game.PLAYER_TYPES["baseline"] = Game.PLAYER_TYPES[Config.ENCODING.baseline]
@@ -109,36 +109,27 @@ class Game:
       # setting it to ones immediately allocates space (which prevents surprises later on...)
       training_data = np.ones((training_samples_per_training, Const.CARDS_PER_HAND + 1), dtype=int)
 
-    main_pid = os.getpid()
-    self.log.info("Running with main process: {}".format(main_pid))
+    # retrieve processes
+    results = [self.pool.apply_async(ParallelGame.set_seed_and_get_pid, (i+1,))
+        for i in range(Config.PARALLEL_PROCESSES)]
+    pool_pids = [result.get() for result in results]
+    assert len(set(pool_pids)) == len(pool_pids)
+    pids = [os.getpid()] + pool_pids
+    self.log.info("Running with 1+{} processes: {}".format(len(pids)-1, " ".join(str(p) for p in pids)))
+    processes = [Process(pid) for pid in pids]
 
     while played_hands < Config.TOTAL_HANDS:
       self.log.debug("Starting batch {}".format(batch_round+1))
       if Config.PARALLEL_PROCESSES > 1:
-        with Pool(processes=Config.PARALLEL_PROCESSES,
-            initializer=ParallelGame.inject_log, initargs=(self.log,)) as pool:
-          # retrieve processes
-          results = [pool.apply_async(ParallelGame.set_seed_and_get_pid, (i+1,))
-              for i in range(Config.PARALLEL_PROCESSES)]
-          pool_pids = [result.get() for result in results]
-          assert len(set(pool_pids)) == len(pool_pids)
-          pids = [main_pid] + pool_pids
-
-          # run batch of parallel games
-          batch = [pool.apply_async(game.play_hands, (played_hands + i * Config.BATCH_SIZE,))
-            for i, game in enumerate(parallel_games)]
-          self.log.debug("Started parallel batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
-          results = [b.get() for b in batch]
-
-          # obtain memory stats, before the pool (and processes) are cleaned up
-          processes = [Process(pid) for pid in pids]
-          memory = [round(process.memory_info().rss/1e6, 1) for process in processes]
+        batch = [self.pool.apply_async(game.play_hands, (played_hands + i * Config.BATCH_SIZE,))
+          for i, game in enumerate(parallel_games)]
+        self.log.debug("Started parallel batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
+        results = [b.get() for b in batch]
       else:
-        ParallelGame.inject_log(self.log)
+        ParallelGame.inject_log(self.log) # this seems needed even though the pool is initialized with the log
         self.log.debug("Starting sequential batch of size {}".format(utils.format_human(Config.BATCH_SIZE)))
         results = [game.play_hands(played_hands + i * Config.BATCH_SIZE)
             for i, game in enumerate(parallel_games)]
-        memory = [round(Process(main_pid).memory_info().rss/1e6, 1)]
 
       self.log.debug("Processing results of batch")
       for result in results:
@@ -177,6 +168,7 @@ class Game:
 
       # logging
       if played_hands % Config.LOGGING_INTERVAL == 0:
+        memory = [round(process.memory_info().rss/1e6, 1) for process in processes]
         percentage = batch_round / Config.BATCH_COUNT
 
         elapsed_minutes = (time.time() - start_time) / 60
