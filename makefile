@@ -305,6 +305,14 @@ else ifeq ($(NAME), 5x200-spades-keras)
 	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=3x300-spades-keras GT=trump_spades REG_EXT=zip TEAM1=keras TARGET=$@
 else ifeq ($(NAME), 3x300-spades-keras)
 	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=5x200-spades-keras GT=trump_spades REG_EXT=zip TEAM1=keras TARGET=$@
+else ifeq ($(NAME), 6x300-spades-keras)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=4x400-spades-keras GT=trump_spades REG_EXT=zip TEAM1=keras TARGET=$@
+else ifeq ($(NAME), 4x400-spades-keras)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=6x300-spades-keras GT=trump_spades REG_EXT=zip TEAM1=keras TARGET=$@
+else ifeq ($(NAME), 8x600-spades-keras)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=6x700-spades-keras GT=trump_spades REG_EXT=zip TEAM1=keras TARGET=$@
+else ifeq ($(NAME), 6x700-spades-keras)
+	@$(MAKE) --no-print-directory online-round MOD=31 ENC=24 OTHER_NAME=8x600-spades-keras GT=trump_spades REG_EXT=zip TEAM1=keras TARGET=$@
 else
 	$(error Unknown name: $(NAME))
 endif
